@@ -15,10 +15,14 @@ ZBReceiver::~ZBReceiver()
 unsigned char ZBReceiver::readByte(int fd)
 {
 	int input = 0x0;
-	while(read(fd, &input, 1) <= 0)
+    read(fd, &input, 1);
+            /*
+    while(read(fd, &input, 1) <= 0)
 	{
 
 	}
+    */
+
 	printf("%X\n", input);
 	if(input == 0x7D)
 	{

@@ -39,8 +39,8 @@ int Connection::openPort(int portNumber, int baudrate)
    	else
     	{
 		std::cout << "set up connection" << std::endl;
-		fcntl(connectionDescriptor, F_SETFL, FNDELAY);		// Set the port to unblocking
-		//fcntl(connectionDescriptor, F_SETFL, 0);		// Set the port to blocking
+        //fcntl(connectionDescriptor, F_SETFL, FNDELAY);		// Set the port to unblocking
+        fcntl(connectionDescriptor, F_SETFL, 0);		// Set the port to blocking
     	}
 	
 	// 9600 baud, NO parity, 1 stop bit

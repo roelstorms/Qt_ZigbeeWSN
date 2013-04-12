@@ -15,6 +15,7 @@ void TransmitRequestPacket::setData( unsigned char applicationID, std::vector<un
     applicationData.push_back('#');                 // First fragment identifier
     applicationData.push_back(0x01);                // Source ID (1 means 64bit)
     applicationData.insert(applicationData.end(), zigbeeAddress64Bit.begin(), zigbeeAddress64Bit.end());
+    applicationData.insert(applicationData.end(), data.begin(), data.end());
     setRFData(zigbeeAddress64Bit, applicationData);
 }
 
