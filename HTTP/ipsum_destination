@@ -1,0 +1,120 @@
+user id 21
+installation id 31
+sensorgroup 320
+sensor 2029
+
+
+
+A31DD4F1-9169-4475-B316-764E1E737653
+a31dd4f1-9169-4475-b316-764e1e737653
+
+
+
+http://ipsum.groept.be/addType/51e94146-507c-41ff-9fc1-30bec4dee8d9/8664259f2b13a4922cea2a724b34c7396a384edf
+
+data sent: entity
+
+<usertype name="lightSensorRoel">
+
+  <field>
+    <sql>
+      <type>decimal_ps_</type>
+      <l1>5</l1>
+      <l2>2</l2>
+    </sql>
+    <type>float</type>
+    <name>temperature</name>
+  </field>
+
+</usertype>
+
+
+reply:
+
+<?xml version="1.0" encoding="utf-16"?><UserObject><name>lightSensorRoel</name><dataname>d7b2e54076c9249a4b4df8fa10be90d78</dataname></UserObject>
+
+
+
+
+
+
+
+
+
+
+
+http://ipsum.groept.be/addType/5d1ea971-9a65-4a08-8872-2414760cc2a7/1fbaae8564d8fc74cd184d98351d3ead5285428e
+
+data sent: 
+
+<usertype name="lightSensor">
+
+  <field>
+    <sql>
+      <type>decimal_ps_</type>
+      <l1>5</l1>
+      <l2>2</l2>
+    </sql>
+    <type>float</type>
+    <name>intensity</name>
+  </field>
+
+</usertype>
+
+reply:
+<?xml version="1.0" encoding="utf-16"?><UserObject><name>lightSensor</name><dataname>d3bae7e83c3fd4165b90570163927da19</dataname></UserObject>
+
+
+
+
+
+
+http://ipsum.groept.be/addSensor/eb255533-d359-4fd6-bc3b-e5bf275475ad/cc12b852f1ea7755f18979518065152b5bfd656f
+
+data sent: 
+
+<Sensor>
+
+  <location>14.04</location>
+
+  <sensorgroupid>320</sensorgroupid>
+
+  <frequency>5</frequency>
+
+  <dataname>d3bae7e83c3fd4165b90570163927da19</dataname>
+
+  <id>0</id>
+
+  <name>Module4LightSens</name>
+
+  <description>a test sensor to see if this request works</description>
+
+  <inuse>True</inuse>
+
+  <infoname/>
+
+</Sensor>
+
+reply:
+<?xml version="1.0" encoding="utf-16"?><Sensor><location>14.04</location><sensorgroupid>320</sensorgroupid><frequency>5</frequency><dataname>d3bae7e83c3fd4165b90570163927da19</dataname><id>2041</id><name>Module4LightSens</name><description>a test sensor to see if this request works</description><inuse>True</inuse><infoname></infoname></Sensor>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Libelium sensor and type:
+
+<?xml version="1.0" encoding="utf-16"?><UserObject><name>libeliumSensorType</name><dataname>dede9bb15bdb8490997179d013fd41346</dataname></UserObject>
+
+<?xml version="1.0" encoding="utf-16"?><Sensor><location>14.04</location><sensorgroupid>320</sensorgroupid><frequency>5</frequency><dataname>dede9bb15bdb8490997179d013fd41346</dataname><id>2421</id><name>Libelium01</name><description>First libelium sensor board that sends all data</description><inuse>True</inuse><infoname></infoname></Sensor>
+

@@ -1,0 +1,12 @@
+$ cat .gitignore
+*.[oa]
+*.~
+*.swp
+*.out
+*.o
+*.txt
+*.*~
+*.*swp
+*.*out
+*.*o
+*.*txt
