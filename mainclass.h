@@ -60,11 +60,7 @@ class MainClass
 
 	std::queue<std::pair<Packet *, time_t >> * packetsWaitingForResponse;
 	
-	void requestIOHandler(WSPacket * wsPacket);
-	void changeFrequencyHandler(WSPacket * wsPacket);
-	void addNodeHandler(WSPacket * wsPacket);
-	void addSensorHandler(WSPacket * wsPacket);
-	void RequestIOHandler(WSPacket * wsPacket);
+
 	public:
 	MainClass(int argc, char * argv[]);
 	~MainClass();
@@ -77,7 +73,14 @@ class MainClass
 	void libelAddNodeResponseHandler(Packet * packet);
 		
 	void webserviceHandler(Packet * packet);
-	std::string findFieldInXML(std::string fieldName, std::string data);
+    void requestIOHandler(WSPacket * wsPacket) throw (InvalidWSXML);
+    void changeFrequencyHandler(WSPacket * wsPacket) throw (InvalidWSXML);
+    void addNodeHandler(WSPacket * wsPacket) throw (InvalidWSXML);
+    void addSensorHandler(WSPacket * wsPacket) throw (InvalidWSXML);
+
+
+    SensorType stringToSensorType(std::string sensorType) throw (InvalidWSXML) ;
+
 	xercesc::DOMDocument * parseToDom(std::string data);
 };
 

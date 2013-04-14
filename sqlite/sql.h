@@ -37,10 +37,10 @@ class Sql
 	//		batteryID (int), co2ID(int), anemoID(int), pluvioID(int)
 	std::string makeNewNode(int installationID, int nodeID, std::string zigbee64bitAddress);
 	std::string updateSensorsInNode(int nodeID, SensorType name, int sensorID);
-	std::string getNodeAddress(int nodeID);	
-	int getNodeID(std::string zigbee64bitaddress);	
-	int getInstallationID(std::string zigbee64bitaddress);
-	std::map<SensorType, int> getSensorsFromNode(int nodeID);
+    std::string getNodeAddress(int nodeID) throw (SqlError);
+    int getNodeID(std::string zigbee64bitaddress) throw (SqlError);
+    int getInstallationID(std::string zigbee64bitaddress) throw (SqlError);
+    std::map<SensorType, int> getSensorsFromNode(int nodeID) throw (SqlError);
 };
 
 #endif

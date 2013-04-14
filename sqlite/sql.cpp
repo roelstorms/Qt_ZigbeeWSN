@@ -54,7 +54,8 @@ std::vector<std::map<std::string, std::string>> Sql::executeQuery(std::string aQ
 	}
 	std::string output("");
 	auto returnValue = selectReturn;
-	selectReturn.clear();	
+    selectReturn.clear();
+
 	return returnValue;
 
 }
@@ -151,10 +152,14 @@ std::string Sql::updateSensorsInNode(int nodeID, SensorType name, int sensorID)
 
 
 
-std::string Sql::getNodeAddress(int nodeID)
+std::string Sql::getNodeAddress(int nodeID) throw (SqlError)
 {
 	std::string query("SELECT zigbee64bitaddress from  nodes WHERE nodeID = " + std::to_string(nodeID));
 	auto data = executeQuery(query);
+    if(data.size() != 1)
+    {
+        throw SqlError();
+    }
 	for(auto it = data.begin(); it < data.end(); ++it)
 	{
 		auto field = it->find("zigbee64bitaddress");
@@ -168,10 +173,14 @@ std::string Sql::getNodeAddress(int nodeID)
 
 }
 
-int Sql::getNodeID(std::string zigbee64bitaddress)
+int Sql::getNodeID(std::string zigbee64bitaddress) throw (SqlError)
 {
 	std::string query("SELECT nodeID from nodes WHERE zigbee64bitaddress = " + zigbee64bitaddress);
 	auto data = executeQuery(query);
+    if(data.size() != 1)
+    {
+        throw SqlError();
+    }
 	for(auto it = data.begin(); it < data.end(); ++it)
 	{
 		auto field = it->find("nodeID");
@@ -185,11 +194,15 @@ int Sql::getNodeID(std::string zigbee64bitaddress)
 
 }
 
-int Sql::getInstallationID(std::string zigbee64bitaddress)
+int Sql::getInstallationID(std::string zigbee64bitaddress) throw (SqlError)
 {
 
 	std::string query("SELECT installationID from nodes WHERE zigbee64bitaddress = " + zigbee64bitaddress);
 	auto data = executeQuery(query);
+    if(data.size() != 1)
+    {
+        throw SqlError();
+    }
 	for(auto it = data.begin(); it < data.end(); ++it)
 	{
 		auto field = it->find("installationID");
@@ -226,7 +239,7 @@ int Sql::getInstallationID(std::string zigbee64bitaddress)
 		}\
 	}
 
-std::map<SensorType, int> Sql::getSensorsFromNode(int nodeID)
+std::map<SensorType, int> Sql::getSensorsFromNode(int nodeID) throw (SqlError)
 {
 	std::string query("SELECT temperatureID, humidityID, pressureID, batteryID, co2ID, anemoID, vaneID, pluvioID  from  nodes WHERE nodeID = " + std::to_string(nodeID));
 	auto data = executeQuery(query);
@@ -259,7 +272,6 @@ std::map<SensorType, int> Sql::getSensorsFromNode(int nodeID)
 	*/	
 
 	return sensors;
-
 }
 
 

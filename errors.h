@@ -29,4 +29,6 @@ ERROR(ZbCorruptedFrameData, "The framedata in this packet is invalid")
 ERROR(NoRoot, "Run the program using sudo")
 ERROR(CorruptedPacket, "Packet used to construct an object of type Incoming Packet is invalid (length, checksum, startbyte)");
 ERROR(SqlError, "An unexpected error happend in connection with the sql database.");
+
+ERROR(InvalidWSXML, "The XML supplied by the webservice request was invalid.");
 #endif

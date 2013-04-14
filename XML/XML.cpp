@@ -677,7 +677,6 @@ std::string XML::analyzeLoginReply(const std::string& reply)
 
 	std::string token;
 
-	XMLCh tempStr[100];
 	char * temp;
 	xercesc::DOMImplementation* impl = xercesc::DOMImplementation::getImplementation();
 
