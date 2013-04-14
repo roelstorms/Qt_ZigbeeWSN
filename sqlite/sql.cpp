@@ -85,11 +85,11 @@ void  Sql::removeIpsumPacket(int id)
 	executeQuery(query);
 }
 
-std::string Sql::makeNewNode(int installationID, int nodeID, std::string zigbee64bitAddress)
+std::string Sql::makeNewNode(int installationID, int nodeID, std::string zigbee64BitAddress)
 {
 
 	std::string query("INSERT INTO nodes (installationID, nodeID, zigbee64bitaddress) VALUES(");
-	query.append(std::to_string(installationID) + ", " + std::to_string(nodeID) + ", '" + zigbee64bitAddress);	
+    query.append(std::to_string(installationID) + ", " + std::to_string(nodeID) + ", '" + zigbee64BitAddress);
 	query.append("')");
 	std::cout << "query :" << query << std::endl;
 	executeQuery(query);
@@ -114,10 +114,10 @@ std::string Sql::makeNewNode(int installationID, int nodeID, std::string zigbee6
 }
 
 	
-std::string Sql::updateSensorsInNode(int nodeID, SensorType name, int sensorID)	
+std::string Sql::updateSensorsInNode(int nodeID, SensorType sensorType, int sensorID)
 {
 	std::string sensorName;
-	switch(name)
+    switch(sensorType)
 	{
 		case TEMP:
 			sensorName = "temperatureID";
@@ -173,9 +173,9 @@ std::string Sql::getNodeAddress(int nodeID) throw (SqlError)
 
 }
 
-int Sql::getNodeID(std::string zigbee64bitaddress) throw (SqlError)
+int Sql::getNodeID(std::string zigbeeAddress64Bit) throw (SqlError)
 {
-	std::string query("SELECT nodeID from nodes WHERE zigbee64bitaddress = " + zigbee64bitaddress);
+    std::string query("SELECT nodeID from nodes WHERE zigbee64bitaddress = " + zigbeeAddress64Bit);
 	auto data = executeQuery(query);
     if(data.size() != 1)
     {
@@ -194,10 +194,10 @@ int Sql::getNodeID(std::string zigbee64bitaddress) throw (SqlError)
 
 }
 
-int Sql::getInstallationID(std::string zigbee64bitaddress) throw (SqlError)
+int Sql::getInstallationID(std::string zigbeeAddress64Bit) throw (SqlError)
 {
 
-	std::string query("SELECT installationID from nodes WHERE zigbee64bitaddress = " + zigbee64bitaddress);
+    std::string query("SELECT installationID from nodes WHERE zigbee64bitaddress = " + zigbeeAddress64Bit);
 	auto data = executeQuery(query);
     if(data.size() != 1)
     {

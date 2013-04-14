@@ -17,11 +17,11 @@ class Webservice
 	std::condition_variable * mainConditionVariable;
 	std::mutex * mainConditionVariableMutex;
 		// List of options. Last element must be NULL.
-	PacketQueue * wsQueue;
+    PacketQueue * wsQueue;
 
 
-	public:
-	Webservice(PacketQueue * aWSQueue, std::condition_variable * aWSConditionVariable, std::mutex * aWSConditionVariableMutex);
+    public:
+    Webservice(PacketQueue * aWSQueue, std::condition_variable * aWSConditionVariable, std::mutex * aWSConditionVariableMutex);
 	~Webservice();
 	void operator() ();	
 	static int beginRequestHandlerWrapper(struct mg_connection *conn);

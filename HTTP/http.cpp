@@ -1,14 +1,7 @@
 #include "http.h"
 
-Http::Http(std::string urlBase): urlBase(urlBase)
-{
-	std::cout << "Http constructor" << std::endl;
-	curl_global_init(CURL_GLOBAL_ALL);
-	token = std::string();
-	httpError = -1;
-}
 
-Http::Http(std::string urlBase, std::string PK): urlBase(urlBase), PK(PK)
+Http::Http(std::string urlBase, std::string PersonalKey): urlBase(urlBase), PersonalKey(PersonalKey)
 {
 	std::cout << "Http constructor" << std::endl;
 	curl_global_init(CURL_GLOBAL_ALL);
@@ -23,7 +16,7 @@ Http::~Http()
 }
 
 //Currently not in use
-size_t Http::read_data( void *ptr, size_t size, size_t nmemb)
+size_t Http::read_data( void *, size_t size, size_t nmemb)
 {
 
 	return size * nmemb;
@@ -247,7 +240,7 @@ void Http::uploadData(IpsumUploadPacket * packet)
 		url.append("/");
 		temp.clear();
 		temp.append(url);
-		temp.append(PK);
+        temp.append(PersonalKey);
 		url.append(generateCode(temp));
 		std::string sensorType;
 		std::string fieldName;	
@@ -307,7 +300,7 @@ void Http::uploadData(std::string aSensorType, std::string destinationBase64, st
 	url.append("/");
 	temp.clear();
 	temp.append(url);
-	temp.append("a31dd4f1-9169-4475-b316-764e1e737653");
+    temp.append(PersonalKey);
 	url.append(generateCode(temp));
 	
 	XML XMLParser;
@@ -326,7 +319,7 @@ bool Http::login() throw (HttpError, InvalidLogin)
 		std::string url("/auth/");
 		std::string temp;
 		temp.append(url);
-		url.append(generateCode(temp.append("a31dd4f1-9169-4475-b316-764e1e737653")));
+        url.append(generateCode(temp.append(PersonalKey)));
 
 		XML XMLParser;
 		httpError = -1;	
@@ -374,7 +367,7 @@ void Http::setUserRights(std::string entity, int userID, int rights) throw (Http
 	url.append("/");
 	temp.clear();
 	temp.append(url);
-	temp.append("a31dd4f1-9169-4475-b316-764e1e737653");
+    temp.append(PersonalKey);
 	url.append(generateCode(temp));
 	sendPost(url, entity, &Http::standardReplyWrapper);
 
@@ -400,7 +393,7 @@ std::string Http::getEntity(std::string destinationBase64) throw (HttpError)
 	url.append("/");
 	temp.clear();
 	temp.append(url);
-	temp.append("a31dd4f1-9169-4475-b316-764e1e737653");
+    temp.append(PersonalKey);
 	url.append(generateCode(temp));
 	return sendGet(url, &Http::standardReplyWrapper);
 	
@@ -427,7 +420,7 @@ std::string Http::getChildren(std::string destinationBase64) throw (HttpError)
 	url.append("/");
 	temp.clear();
 	temp.append(url);
-	temp.append("a31dd4f1-9169-4475-b316-764e1e737653");
+    temp.append(PersonalKey);
 	url.append(generateCode(temp));
 	return sendGet(url, &Http::standardReplyWrapper);
 	
@@ -462,7 +455,7 @@ std::string Http::selectData(std::string destinationBase64, std::vector<std::str
 	url.append("/");
 	temp.clear();
 	temp.append(url);
-	temp.append("a31dd4f1-9169-4475-b316-764e1e737653");
+    temp.append(PersonalKey);
 	url.append(generateCode(temp));
 
 	
@@ -484,7 +477,7 @@ std::string Http::testQuery() throw (HttpError)
 	url.append("/");
 	temp.clear();
 	temp.append(url);
-	temp.append("a31dd4f1-9169-4475-b316-764e1e737653");
+    temp.append(PersonalKey);
 	url.append(generateCode(temp));
 
 	
@@ -522,11 +515,13 @@ std::string Http::createNewSensor(std::string sensorGroupIDValue, std::string na
 	url.append("/");
 	temp.clear();
 	temp.append(url);
-	temp.append("a31dd4f1-9169-4475-b316-764e1e737653");
+    temp.append(PersonalKey);
 	url.append(generateCode(temp));
 
-	return sendPost(url, XMLParser.createNewSensor(sensorGroupIDValue, nameValue, dataNameValue, descriptionValue, inuseValue), &Http::standardReplyWrapper);
+    return sendPost(url, XMLParser.createNewSensor(sensorGroupIDValue, nameValue, dataNameValue, descriptionValue, inuseValue), &Http::standardReplyWrapper);
 }
+
+
 
 std::string Http::createNewType(std::string aName, std::vector<std::pair<std::string, std::string>> aListOfFields) throw (HttpError)
 
@@ -546,12 +541,34 @@ std::string Http::createNewType(std::string aName, std::vector<std::pair<std::st
 	
 	temp.clear();
 	temp.append(url);
-	temp.append("a31dd4f1-9169-4475-b316-764e1e737653");
+    temp.append(PersonalKey);
 	url.append(generateCode(temp));
 
 	return sendPost(url, XMLParser.createNewType(aName, aListOfFields), &Http::standardReplyWrapper);
 }
 
+std::string Http::changeSensorGroup(std::string newXML)
+{
+    XML XMLParser;
+
+    login();
+
+    std::string url;
+    std::string temp;
+
+    // url format for addGroup:  addGroup/{token}/{code}
+    url.clear();
+    url.append("/addGroup/");
+    url.append(token);
+    url.append("/");
+
+    temp.clear();
+    temp.append(url);
+    temp.append(PersonalKey);
+    url.append(generateCode(temp));
+
+    return sendPost(url, newXML, &Http::standardReplyWrapper);
+}
 
 void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
 {
@@ -559,8 +576,7 @@ void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
 	XML XMLParser;
 	xercesc::DOMDocument * doc= XMLParser.parseToDom(entity);
 	xercesc::DOMElement * docElement = doc->getDocumentElement();
-	
-	char * temp;	
+		
 	xercesc::DOMElement * nextElement;
 	nextElement = docElement->getFirstElementChild();
 	while(nextElement != NULL)
@@ -580,8 +596,7 @@ void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
 				inUse = xercesc::XMLString::transcode("False");
 			}
 			nextElement->setTextContent(inUse);
-			token = std::string(temp);
-			xercesc::XMLString::release(&temp);
+            xercesc::XMLString::release(&inUse);
 
 		}
 
@@ -590,7 +605,7 @@ void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
 		nextElement = nextElement->getNextElementSibling();
 	}	
 
-		
+    changeSensorGroup(XMLParser.serializeDOM(doc));
 }
 
 
@@ -612,7 +627,7 @@ std::string Http::createNewSensorGroup(const std::string& installationIDValue, c
 	
 	temp.clear();
 	temp.append(url);
-	temp.append("a31dd4f1-9169-4475-b316-764e1e737653");
+    temp.append(PersonalKey);
 	url.append(generateCode(temp));
 
 	return sendPost(url, XMLParser.createNewSensor(nstallationIDValue, nameValue, descriptionValue, inuseValue);

@@ -80,8 +80,6 @@ class MainClass
 
 
     SensorType stringToSensorType(std::string sensorType) throw (InvalidWSXML) ;
-
-	xercesc::DOMDocument * parseToDom(std::string data);
 };
 
 #endif

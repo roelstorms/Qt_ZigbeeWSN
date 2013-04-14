@@ -16,7 +16,7 @@ class WSPacket : public Packet
 		RequestType requestType;
 		std::string data;
 	public:
-		WSPacket(std::string aURI, std::string aData) throw (WebserviceInvalidCommand);
+        WSPacket(std::string URI, std::string data) throw (WebserviceInvalidCommand);
 		~WSPacket();
 		const RequestType& getRequestType() const;
 		const std::string& getRequestData() const;

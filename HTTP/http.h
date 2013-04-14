@@ -39,15 +39,13 @@ class Http
 		std::string curlReply;
 		int httpError;
 		XML xmlParser;
-		std::string PK;
+        std::string PersonalKey;
 	public: 
-		Http(std::string urlBase);
-
-		Http(std::string urlBase, std::string PK);
+        Http(std::string urlBase, std::string PersonalKey);
 
 		~Http();
 
-		size_t read_data( void *ptr, size_t size, size_t nmemb);	//Currently not used nor implemented correctly (to send data you just pass a pointer to the data to Curl
+        size_t read_data(void *, size_t size, size_t nmemb);	//Currently not used nor implemented correctly (to send data you just pass a pointer to the data to Curl
 		static size_t standardReplyWrapper(void *buffer, size_t size, size_t nmemb, void *obj);
 		size_t write_data(void *buffer, size_t size, size_t nmemb);
 		static size_t headerHandlerWrapper(void *buffer, size_t size, size_t nmemb, void *obj);
@@ -74,6 +72,7 @@ class Http
 		std::string ipsumInfo() throw (HttpError);
 		std::string createNewSensor(std::string sensorGroupIDValue, std::string nameValue, std::string dataNameValue, std::string descriptionValue, std::string inuseValue) throw (HttpError);
 		std::string createNewType(std::string aName, std::vector<std::pair<std::string, std::string>> aListOfFields) throw (HttpError);
+        std::string changeSensorGroup(std::string newXML);
 
 		void changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError);
 		//std::string createNewSensorGroup(const std::string& installationIDValue, const std::string& nameValue, const std::string& descriptionValue, const std::string& inuseValue) throw (HttpError);

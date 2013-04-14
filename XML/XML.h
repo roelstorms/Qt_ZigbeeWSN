@@ -33,11 +33,11 @@ class XML
 	/*
    	 *	Give the top node of the DOM tree you want to serialize and XML code will be returned.
 	 */	 
-	std::string serializeDOM(xercesc::DOMNode * node);
 
 	public:
 	XML();
 	~XML();
+    std::string serializeDOM(xercesc::DOMNode * node);
 
 	std::string uploadData(const std::string& type, const std::vector<std::pair<std::string, double>>& input);
 	std::string uploadData(const std::string& type, const std::string& fieldName, float data, std::string timeStamp); 

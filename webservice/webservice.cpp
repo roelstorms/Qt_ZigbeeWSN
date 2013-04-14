@@ -31,7 +31,7 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 		return 1;	
 	}
 	
-	wsQueue->addPacket(packet);
+    wsQueue->addPacket(packet);
 	std::cout << "adding ws packet to wsqueue" << std::endl;
 	std::lock_guard<std::mutex> lg(*mainConditionVariableMutex);
 	mainConditionVariable->notify_all();

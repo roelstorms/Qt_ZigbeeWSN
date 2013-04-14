@@ -4,7 +4,7 @@ Ipsum::Ipsum(PacketQueue * ipsumSendQueue, PacketQueue * ipsumReceiveQueue, std:
 {
 	std::cout << "ipsum constructor" << std::endl;
 	localIpsumSendQueue = new std::queue<Packet*>;
-	http = new Http("http://ipsum.groept.be");
+    http = new Http("http://ipsum.groept.be", "a31dd4f1-9169-4475-b316-764e1e737653");
 }
 
 Ipsum::~Ipsum()
@@ -51,6 +51,7 @@ void Ipsum::operator()()
 void Ipsum::uploadDataHandler(IpsumUploadPacket * packet)
 {
 	http->uploadData(packet);
+    delete packet;
 }
 
 void Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)

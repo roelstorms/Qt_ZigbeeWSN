@@ -47,6 +47,7 @@ void ZBSender::operator() ()
 				auto data = escape(packet->getEncodedPacket());
 				write(fileDescriptor, (void*) data.data(),  data.size());
 				fsync(fileDescriptor);		
+                delete packet;
 			}
 		}
 	}
