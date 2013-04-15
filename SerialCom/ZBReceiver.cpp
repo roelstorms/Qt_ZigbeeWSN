@@ -1,7 +1,7 @@
 #include "ZBReceiver.h"
 
 
-ZBReceiver::ZBReceiver(int fd, std::mutex * aConditionVariableMutex, std::condition_variable * aMainConditionVariable, PacketQueue * aZBReceiveQueue) : fileDescriptor(fd), conditionVariableMutex(aConditionVariableMutex), mainConditionVariable(aMainConditionVariable), zbReceiveQueue(aZBReceiveQueue)
+ZBReceiver::ZBReceiver(int connectionDescriptor, std::mutex * conditionVariableMutex, std::condition_variable * mainConditionVariable, PacketQueue * zbReceiveQueue) : connectionDescriptor(connectionDescriptor), conditionVariableMutex(conditionVariableMutex), mainConditionVariable(mainConditionVariable), zbReceiveQueue(zbReceiveQueue)
 {	
 	std::cout << "ZBReceiver constructor" << std::endl;
 }
@@ -12,10 +12,10 @@ ZBReceiver::~ZBReceiver()
 	std::cout << "ZBReceiver destructor" << std::endl;
 }
 
-unsigned char ZBReceiver::readByte(int fd)
+unsigned char ZBReceiver::readByte()
 {
 	int input = 0x0;
-    read(fd, &input, 1);
+    read(connectionDescriptor, &input, 1);
             /*
     while(read(fd, &input, 1) <= 0)
 	{
@@ -26,7 +26,7 @@ unsigned char ZBReceiver::readByte(int fd)
 	printf("%X\n", input);
 	if(input == 0x7D)
 	{
-		while(read(fd, &input, 1) <= 0)
+        while(read(connectionDescriptor, &input, 1) <= 0)
 		{
 
 		}

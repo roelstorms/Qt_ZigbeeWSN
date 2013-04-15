@@ -118,10 +118,6 @@ bool Connection::sendPacket(std::vector<unsigned char> packet)
 	return true;
 }
 
-void Connection::startInputHandler()
-{
-}
-
 void Connection::closeConnection()
 {	
 	std::cout << "Closing connection file descriptor" << std::endl;

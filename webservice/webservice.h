@@ -13,7 +13,7 @@ class Webservice
 {
 	private:
 	struct mg_context *ctx;
-	struct mg_callbacks callbacks;
+
 	std::condition_variable * mainConditionVariable;
 	std::mutex * mainConditionVariableMutex;
 		// List of options. Last element must be NULL.
@@ -21,7 +21,7 @@ class Webservice
 
 
     public:
-    Webservice(PacketQueue * aWSQueue, std::condition_variable * aWSConditionVariable, std::mutex * aWSConditionVariableMutex);
+    Webservice( PacketQueue * wsQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex );
 	~Webservice();
 	void operator() ();	
 	static int beginRequestHandlerWrapper(struct mg_connection *conn);

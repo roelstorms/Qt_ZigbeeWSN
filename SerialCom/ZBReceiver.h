@@ -28,7 +28,7 @@ class ZBReceiver
 {
 	private:
 	std::ofstream logFile;
-	int fileDescriptor;
+    int connectionDescriptor;
 	std::mutex  * conditionVariableMutex;
 	std::condition_variable * mainConditionVariable;
 	PacketQueue * zbReceiveQueue;	
@@ -36,12 +36,12 @@ class ZBReceiver
 	ZBReceiver(const ZBReceiver& source);	 
 
 	public:
-	ZBReceiver(int fd, std::mutex * aConditionVariableMutex, std::condition_variable * aMainConditionVariable, PacketQueue * aZBReceiveQueue);
+    ZBReceiver(int connectionDescriptor, std::mutex * conditionVariableMutex, std::condition_variable * mainConditionVariable, PacketQueue * zbReceiveQueue);
 	~ZBReceiver();
 	
 
 
-	unsigned char readByte(int fd);
+    unsigned char readByte( );
 	void operator () ();
 	
 

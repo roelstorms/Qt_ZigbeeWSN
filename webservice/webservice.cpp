@@ -56,10 +56,12 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 
 
 
-Webservice::Webservice(PacketQueue * aWSQueue, std::condition_variable * aMainConditionVariable, std::mutex * aMainConditionVariableMutex) : wsQueue(aWSQueue), mainConditionVariable(aMainConditionVariable), mainConditionVariableMutex(aMainConditionVariableMutex)
+Webservice::Webservice(PacketQueue * aWSQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex) : wsQueue(aWSQueue), mainConditionVariable(mainConditionVariable), mainConditionVariableMutex(mainConditionVariableMutex)
 {
 	const char *options[] = {"listening_ports", "8080", "error_log_file", "./webservice_error.txt", NULL};
 	std::cout << "begin of Webservice constructor" << std::endl;
+    struct mg_callbacks callbacks;
+
 	// Prepare callbacks structure. We have only one callback, the rest are NULL.
 	memset(&callbacks, 0, sizeof(callbacks));
 	callbacks.begin_request = &Webservice::beginRequestHandlerWrapper;
