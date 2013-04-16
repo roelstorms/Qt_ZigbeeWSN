@@ -16,41 +16,51 @@ Ipsum::~Ipsum()
 void Ipsum::operator()()
 {
 	std::cout << "Ipsum::operator()()" << std::endl;
+    while(true)
+    {
+        std::unique_lock<std::mutex> uniqueLock(*ipsumConditionVariableMutex);
+        ipsumConditionVariable->wait(uniqueLock, [this] {return (!ipsumSendQueue->empty());});
 
-	std::unique_lock<std::mutex> uniqueLock(*ipsumConditionVariableMutex);
-	ipsumConditionVariable->wait(uniqueLock, [this] {return (!ipsumSendQueue->empty());});
+        std::cout << "ipsum condition variable notified" << std::endl;
 
-	std::cout << "ipsum condition variable notified" << std::endl;
+        while(!ipsumSendQueue->empty())
+        {
+            localIpsumSendQueue->push(ipsumSendQueue->getPacket());
+        }
 
-	while(!ipsumSendQueue->empty())
-	{
-		localIpsumSendQueue->push(ipsumSendQueue->getPacket());
-	}
+        Packet * ipsumPacket;
+        while(!localIpsumSendQueue->empty())
+        {
+            ipsumPacket = localIpsumSendQueue->front();
+            localIpsumSendQueue->pop();
 
-	Packet * ipsumPacket;
-	while(!localIpsumSendQueue->empty())
-	{
-		ipsumPacket = localIpsumSendQueue->front();
-		localIpsumSendQueue->pop();
-		
-		switch(ipsumPacket->getPacketType())
-		{
-			case IPSUM_UPLOAD:
-				uploadDataHandler(dynamic_cast<IpsumUploadPacket *> (ipsumPacket));
-			break;
+            switch(ipsumPacket->getPacketType())
+            {
+                case IPSUM_UPLOAD:
+                    uploadDataHandler(dynamic_cast<IpsumUploadPacket *> (ipsumPacket));
+                break;
 
-			default:
-			std::cout << "packet not found" << std::endl;
-			// Packet not recognized
-		
-		}	
-	}
+                default:
+                std::cout << "packet not found" << std::endl;
+                // Packet not recognized
+
+            }
+        }
+    }
 }
 
 
 void Ipsum::uploadDataHandler(IpsumUploadPacket * packet)
 {
-	http->uploadData(packet);
+    std::cout << "Ipsum::uploadDataHandler(IpsumUploadPacket * packet)" << std::endl;
+    try
+    {
+        http->uploadData(packet);
+    }
+    catch(HttpError)
+    {
+        std::cerr << "Error trying to upload data to ipsum" << std::endl;
+    }
     delete packet;
 }
 

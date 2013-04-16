@@ -120,7 +120,7 @@ std::string Http::sendPost(std::string urlAddition, std::string data, size_t (*c
 		/* Check for errors */
 		if(result != CURLE_OK)
 		{	
-			fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(result));
+            fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(result));
 			throw HttpError();
 		}
 		/* always cleanup */
@@ -129,7 +129,7 @@ std::string Http::sendPost(std::string urlAddition, std::string data, size_t (*c
 	curl_easy_cleanup(curl);
 	if(httpError != 200)
 	{
-		throw HttpError();
+        throw HttpError();
 	}
 	return curlReply;
 
@@ -222,7 +222,7 @@ std::string Http::toBase64(std::string input)
 }
 
 
-void Http::uploadData(IpsumUploadPacket * packet)
+void Http::uploadData(IpsumUploadPacket * packet) throw (HttpError)
 {
 	std::string url;
 	std::string temp;
@@ -244,6 +244,7 @@ void Http::uploadData(IpsumUploadPacket * packet)
 		url.append(generateCode(temp));
 		std::string sensorType;
 		std::string fieldName;	
+        std::cout << "sensor Type to be uploaded: " << std::get<0>(*it) << std::endl;
 		switch(std::get<0>(*it))
 		{
 			case TEMP:
@@ -280,7 +281,7 @@ void Http::uploadData(IpsumUploadPacket * packet)
 			break;
 		}
 		
-		sendPost(url, xmlParser.uploadData(sensorType, fieldName, std::get<2>(*it), timeStamp), &Http::standardReplyWrapper); 
+        sendPost(url, xmlParser.uploadData(sensorType, "value", std::get<2>(*it), timeStamp), &Http::standardReplyWrapper);
 	}
 	
 }

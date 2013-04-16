@@ -59,7 +59,7 @@ class Http
 		std::string calculateDestination(int userID, int installationID = -1, int sensorGroupID = -1, int sensorID = -1);
 		std::string toBase64(std::string input);
 
-		void uploadData(IpsumUploadPacket * packet);
+        void uploadData(IpsumUploadPacket * packet) throw (HttpError);
 
 		void uploadData(std::string aSensorType, std::string destinationBase64, std::vector<std::pair<std::string, double>> input) throw (HttpError);
 		bool login() throw (HttpError, InvalidLogin);

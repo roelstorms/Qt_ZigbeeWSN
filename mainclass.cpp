@@ -29,7 +29,7 @@ MainClass::MainClass(int argc, char * argv[])
 		std::cerr << "also provide the port number" << std::endl;
 		//return 1;
 	}
-	db = new Sql("./sqlite/zigbee.dbs");
+    db = new Sql("../ZigbeeWSN/sqlite/zigbee.dbs");
 	con = new Connection(); 
 	int connectionDescriptor = con->openPort(atoi(argv[1]), 9600);
 
@@ -59,9 +59,10 @@ MainClass::MainClass(int argc, char * argv[])
 	ipsumConditionVariableMutex = new std::mutex;
 	localIpsumSendQueue = new std::queue<Packet *>;
 	localIpsumReceiveQueue = new std::queue<Packet *>;
+    sentZBPackets = new std::queue<Packet *>;
 
 	ipsum = new Ipsum(ipsumSendQueue, ipsumReceiveQueue, conditionVariableMutex, mainConditionVariable, ipsumConditionVariableMutex, ipsumConditionVariable);
-
+    ipsumThread = new boost::thread(boost::ref(*ipsum));
 	packetsWaitingForResponse = new std::queue<std::pair<Packet*, time_t>>;
 }
 
@@ -96,6 +97,7 @@ MainClass::~MainClass()
 	delete ipsumConditionVariableMutex;
 	delete localIpsumSendQueue;
 	delete localIpsumReceiveQueue;
+    delete sentZBPackets;
 	delete ipsum;
 //	delete wsThread;
 	delete packetsWaitingForResponse; 
@@ -200,13 +202,23 @@ void MainClass::libelIOHandler(Packet * packet)
 	std::cout << "temperature: " << libelIOPacket->getTemperature() << std::endl;
 
 	std::vector<unsigned char> zigbee64BitAddress = libelIOPacket->getZigbee64BitAddress();
-	std::string zigbee64BitAddressString( zigbee64BitAddress.begin(), zigbee64BitAddress.end());
+    std::stringstream zigbee64BitAddressStream;
+    for(auto it = zigbee64BitAddress.begin(); it < zigbee64BitAddress.end(); ++it)
+    {
+        zigbee64BitAddressStream << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it);
+    }
+
+    std::string zigbee64BitAddressString(zigbee64BitAddressStream.str());
     int nodeID, installationID;
-     std::map<SensorType, int> availableSensors;
+    std::map<SensorType, int> availableSensors;
+    std::cout << "zigbee64BitAddressString: " << zigbee64BitAddressString << std::endl;
     try
     {
+        std::cout << "before getNodeID" << std::endl;
         nodeID = db->getNodeID(zigbee64BitAddressString);
+        std::cout << "before getInstallationID" << std::endl;
         installationID = db->getInstallationID(zigbee64BitAddressString);
+        std::cout << "before getSensorsFromNode" << std::endl;
         availableSensors = db->getSensorsFromNode(nodeID);
     }
     catch (SqlError)
@@ -221,15 +233,37 @@ void MainClass::libelIOHandler(Packet * packet)
 	for(auto it = sensorData.begin(); it != sensorData.end(); ++it)
 	{
 		auto sensorField = availableSensors.find(it->first);
+        if(sensorField == availableSensors.end())
+        {
+            std::cerr << "Data received from sensor which could not be found in database"  << std::endl;
+        }
+        else
+        {
+            std::cout << "sensor data that will be uploaded: " << it->first << std::endl;
+            data.push_back(std::tuple<SensorType, int, float>(it->first, sensorField->second, it->second ));
+        }
 
-		data.push_back(std::tuple<SensorType, int, float>(it->first, sensorField->second, it->second ));	
 	}
 
-	delete packet;
+
+
+
+    delete packet;
 
 	
-	//IpsumUploadPacket * ipsumUploadPacket = new IpsumUploadPacket(installationID, nodeID, data);
-	//ipsumSendQueue->addPacket(dynamic_cast<Packet*> (ipsumUploadPacket));
+    IpsumUploadPacket * ipsumUploadPacket = new IpsumUploadPacket(installationID, nodeID, data);
+
+    std::vector<std::tuple<SensorType, int, float> > retreivedData = ipsumUploadPacket->getData();
+    for(auto it = retreivedData.begin(); it < retreivedData.end(); ++it)
+    {
+        std::cout << "sensortypes in retreived data: " << std::get<0>(*it) << std::endl;
+    }
+
+
+    ipsumSendQueue->addPacket(dynamic_cast<Packet*> (ipsumUploadPacket));
+    std::cout << "ipsumuploadpacket added" << std::endl;
+    std::lock_guard<std::mutex> lg(*ipsumConditionVariableMutex);
+    ipsumConditionVariable->notify_all();
 }
 
 void MainClass::libelMaskResponseHandler(Packet * packet)
@@ -278,8 +312,17 @@ void MainClass::webserviceHandler(Packet * packet)
 			break;
 		case ADD_SENSOR:
             std::cout << "ADD_SENSOR request being handled" << std::endl;
-            addSensorHandler(wsPacket);
-		     	break;
+            try
+            {
+                addSensorHandler(wsPacket);
+            }
+            catch(InvalidWSXML)
+            {
+                std::cerr << "invalid XML in webservice request" << std::endl;
+                // Could send a reply to the client by using a queue going to the webservice.
+            }
+
+        break;
 		case REQUEST_DATA:
 			requestIOHandler(wsPacket);
 		     	break;
@@ -294,7 +337,7 @@ void MainClass::requestIOHandler(WSPacket * wsPacket) throw (InvalidWSXML)
 {
     XML XMLParser;
     xercesc::DOMDocument * doc = XMLParser.parseToDom( wsPacket->getRequestData() );
-
+/*
 
     int nodeID = -1;
     std::vector<SensorType> sensors;
@@ -341,6 +384,7 @@ void MainClass::requestIOHandler(WSPacket * wsPacket) throw (InvalidWSXML)
 
     db->getNodeAddress()
     db->getSensorsFromNode();
+    */
 }
 
 void MainClass::changeFrequencyHandler(WSPacket * wsPacket) throw (InvalidWSXML)
@@ -457,15 +501,17 @@ void MainClass::addSensorHandler(WSPacket * wsPacket) throw (InvalidWSXML)
 
             if(xercesc::XMLString::compareIString(child->getTagName(), sensorTypeString) == 0)
             {
-                temp = xercesc::XMLString::transcode(nextElement->getTextContent());
+                temp = xercesc::XMLString::transcode(child->getTextContent());
+                std::cout << "sensorType in XML from WS: " << temp << std::endl;
                 sensor.first = stringToSensorType(temp);
+
                 xercesc::XMLString::release(&temp);
             }
             else
             {
                 throw InvalidWSXML();
             }
-
+            std::cout << "adding sensor to vector" << std::endl;
             sensors.insert(sensor);
 
         }
@@ -475,19 +521,29 @@ void MainClass::addSensorHandler(WSPacket * wsPacket) throw (InvalidWSXML)
 
 
     // Add these sensors to the right node in the database
-    std::vector<SensorType> sensorTypes;
+
     for(auto it = sensors.begin(); it != sensors.end(); ++it)
     {
         db->updateSensorsInNode(sensorGroupID, it->first, it->second);
-        sensorTypes.push_back(it->first);
+
     }
 
     // Send a LibelAddNodePacket
     std::string zigbee64BitAddressString = db->getNodeAddress(sensorGroupID);
     std::vector <unsigned char> zigbee64BitAddress(zigbee64BitAddressString.begin(), zigbee64BitAddressString.end());
 
+
+    std::map<SensorType,int> sensorsFromDB = db->getSensorsFromNode(sensorGroupID);
+    std::vector<SensorType> sensorTypes;
+    for(auto it = sensorsFromDB.begin(); it != sensorsFromDB.end(); ++it)
+    {
+        sensorTypes.push_back(it->first);
+    }
+
     Packet * packet = dynamic_cast<Packet *> (new LibelAddNodePacket(zigbee64BitAddress, sensorTypes));
     zbSenderQueue->addPacket(packet);
+
+
     std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
     zbSenderConditionVariable->notify_all();
 
@@ -495,35 +551,36 @@ void MainClass::addSensorHandler(WSPacket * wsPacket) throw (InvalidWSXML)
 
 SensorType MainClass::stringToSensorType(std::string sensorType) throw (InvalidWSXML)
 {
-    if(sensorType == "Temperature")
+    std::cout << "stringToSensorType" << std::endl;
+    if(sensorType == "zigbeeTemp")
     {
         return TEMP;
     }
-    else if (sensorType == "Humidity")
+    else if (sensorType == "zigbeeHum")
     {
         return HUM;
     }
-    else if (sensorType == "Pressure")
+    else if (sensorType == "zigbeePres")
     {
         return PRES;
     }
-    else if (sensorType == "Battery")
+    else if (sensorType == "zigbeeBat")
     {
         return BAT;
     }
-    else if (sensorType == "CO2")
+    else if (sensorType == "zigbeeCO2")
     {
         return CO2;
     }
-    else if (sensorType == "Anemo")
+    else if (sensorType == "zigbeeAnemo")
     {
         return ANEMO;
     }
-    else if (sensorType == "Vane")
+    else if (sensorType == "zigbeeVane")
     {
         return VANE;
     }
-    else if (sensorType == "Pluvio")
+    else if (sensorType == "zigbeePluvio")
     {
         return PLUVIO;
     }

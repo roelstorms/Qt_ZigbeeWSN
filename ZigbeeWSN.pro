@@ -38,7 +38,8 @@ SOURCES += \
     XML/XML.cpp \
     webservice/wspacket.cpp \
     webservice/webservice.cpp \
-    webservice/mongoose.c
+    webservice/mongoose.c \
+    sentzbpackets.cpp
 
 HEADERS += \
     mainclass.h \
@@ -77,6 +78,10 @@ HEADERS += \
     XML/XML.h \
     webservice/wspacket.h \
     webservice/webservice.h \
-    webservice/mongoose.h
+    webservice/mongoose.h \
+    sentzbpackets.h
 
 unix:!macx:!symbian: LIBS += -lcurl -lxerces-c -lboost_thread -lboost_date_time -ldl
+
+OTHER_FILES += \
+    sqlite/zigbee.dbs

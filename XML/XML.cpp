@@ -211,7 +211,7 @@ std::string XML::uploadData(const std::string& type, const std::string& fieldNam
 	xercesc::DOMText* fieldTimestampValue = doc->createTextNode(tempStr);
 	fieldTimestamp->appendChild(fieldTimestampValue);
 
-	XMLOutput = serializeDOM(upload);
+    XMLOutput = serializeDOM(doc);
 
 	doc->release();
 	std::cout << "XMLouput:" << std::endl << XMLOutput << std::endl;	

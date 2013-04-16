@@ -17,7 +17,7 @@ int IpsumUploadPacket::getSensorGroupID() const
 	return sensorGroupID;
 }
 
-const std::vector<std::tuple<SensorType, int, float>>& IpsumUploadPacket::getData() const
+const std::vector<std::tuple<SensorType, int, float> >& IpsumUploadPacket::getData() const
 {
 	return data;
 }

@@ -21,7 +21,7 @@ class IpsumUploadPacket : public IpsumPacket
 	int getInstallationID() const;
 	int getSensorGroupID() const;
 
-	const std::vector<std::tuple<SensorType, int, float>>& getData() const;
+    const std::vector<std::tuple<SensorType, int, float> >& getData() const;
 };
 
 #endif

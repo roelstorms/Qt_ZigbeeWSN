@@ -48,23 +48,23 @@ void ZBReceiver::operator() ()
 	std::vector<unsigned char> packetVector;	
 	while(true)
     	{
-		input = readByte(fileDescriptor);
+        input = readByte();
 		if(input == 0x7E)
 		{
 			packetVector.push_back(input);
 			
-			input = readByte(fileDescriptor);
+            input = readByte();
 			int packetSize = input * 255;
 			packetVector.push_back(input);
 
-			input = readByte(fileDescriptor);
+            input = readByte();
 			packetSize += input;
 			packetVector.push_back(input);
 	
 			printf("pSize: %d\n", packetSize);
 			for(int position = 0; position <= packetSize; ++position)
 			{
-				input = readByte(fileDescriptor);
+                input = readByte();
 				packetVector.push_back(input);
 				fflush(stdout);
 			}

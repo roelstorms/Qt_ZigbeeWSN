@@ -44,7 +44,7 @@ class MainClass
 	Http * socket;
 	
 	PacketQueue * zbReceiveQueue, * zbSenderQueue, * wsQueue, * ipsumSendQueue, * ipsumReceiveQueue;
-	std::queue<Packet *> * localZBReceiveQueue, * localWSQueue, * localIpsumSendQueue, * localIpsumReceiveQueue;
+    std::queue<Packet *> * localZBReceiveQueue, * localWSQueue, * localIpsumSendQueue, * localIpsumReceiveQueue, * sentZBPackets;
 
 	std::condition_variable * mainConditionVariable, * ipsumConditionVariable, * zbSenderConditionVariable;
 	std::mutex * conditionVariableMutex, * ipsumConditionVariableMutex, * zbSenderConditionVariableMutex;
