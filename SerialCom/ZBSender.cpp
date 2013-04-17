@@ -1,6 +1,6 @@
 #include "ZBSender.h"
 
-ZBSender::ZBSender(int fd, std::mutex * zbSenderConditionVariableMutex, std::condition_variable * zbSenderConditionVariable, PacketQueue * zbSendQueue) : fileDescriptor(fd), zbSenderConditionVariableMutex(zbSenderConditionVariableMutex), zbSenderConditionVariable(zbSenderConditionVariable), zbSendQueue(zbSendQueue)
+ZBSender::ZBSender(int connectionDescriptor, std::mutex * zbSenderConditionVariableMutex, std::condition_variable * zbSenderConditionVariable, PacketQueue * zbSendQueue) : connectionDescriptor(connectionDescriptor), zbSenderConditionVariableMutex(zbSenderConditionVariableMutex), zbSenderConditionVariable(zbSenderConditionVariable), zbSendQueue(zbSendQueue)
 {
 	std::cout << "ZBSender constructor" << std::endl;
 }
@@ -45,8 +45,8 @@ void ZBSender::operator() ()
 				packet = dynamic_cast<ZBPacket *> (zbSendQueue->getPacket());
 				std::cout << "sending : " << *packet << std::endl;
 				auto data = escape(packet->getEncodedPacket());
-				write(fileDescriptor, (void*) data.data(),  data.size());
-				fsync(fileDescriptor);		
+                write(connectionDescriptor, (void*) data.data(),  data.size());
+                fsync(connectionDescriptor);
                 delete packet;
 			}
 		}

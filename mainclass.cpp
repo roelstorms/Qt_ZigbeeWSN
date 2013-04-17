@@ -1,5 +1,7 @@
 #include "mainclass.h"
 
+
+
 MainClass::MainClass(int argc, char * argv[])
 {
 	int user = getuid();
@@ -33,6 +35,8 @@ MainClass::MainClass(int argc, char * argv[])
 	con = new Connection(); 
 	int connectionDescriptor = con->openPort(atoi(argv[1]), 9600);
 
+    addNodeSentPackets = new SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>;
+
     wsQueue = new PacketQueue();
 	zbReceiveQueue = new PacketQueue();
 	localZBReceiveQueue = new std::queue<Packet *>;
@@ -59,11 +63,11 @@ MainClass::MainClass(int argc, char * argv[])
 	ipsumConditionVariableMutex = new std::mutex;
 	localIpsumSendQueue = new std::queue<Packet *>;
 	localIpsumReceiveQueue = new std::queue<Packet *>;
+
     sentZBPackets = new std::queue<Packet *>;
 
 	ipsum = new Ipsum(ipsumSendQueue, ipsumReceiveQueue, conditionVariableMutex, mainConditionVariable, ipsumConditionVariableMutex, ipsumConditionVariable);
     ipsumThread = new boost::thread(boost::ref(*ipsum));
-	packetsWaitingForResponse = new std::queue<std::pair<Packet*, time_t>>;
 }
 
 MainClass::~MainClass()
@@ -71,6 +75,8 @@ MainClass::~MainClass()
 	delete socket;
 	delete con;
 	delete db;
+
+    delete addNodeSentPackets;
 
 	delete mainConditionVariable;
 	delete conditionVariableMutex;
@@ -100,7 +106,7 @@ MainClass::~MainClass()
     delete sentZBPackets;
 	delete ipsum;
 //	delete wsThread;
-	delete packetsWaitingForResponse; 
+
 }
 
 void MainClass::operator() ()
