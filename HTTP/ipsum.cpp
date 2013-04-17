@@ -66,7 +66,7 @@ void Ipsum::uploadDataHandler(IpsumUploadPacket * packet)
 
 void Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)
 {
-	
+    http->changeInUse(packet);
 }
 
 void Ipsum::changeFrequencyHandler(IpsumChangeFreqPacket * packet)

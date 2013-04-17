@@ -24,7 +24,7 @@ int main(int argc, char* argv[])
     std::cout << "Main" << std::endl;
 
 
-    MainClass mainClass(argc, argv);
+    MainClass mainClass(argc, argv, 60);
     mainClass();
 
     /*

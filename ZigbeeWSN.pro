@@ -38,8 +38,7 @@ SOURCES += \
     XML/XML.cpp \
     webservice/wspacket.cpp \
     webservice/webservice.cpp \
-    webservice/mongoose.c \
-    sentpackets.cpp
+    webservice/mongoose.c
 
 HEADERS += \
     mainclass.h \

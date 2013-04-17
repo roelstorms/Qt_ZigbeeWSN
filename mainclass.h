@@ -26,12 +26,16 @@
 #include "./SerialCom/packets/libelchangenodefreqresponse.h"
 
 #include "./HTTP/http.h"
+#include "./HTTP/ipsum.h"
+#include "./HTTP/ipsumchangefreqpacket.h"
+#include "./HTTP/ipsumchangeinusepacket.h"
+#include "./HTTP/ipsumuploadpacket.h"
+
 #include "packetqueue.h"
 #include "sentpackets.h"
 
 #include "./webservice/webservice.h"
 #include <thread>
-#include "./HTTP/ipsum.h"
 #include <ctime>
 #include <typeinfo>
 
@@ -40,71 +44,11 @@
 #include <xercesc/framework/MemBufInputSource.hpp>
 #include <xercesc/framework/Wrapper4InputSource.hpp>
 
-
-template <class P, class R> // P for packet, R for response
-
-class SentPackets
-{
-private:
-    std::vector<std::pair<P, int> > sentPackets;     // Packet and timestamp
-public:
-    SentPackets();
-    void addPacket(P packet);
-    P  retrieveCorrespondingPacket(R packet);
-
-    std::vector<P> findExpiredPacket(int expirationTime);
-};
-
-template <class P, class R>
-SentPackets<P,R>::SentPackets()
-{
-    std::cout << "SentZBPackets<P,R>::SentZBPackets()" << std::endl;
-}
-
-template <class P, class R>
-void SentPackets<P, R>::addPacket(P packet)
-{
-    int currentTime = time(NULL);
-    sentPackets.push_back(std::pair<P, int> (packet, currentTime));
-
-    std::cout << "Packet added to sentZBPacket with time: " << currentTime << std::endl;
-}
-
-template <class P, class R>
-P SentPackets<P, R>::retrieveCorrespondingPacket(R packet)
-{
-    for(auto it = sentPackets.begin(); it < sentPackets.end(); ++it)
-    {
-        if(packet->correspondsTo(it->first))
-        {
-            return it->first;
-        }
-    }
-}
-
-template <class P, class R>
-std::vector<P> SentPackets<P, R>::findExpiredPacket(int expirationTime)
-{
-    std::vector<P*> expiredPackets;
-
-    for(auto it = sentPackets.begin(); it < sentPackets.end(); ++it)
-    {
-        if(it->second > expirationTime)
-        {
-            expiredPackets.push_back(it->first);
-            sentPackets.erase(it);
-        }
-    }
-    return expiredPackets;
-}
-
-
-
-
-
 class MainClass
 {
 	private:
+    int packetExpirationTime;
+
 	Http * socket;
 	
     SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>  * addNodeSentPackets;
@@ -126,9 +70,12 @@ class MainClass
 
 
 	public:
-	MainClass(int argc, char * argv[]);
+    MainClass(int argc, char * argv[], int packetExpirationTime);
 	~MainClass();
 	void operator () ();
+
+    void checkExpiredPackets();
+    std::string ucharVectToString(const std::vector<unsigned char> &ucharVect);
 
 	void libelIOHandler(Packet * packet);
 	void libelMaskResponseHandler(Packet * packet);

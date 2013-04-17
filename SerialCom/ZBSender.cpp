@@ -47,7 +47,8 @@ void ZBSender::operator() ()
 				auto data = escape(packet->getEncodedPacket());
                 write(connectionDescriptor, (void*) data.data(),  data.size());
                 fsync(connectionDescriptor);
-                delete packet;
+
+                //delete packet;
 			}
 		}
 	}

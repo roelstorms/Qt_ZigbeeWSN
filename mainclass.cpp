@@ -2,7 +2,7 @@
 
 
 
-MainClass::MainClass(int argc, char * argv[])
+MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) : packetExpirationTime(packetExpirationTime)
 {
 	int user = getuid();
 	if (user != 0)
@@ -114,6 +114,10 @@ void MainClass::operator() ()
 	std::cout << "going into main while loop" << std::endl;
 	while(true)
 	{
+        checkExpiredPackets();
+
+
+
 		{	// Scope of unique_lock
 			std::unique_lock<std::mutex> uniqueLock(*conditionVariableMutex);
 			mainConditionVariable->wait(uniqueLock, [this]{ return ((!zbReceiveQueue->empty()) || (!wsQueue->empty() || (!ipsumReceiveQueue->empty()))); });
@@ -199,7 +203,27 @@ void MainClass::operator() ()
 
 
 	}
-	zbReceiverThread->join();
+zbReceiverThread->join();
+}
+
+void MainClass::checkExpiredPackets()
+{
+    std::vector<LibelAddNodePacket *> expiredAddNodePackets = addNodeSentPackets->findExpiredPacket(packetExpirationTime);
+    for( auto it = expiredAddNodePackets.begin(); it < expiredAddNodePackets.end(); ++it )
+    {
+        std::cerr << "LibelAddNodePacket received no reply. " << (*it) <<  std::endl;
+        addNodeSentPackets->removePacket(*it);
+    }
+}
+
+std::string MainClass::ucharVectToString(const std::vector<unsigned char>& ucharVect)
+{
+    std::stringstream stream;
+    for(auto it = ucharVect.begin(); it < ucharVect.end(); ++it)
+    {
+        stream << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it);
+    }
+    return stream.str();
 }
 
 void MainClass::libelIOHandler(Packet * packet)
@@ -208,13 +232,9 @@ void MainClass::libelIOHandler(Packet * packet)
 	std::cout << "temperature: " << libelIOPacket->getTemperature() << std::endl;
 
 	std::vector<unsigned char> zigbee64BitAddress = libelIOPacket->getZigbee64BitAddress();
-    std::stringstream zigbee64BitAddressStream;
-    for(auto it = zigbee64BitAddress.begin(); it < zigbee64BitAddress.end(); ++it)
-    {
-        zigbee64BitAddressStream << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it);
-    }
 
-    std::string zigbee64BitAddressString(zigbee64BitAddressStream.str());
+
+    std::string zigbee64BitAddressString(ucharVectToString(zigbee64BitAddress));
     int nodeID, installationID;
     std::map<SensorType, int> availableSensors;
     std::cout << "zigbee64BitAddressString: " << zigbee64BitAddressString << std::endl;
@@ -251,9 +271,6 @@ void MainClass::libelIOHandler(Packet * packet)
 
 	}
 
-
-
-
     delete packet;
 
 	
@@ -276,7 +293,7 @@ void MainClass::libelMaskResponseHandler(Packet * packet)
 {
 	LibelMaskResponse * libelMaskResponse = dynamic_cast<LibelMaskResponse *> (packet);
 
-	delete packet;
+    delete libelMaskResponse;
 }
 
 	
@@ -284,21 +301,36 @@ void MainClass::libelChangeFreqResponseHandler(Packet * packet)
 {
 	LibelChangeFreqResponse * libelChangeFreqResponse = dynamic_cast<LibelChangeFreqResponse *> (packet);
 
-	delete packet;
+    delete libelChangeFreqResponse;
 }
 
 void MainClass::libelChangeNodeFreqResponseHandler(Packet * packet)
 {
 	LibelChangeNodeFreqResponse * libelChangeNodeFreqResponse = dynamic_cast<LibelChangeNodeFreqResponse *> (packet);
 
-	delete packet;
+    delete libelChangeNodeFreqResponse;
 }
 
 void MainClass::libelAddNodeResponseHandler(Packet * packet)
 {
 	LibelAddNodeResponse * libelAddNodeResponse = dynamic_cast<LibelAddNodeResponse *> (packet);
+    LibelAddNodePacket * libelAddNodePacket = addNodeSentPackets->retrieveCorrespondingPacket(libelAddNodeResponse);
 
-	delete packet;
+    if(libelAddNodePacket != nullptr)
+    {
+        addNodeSentPackets->removePacket(libelAddNodePacket);
+
+        int installationID = db->getInstallationID(ucharVectToString(libelAddNodeResponse->getZigbee64BitAddress()));
+        int sensorGroupID = db->getNodeID(ucharVectToString(libelAddNodeResponse->getZigbee64BitAddress()));
+        IpsumChangeInUsePacket * ipsumChangeInUsePacket = new IpsumChangeInUsePacket(installationID, sensorGroupID, true);
+
+        ipsumSendQueue->addPacket(ipsumChangeInUsePacket);
+        std::lock_guard<std::mutex> lg(*ipsumConditionVariableMutex);
+        ipsumConditionVariable->notify_all();
+    }
+
+
+    delete libelAddNodeResponse;
 }
 
 
@@ -546,9 +578,10 @@ void MainClass::addSensorHandler(WSPacket * wsPacket) throw (InvalidWSXML)
         sensorTypes.push_back(it->first);
     }
 
-    Packet * packet = dynamic_cast<Packet *> (new LibelAddNodePacket(zigbee64BitAddress, sensorTypes));
-    zbSenderQueue->addPacket(packet);
+    LibelAddNodePacket * packet =  new LibelAddNodePacket(zigbee64BitAddress, sensorTypes);
+    zbSenderQueue->addPacket(dynamic_cast<Packet *> (packet));
 
+    addNodeSentPackets->addPacket(packet);
 
     std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
     zbSenderConditionVariable->notify_all();

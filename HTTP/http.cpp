@@ -605,7 +605,6 @@ void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
 
 		nextElement = nextElement->getNextElementSibling();
 	}	
-
     changeSensorGroup(XMLParser.serializeDOM(doc));
 }
 
