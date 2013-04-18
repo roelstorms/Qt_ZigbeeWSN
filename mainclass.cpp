@@ -112,11 +112,24 @@ MainClass::~MainClass()
 void MainClass::operator() ()
 {
 	std::cout << "going into main while loop" << std::endl;
+
+    std::cout << "sending add node packet" << std::endl;
+
+    std::vector<SensorType> sensors{TEMP, BAT, PRES};
+    std::vector<unsigned char> zigbee64BitAddress{0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x73, 0x77};
+    LibelAddNodePacket * packet =  new LibelAddNodePacket(zigbee64BitAddress, sensors);
+    std::cout << "packet to be sent: " << *packet << std::endl;
+    zbSenderQueue->addPacket(dynamic_cast<Packet *> (packet));
+
+    //addNodeSentPackets->addPacket(packet);
+    {
+        std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
+        zbSenderConditionVariable->notify_all();
+    }
+    std::cout << "zbSender notified" << std::endl;
 	while(true)
 	{
-        checkExpiredPackets();
-
-
+        //checkExpiredPackets();
 
 		{	// Scope of unique_lock
 			std::unique_lock<std::mutex> uniqueLock(*conditionVariableMutex);
@@ -316,7 +329,7 @@ void MainClass::libelAddNodeResponseHandler(Packet * packet)
 	LibelAddNodeResponse * libelAddNodeResponse = dynamic_cast<LibelAddNodeResponse *> (packet);
     LibelAddNodePacket * libelAddNodePacket = addNodeSentPackets->retrieveCorrespondingPacket(libelAddNodeResponse);
 
-    if(libelAddNodePacket != nullptr)
+    //if(libelAddNodePacket != nullptr)
     {
         addNodeSentPackets->removePacket(libelAddNodePacket);
 
@@ -327,8 +340,9 @@ void MainClass::libelAddNodeResponseHandler(Packet * packet)
         ipsumSendQueue->addPacket(ipsumChangeInUsePacket);
         std::lock_guard<std::mutex> lg(*ipsumConditionVariableMutex);
         ipsumConditionVariable->notify_all();
+        std::cout << "AddNodeResponse handled and ipsum packet created" << std::endl;
     }
-
+    std::cout << "exiting libelAddNodeResponseHandler" << std::endl;
 
     delete libelAddNodeResponse;
 }

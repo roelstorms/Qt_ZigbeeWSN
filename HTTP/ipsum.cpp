@@ -39,7 +39,9 @@ void Ipsum::operator()()
                 case IPSUM_UPLOAD:
                     uploadDataHandler(dynamic_cast<IpsumUploadPacket *> (ipsumPacket));
                 break;
-
+                case IPSUM_CHANGE_IN_USE:
+                    changeInUseHandler(dynamic_cast<IpsumChangeInUsePacket *> (ipsumPacket));
+                break;
                 default:
                 std::cout << "packet not found" << std::endl;
                 // Packet not recognized

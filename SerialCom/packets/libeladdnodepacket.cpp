@@ -39,7 +39,7 @@ LibelAddNodePacket::LibelAddNodePacket(std::vector<unsigned char> zigbeeAddress6
     data.push_back(mask / 256);
     data.push_back(mask % 256);
 	
-    std::cout << "data calculated in LibelAddNodePacket(), this represents the mask of the noded to be added" << std::endl;
+    std::cout << "data calculated in LibelAddNodePacket(), this represents the mask of the node to be added" << std::endl;
     for(auto it = data.begin(); it < data.end(); ++it)
 	{
 		std::cout << std::setfill('0') << std::hex << std::setw(2) <<  (int)(*it) << " ";

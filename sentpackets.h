@@ -4,7 +4,7 @@
 #include <vector>
 #include <time.h>
 #include <iostream>
-
+#include <stdlib.h>
 
 template <class P, class R> // P for packet, R for response
 
@@ -34,7 +34,7 @@ void SentPackets<P, R>::addPacket(P packet)
     int currentTime = time(NULL);
     sentPackets.push_back(std::pair<P, int> (packet, currentTime));
 
-    std::cout << "Packet added to sentZBPacket with time: " << currentTime << std::endl;
+    std::cout << "Packet added to sentZBPacket with time: " << std::to_string(currentTime) << std::endl;
 }
 
 template <class P, class R>

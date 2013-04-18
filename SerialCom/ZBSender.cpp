@@ -33,8 +33,9 @@ void ZBSender::operator() ()
 {
 	while(true)
 	{
-		std::unique_lock<std::mutex> lu(*zbSenderConditionVariableMutex);
-		zbSenderConditionVariable->wait(lu, [this]{return !zbSendQueue->empty();});
+        std::unique_lock<std::mutex> uniqueLock(*zbSenderConditionVariableMutex);
+        zbSenderConditionVariable->wait(uniqueLock, [this]{return (!zbSendQueue->empty());});
+        //std::cout << "zb sender out of wait" << std::endl;
 		ZBPacket * packet;
 
 		while(!zbSendQueue->empty())
@@ -48,7 +49,7 @@ void ZBSender::operator() ()
                 write(connectionDescriptor, (void*) data.data(),  data.size());
                 fsync(connectionDescriptor);
 
-                //delete packet;
+                delete packet;
 			}
 		}
 	}

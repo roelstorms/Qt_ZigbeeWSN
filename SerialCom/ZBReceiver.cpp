@@ -78,7 +78,7 @@ void ZBReceiver::operator() ()
 					switch(packetVector.at(15))	//It is a ZB data packet, all our libelium packets are of this type, so now to figure out what libelium packet we 've got
 					{
 						case 0x2:
-							std::cout << "received LibelAddNodeResponse" << std::endl;
+                            std::cout << "found LibelAddNodeResponse" << std::endl;
 							packet = dynamic_cast<Packet*> (new LibelAddNodeResponse(packetVector));
 							zbReceiveQueue->addPacket(packet);
 							{
