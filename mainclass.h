@@ -53,7 +53,7 @@ class MainClass
 	
     SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>  * addNodeSentPackets;
 
-	PacketQueue * zbReceiveQueue, * zbSenderQueue, * wsQueue, * ipsumSendQueue, * ipsumReceiveQueue;
+    PacketQueue * zbReceiveQueue, * zbSenderQueue, * wsQueue, * ipsumSendQueue, * ipsumReceiveQueue;
     std::queue<Packet *> * localZBReceiveQueue, * localWSQueue, * localIpsumSendQueue, * localIpsumReceiveQueue, * sentZBPackets;
 
 	std::condition_variable * mainConditionVariable, * ipsumConditionVariable, * zbSenderConditionVariable;
@@ -79,7 +79,7 @@ class MainClass
 
 	void libelIOHandler(Packet * packet);
 	void libelMaskResponseHandler(Packet * packet);
-	void libelChangeFreqResponseHandler(Packet * packet);
+    void libelChangeFreqResponseHandler(Packet * packet);
 	void libelChangeNodeFreqResponseHandler(Packet * packet);
 	void libelAddNodeResponseHandler(Packet * packet);
 		

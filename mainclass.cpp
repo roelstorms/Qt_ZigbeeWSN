@@ -31,7 +31,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) : packet
 		std::cerr << "also provide the port number" << std::endl;
 		//return 1;
 	}
-    db = new Sql("../ZigbeeWSN/sqlite/zigbee.dbs");
+    db = new Sql("../Qt_ZigbeeWSN/zigbee.dbs");
 	con = new Connection(); 
 	int connectionDescriptor = con->openPort(atoi(argv[1]), 9600);
 
@@ -113,6 +113,7 @@ void MainClass::operator() ()
 {
 	std::cout << "going into main while loop" << std::endl;
 
+    /*
     std::cout << "sending add node packet" << std::endl;
 
     std::vector<SensorType> sensors{TEMP, BAT, PRES};
@@ -127,6 +128,7 @@ void MainClass::operator() ()
         zbSenderConditionVariable->notify_all();
     }
     std::cout << "zbSender notified" << std::endl;
+    */
 	while(true)
 	{
         //checkExpiredPackets();
