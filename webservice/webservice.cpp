@@ -20,6 +20,15 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 	post_data_len = mg_read(conn, post_data, sizeof(post_data));
 	std::cout << std::endl << "url: "<< request_info->uri << std::endl;
 	Packet * packet; 
+    std::string url(request_info->uri);
+
+    /*
+    if(url.find("login") != std::string::npos)
+    {
+        login(std::string(post_data), url);
+    }
+    */
+
 	try
 	{
 		packet= /*dynamic_cast<Packet *>*/ (new WSPacket(std::string(request_info->uri), std::string(post_data)));
@@ -52,6 +61,78 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 	// the client, and mongoose should not send client any more data.
 	return 1;
 
+}
+
+std::string Webservice::login(std::string , std::string )
+{
+    /*
+    XML XMLParser;
+    xercesc::DOMDocument * doc = XMLParser.parseToDom(data);
+
+    xercesc::DOMElement * docElement = doc->getDocumentElement();
+    xercesc::DOMElement * nextElement;
+    nextElement = docElement->getFirstElementChild();
+
+    int sensorGroupID = -1;
+
+    XMLCh * usernameString = xercesc::XMLString::transcode("username");
+    XMLCh * passwordIDString = xercesc::XMLString::transcode("password");
+
+
+    std::vector<std::pair<int, int> > frequencies;      // IpsumID + frequency (interval) in seconds
+
+    while(nextElement != NULL)
+    {
+        if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorGroupIDString) == 0)
+        {
+            temp = xercesc::XMLString::transcode(nextElement->getTextContent());
+            sensorGroupID = boost::lexical_cast<int>(std::string(temp));
+            xercesc::XMLString::release(&temp);
+
+        }
+        if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorString) == 0)
+        {
+            std::pair<int, int> freq;
+            xercesc::DOMElement * child;
+            child = nextElement->getFirstElementChild();
+
+            if(xercesc::XMLString::compareIString(child->getTagName(), sensorIDString) == 0)
+            {
+                temp = xercesc::XMLString::transcode(child->getTextContent());
+                freq.first = boost::lexical_cast<int>(temp);
+                xercesc::XMLString::release(&temp);
+
+            }
+            else
+            {
+                throw InvalidWSXML();
+            }
+
+            child = child->getNextElementSibling();
+
+            if(xercesc::XMLString::compareIString(child->getTagName(), frequencyString) == 0)
+            {
+                temp = xercesc::XMLString::transcode(child->getTextContent());
+                freq.second = boost::lexical_cast<int> (temp);
+
+                xercesc::XMLString::release(&temp);
+            }
+            else
+            {
+                throw InvalidWSXML();
+            }
+            std::cout << "adding sensor to vector" << std::endl;
+            frequencies.push_back(freq);
+        }
+        else
+        {
+            std::cerr << "invalid XML" << std::endl;
+            throw InvalidWSXML();
+        }
+
+        nextElement = nextElement->getNextElementSibling();
+    }
+    */
 }
 
 

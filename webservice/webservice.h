@@ -8,6 +8,8 @@
 #include "../packetqueue.h"
 #include <mutex>
 #include <condition_variable>
+#include "XML/XML.h"
+
 
 class Webservice
 {
@@ -27,6 +29,7 @@ class Webservice
 	static int beginRequestHandlerWrapper(struct mg_connection *conn);
 	int beginRequestHandler(struct mg_connection *conn);
 
+    std::string login(std::string, std::string);
 };
 
 #endif

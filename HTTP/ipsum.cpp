@@ -1,6 +1,6 @@
 #include "ipsum.h"
 
-Ipsum::Ipsum(PacketQueue * ipsumSendQueue, PacketQueue * ipsumReceiveQueue, std::mutex * mainConditionVariableMutex, std::condition_variable * mainConditionVariable, std::mutex * ipsumConditionVariableMutex, std::condition_variable * ipsumConditionVariable) : ipsumSendQueue(ipsumSendQueue), ipsumReceiveQueue(ipsumReceiveQueue), mainConditionVariableMutex(mainConditionVariableMutex), ipsumConditionVariableMutex(ipsumConditionVariableMutex), mainConditionVariable(mainConditionVariable), ipsumConditionVariable(ipsumConditionVariable)
+Ipsum::Ipsum(PacketQueue * ipsumSendQueue, PacketQueue * ipsumReceiveQueue, std::mutex * mainConditionVariableMutex, std::condition_variable * mainConditionVariable, std::mutex * ipsumConditionVariableMutex, std::condition_variable * ipsumConditionVariable) : ipsumSendQueue(ipsumSendQueue), ipsumReceiveQueue(ipsumReceiveQueue), mainConditionVariableMutex(mainConditionVariableMutex), ipsumConditionVariableMutex(ipsumConditionVariableMutex), mainConditionVariable(mainConditionVariable), ipsumConditionVariable(ipsumConditionVariable), IpsumUnreachable(false)
 {
 	std::cout << "ipsum constructor" << std::endl;
 	localIpsumSendQueue = new std::queue<Packet*>;
@@ -28,25 +28,47 @@ void Ipsum::operator()()
             localIpsumSendQueue->push(ipsumSendQueue->getPacket());
         }
 
-        Packet * ipsumPacket;
-        while(!localIpsumSendQueue->empty())
+        if (IpsumUnreachable)
         {
-            ipsumPacket = localIpsumSendQueue->front();
-            localIpsumSendQueue->pop();
-
-            switch(ipsumPacket->getPacketType())
+            try
             {
-                case IPSUM_UPLOAD:
-                    uploadDataHandler(dynamic_cast<IpsumUploadPacket *> (ipsumPacket));
-                break;
-                case IPSUM_CHANGE_IN_USE:
-                    changeInUseHandler(dynamic_cast<IpsumChangeInUsePacket *> (ipsumPacket));
-                break;
-                default:
-                std::cout << "packet not found" << std::endl;
-                // Packet not recognized
-
+                http->ipsumInfo();
+                IpsumUnreachable = false;
             }
+            catch (HttpError)
+            {
+                IpsumUnreachable = true;
+            }
+        }
+
+        if(!IpsumUnreachable)
+        {
+            Packet * ipsumPacket;
+            while(!localIpsumSendQueue->empty())
+            {
+                ipsumPacket = localIpsumSendQueue->front();
+                localIpsumSendQueue->pop();
+
+                switch(ipsumPacket->getPacketType())
+                {
+                    case IPSUM_UPLOAD:
+                        uploadDataHandler(dynamic_cast<IpsumUploadPacket *> (ipsumPacket));
+                    break;
+                    case IPSUM_CHANGE_IN_USE:
+                        changeInUseHandler(dynamic_cast<IpsumChangeInUsePacket *> (ipsumPacket));
+                    case IPSUM_CHANGE_FREQ:
+                        changeFrequencyHandler(dynamic_cast<IpsumChangeFreqPacket *> (ipsumPacket));
+                    break;
+                    default:
+                    std::cout << "packet not found" << std::endl;
+                    // Packet not recognized
+
+                }
+            }
+        }
+        else
+        {
+            std::cerr << "Ipsum unreachable, packed stored in queue" << std::endl;
         }
     }
 }
@@ -62,6 +84,14 @@ void Ipsum::uploadDataHandler(IpsumUploadPacket * packet)
     catch(HttpError)
     {
         std::cerr << "Error trying to upload data to ipsum" << std::endl;
+        try
+        {
+            http->ipsumInfo();
+        }
+        catch (HttpError)
+        {
+            IpsumUnreachable = true;
+        }
     }
     delete packet;
 }
@@ -76,6 +106,14 @@ void Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)
     catch(HttpError)
     {
         std::cerr << "Error trying to changing inuse on ipsum" << std::endl;
+        try
+        {
+            http->ipsumInfo();
+        }
+        catch (HttpError)
+        {
+            IpsumUnreachable = true;
+        }
     }
     delete packet;
 }
@@ -90,6 +128,14 @@ void Ipsum::changeFrequencyHandler(IpsumChangeFreqPacket * packet)
     catch(HttpError)
     {
         std::cerr << "Error trying to changing change frequency" << std::endl;
+        try
+        {
+            http->ipsumInfo();
+        }
+        catch (HttpError)
+        {
+            IpsumUnreachable = true;
+        }
     }
     delete packet;
 }

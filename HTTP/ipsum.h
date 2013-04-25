@@ -19,6 +19,9 @@ class Ipsum
 	std::queue<Packet *> * localIpsumSendQueue;
 
 	Http * http;
+
+    bool IpsumUnreachable;
+
 	Ipsum(const Ipsum&);
 	public:
 	Ipsum(PacketQueue * ipsumSendQueue, PacketQueue * ipsumReceiveQueue, std::mutex * mainConditionVariableMutex, std::condition_variable * mainConditionVariable, std::mutex * ipsumConditionVariableMutex, std::condition_variable * ipsumConditionVariable);

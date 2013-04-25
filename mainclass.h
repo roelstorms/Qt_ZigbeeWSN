@@ -44,6 +44,9 @@
 #include <xercesc/framework/MemBufInputSource.hpp>
 #include <xercesc/framework/Wrapper4InputSource.hpp>
 
+
+#include "config.h"
+
 class MainClass
 {
 	private:

@@ -4,6 +4,7 @@
 
 MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) : packetExpirationTime(packetExpirationTime)
 {
+    //Config::loadConfig("configFile.txt");
 	int user = getuid();
 	if (user != 0)
 	{
@@ -316,6 +317,37 @@ void MainClass::libelMaskResponseHandler(Packet * packet)
 void MainClass::libelChangeFreqResponseHandler(Packet * packet)
 {
 	LibelChangeFreqResponse * libelChangeFreqResponse = dynamic_cast<LibelChangeFreqResponse *> (packet);
+    LibelChangeFreqPacket * libelChangeFreqPacket = changeFreqSentPackets->retrieveCorrespondingPacket(libelChangeFreqResponse);
+
+    if(libelChangeFreqPacket != nullptr)
+    {
+        changeFreqSentPackets->removePacket(libelChangeFreqPacket);
+
+        int installationID = db->getInstallationID(ucharVectToString(libelChangeFreqResponse->getZigbee64BitAddress()));
+        int sensorGroupID = db->getNodeID(ucharVectToString(libelChangeFreqResponse->getZigbee64BitAddress()));
+        std::map<SensorType, int> sensors = db->getSensorsFromNode(sensorGroupID); // sensors is a vector of sensorType + ipsum ID
+        std::map<SensorType, int> frequencies = libelChangeFreqResponse->getFrequencies(); // frequencies is a map of sensortype + frequency(interval)
+        std::vector<std::pair<int, int> > ipsumFreqVector;
+        for(auto it = sensors.begin(); it != sensors.end(); ++it)
+        {
+            auto found = frequencies.find(it->first);
+            if (found != frequencies.end())
+            {
+                ipsumFreqVector.push_back(std::pair<int, int> (it->second, found->second));      // adding ipsumId and frequency to the output vector
+            }
+            else
+            {
+                std::cerr << "MainClass: A sensor frequency has been changed for an unknown sensor" << std::endl;
+            }
+        }
+        IpsumChangeFreqPacket * ipsumChangeFreqPacket = new IpsumChangeFreqPacket(installationID, sensorGroupID, ipsumFreqVector);
+
+        ipsumSendQueue->addPacket(ipsumChangeFreqPacket);
+        std::lock_guard<std::mutex> lg(*ipsumConditionVariableMutex);
+        ipsumConditionVariable->notify_all();
+        std::cout << "ChangeFreqResponse handled and ipsum packet created" << std::endl;
+    }
+    std::cout << "exiting libelChangeFreqResponseHandler" << std::endl;
 
     delete libelChangeFreqResponse;
 }
@@ -332,7 +364,7 @@ void MainClass::libelAddNodeResponseHandler(Packet * packet)
 	LibelAddNodeResponse * libelAddNodeResponse = dynamic_cast<LibelAddNodeResponse *> (packet);
     LibelAddNodePacket * libelAddNodePacket = addNodeSentPackets->retrieveCorrespondingPacket(libelAddNodeResponse);
 
-    //if(libelAddNodePacket != nullptr)
+    if(libelAddNodePacket != nullptr)
     {
         addNodeSentPackets->removePacket(libelAddNodePacket);
 
@@ -392,50 +424,64 @@ void MainClass::requestIOHandler(WSPacket * wsPacket) throw (InvalidWSXML)
 {
     XML XMLParser;
     xercesc::DOMDocument * doc = XMLParser.parseToDom( wsPacket->getRequestData() );
-/*
-
-    int nodeID = -1;
-    std::vector<SensorType> sensors;
+    char * temp;
 
     xercesc::DOMElement * docElement = doc->getDocumentElement();
     xercesc::DOMElement * nextElement;
     nextElement = docElement->getFirstElementChild();
 
+    int sensorGroupID = -1;
+
+    XMLCh * sensorString = xercesc::XMLString::transcode("sensorID");
     XMLCh * sensorGroupIDString = xercesc::XMLString::transcode("sensorGroupID");
-    XMLCh * sensorString = xercesc::XMLString::transcode("sensor");
+
+    std::vector<int> sensors;      // IpsumID + frequency (interval) in seconds
+
     while(nextElement != NULL)
     {
-        if(xercesc::XMLString::compareIString(nextElement->getTagName(), installationIDString) == 0)
-        {
-            temp = xercesc::XMLString::transcode(nextElement->getTextContent());
-            installationID = std::string(temp);
-            xercesc::XMLString::release(&temp);
-
-        }
         if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorGroupIDString) == 0)
         {
             temp = xercesc::XMLString::transcode(nextElement->getTextContent());
-            sensorGroupID = std::string(temp);
+            sensorGroupID = boost::lexical_cast<int>(std::string(temp));
             xercesc::XMLString::release(&temp);
-
         }
-        else if(xercesc::XMLString::compareIString(nextElement->getTagName(), zigbeeAddressString) == 0)
+        else if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorString) == 0)
         {
-            temp = xercesc::XMLString::transcode(nextElement->getTextContent());
-            zigbeeAddress = std::string(temp);
-            xercesc::XMLString::release(&temp);
+
+                temp = xercesc::XMLString::transcode(nextElement->getTextContent());
+                sensors.push_back(boost::lexical_cast<int>(temp));
+                xercesc::XMLString::release(&temp);
+
         }
         else
         {
-            std::cerr << "invalid XML" << std::endl;
+            throw InvalidWSXML();
         }
-
         nextElement = nextElement->getNextElementSibling();
     }
 
-    db->getNodeAddress()
-    db->getSensorsFromNode();
-    */
+    std::string zigbee64BitAddress = db->getNodeAddress(sensorGroupID);
+    std::map<SensorType,int> sensorsFromDB = db->getSensorsFromNode(sensorGroupID);
+
+    std::vector<SensorType> sensorTypes;    // vector of SensorTypes used to construct a LibelRequestIOPacket
+    for(auto sensorsIt = sensors.begin(); sensorsIt < sensors.end(); ++sensorsIt)
+    {
+        for(auto sensorsFromDBIt = sensorsFromDB.begin(); sensorsFromDBIt != sensorsFromDB.end(); ++sensorsFromDBIt)
+        {
+            if(sensorsFromDBIt->second == (*sensorsIt))
+            {
+                sensorTypes.push_back(sensorsFromDBIt->first);  // interval / 10 since ZB works with 10s as a unit of time
+            }
+        }
+
+    }
+
+    LibelRequestIOPacket * libelRequestIOPacket = new LibelRequestIOPacket(std::vector<unsigned char>(zigbee64BitAddress.begin(), zigbee64BitAddress.end()), sensorTypes);
+
+    zbSenderQueue->addPacket(libelRequestIOPacket);
+    std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
+    zbSenderConditionVariable->notify_all();
+
 }
 
 void MainClass::changeFrequencyHandler(WSPacket * wsPacket) throw (InvalidWSXML)
