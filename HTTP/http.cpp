@@ -571,6 +571,29 @@ std::string Http::changeSensorGroup(std::string newXML)
     return sendPost(url, newXML, &Http::standardReplyWrapper);
 }
 
+std::string Http::changeSensor(std::string newXML)
+{
+    XML XMLParser;
+
+    login();
+
+    std::string url;
+    std::string temp;
+
+    // url format for addSensor:  addSensor/{token}/{code}
+    url.clear();
+    url.append("/addSensor/");
+    url.append(token);
+    url.append("/");
+
+    temp.clear();
+    temp.append(url);
+    temp.append(PersonalKey);
+    url.append(generateCode(temp));
+
+    return sendPost(url, newXML, &Http::standardReplyWrapper);
+}
+
 void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
 {
 	std::string entity = getEntity(calculateDestination(21 ,packet->getInstallationID(), packet->getSensorGroupID()));
@@ -606,6 +629,44 @@ void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
 		nextElement = nextElement->getNextElementSibling();
 	}	
     changeSensorGroup(XMLParser.serializeDOM(doc));
+}
+
+void Http::changeFreq(IpsumChangeFreqPacket *packet)  throw (HttpError)
+{
+    int installationID = packet->getInstallationID();
+    int sensorGroupID = packet->getSensorGroupID();
+    std::vector<std::pair<int, int> > frequencies = packet->getFrequencies();
+    for(auto it = frequencies.begin(); it < frequencies.end(); ++it)
+    {
+        std::string entity = getEntity(calculateDestination(21 , installationID, sensorGroupID, it->first));
+
+        XML XMLParser;
+        xercesc::DOMDocument * doc= XMLParser.parseToDom(entity);
+        xercesc::DOMElement * docElement = doc->getDocumentElement();
+
+        xercesc::DOMElement * nextElement;
+        nextElement = docElement->getFirstElementChild();
+        while(nextElement != NULL)
+        {
+            XMLCh * frequencytemp = xercesc::XMLString::transcode("frequency");
+
+            if(xercesc::XMLString::compareIString(nextElement->getTagName(), frequencytemp) == 0)
+            {
+                XMLCh * freq;
+
+                freq = xercesc::XMLString::transcode(std::to_string(it->second).c_str());
+
+                nextElement->setTextContent(freq);
+                xercesc::XMLString::release(&freq);
+
+            }
+
+            xercesc::XMLString::release(&frequencytemp);
+
+            nextElement = nextElement->getNextElementSibling();
+        }
+        changeSensor(XMLParser.serializeDOM(doc));
+    }
 }
 
 

@@ -36,7 +36,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) : packet
 	int connectionDescriptor = con->openPort(atoi(argv[1]), 9600);
 
     addNodeSentPackets = new SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>;
-
+    changeFreqSentPackets = new SentPackets<LibelChangeFreqPacket *, LibelChangeFreqResponse *>;
     wsQueue = new PacketQueue();
 	zbReceiveQueue = new PacketQueue();
 	localZBReceiveQueue = new std::queue<Packet *>;
@@ -77,6 +77,7 @@ MainClass::~MainClass()
 	delete db;
 
     delete addNodeSentPackets;
+    delete changeFreqSentPackets;
 
 	delete mainConditionVariable;
 	delete conditionVariableMutex;
@@ -432,10 +433,6 @@ void MainClass::requestIOHandler(WSPacket * wsPacket) throw (InvalidWSXML)
         nextElement = nextElement->getNextElementSibling();
     }
 
-
-
-
-
     db->getNodeAddress()
     db->getSensorsFromNode();
     */
@@ -443,12 +440,98 @@ void MainClass::requestIOHandler(WSPacket * wsPacket) throw (InvalidWSXML)
 
 void MainClass::changeFrequencyHandler(WSPacket * wsPacket) throw (InvalidWSXML)
 {
-	wsPacket->getRequestData();
+    char * temp;
+    XML XMLParser;
+    xercesc::DOMDocument * doc = XMLParser.parseToDom(wsPacket->getRequestData());
 
+    xercesc::DOMElement * docElement = doc->getDocumentElement();
+    xercesc::DOMElement * nextElement;
+    nextElement = docElement->getFirstElementChild();
 
-	//LibelChangeNodeFreqPacket libelChangeNodeFreqPacket(destination64bitAddress, newFrequency):
-	//zbSenderQueue->addPacket();	
+    int sensorGroupID = -1;
 
+    XMLCh * sensorString = xercesc::XMLString::transcode("sensorID");
+    XMLCh * sensorIDString = xercesc::XMLString::transcode("sensorID");
+    XMLCh * sensorGroupIDString = xercesc::XMLString::transcode("sensorGroupID");
+    XMLCh * frequencyString = xercesc::XMLString::transcode("frequency");
+
+    std::vector<std::pair<int, int> > frequencies;      // IpsumID + frequency (interval) in seconds
+
+    while(nextElement != NULL)
+    {
+        if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorGroupIDString) == 0)
+        {
+            temp = xercesc::XMLString::transcode(nextElement->getTextContent());
+            sensorGroupID = boost::lexical_cast<int>(std::string(temp));
+            xercesc::XMLString::release(&temp);
+
+        }
+        if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorString) == 0)
+        {
+            std::pair<int, int> freq;
+            xercesc::DOMElement * child;
+            child = nextElement->getFirstElementChild();
+
+            if(xercesc::XMLString::compareIString(child->getTagName(), sensorIDString) == 0)
+            {
+                temp = xercesc::XMLString::transcode(child->getTextContent());
+                freq.first = boost::lexical_cast<int>(temp);
+                xercesc::XMLString::release(&temp);
+
+            }
+            else
+            {
+                throw InvalidWSXML();
+            }
+
+            child = child->getNextElementSibling();
+
+            if(xercesc::XMLString::compareIString(child->getTagName(), frequencyString) == 0)
+            {
+                temp = xercesc::XMLString::transcode(child->getTextContent());
+                freq.second = boost::lexical_cast<int> (temp);
+
+                xercesc::XMLString::release(&temp);
+            }
+            else
+            {
+                throw InvalidWSXML();
+            }
+            std::cout << "adding sensor to vector" << std::endl;
+            frequencies.push_back(freq);
+        }
+        else
+        {
+            std::cerr << "invalid XML" << std::endl;
+            throw InvalidWSXML();
+        }
+
+        nextElement = nextElement->getNextElementSibling();
+    }
+
+    std::string zigbee64BitAddress = db->getNodeAddress(sensorGroupID);
+    std::map<SensorType,int> sensors = db->getSensorsFromNode(sensorGroupID);
+
+    std::vector<std::pair<SensorType, int> > newFrequencies;    // SensorType + frequency(interval) in seconds
+    for(auto it = frequencies.begin(); it < frequencies.end(); ++it)
+    {
+        for(auto sensorsIt = sensors.begin(); sensorsIt != sensors.end(); ++it)
+        {
+            if(sensorsIt->second == it->first)
+            {
+                newFrequencies.push_back(std::pair<SensorType, int>(sensorsIt->first, it->second/10));  // interval / 10 since ZB works with 10s as a unit of time
+            }
+        }
+
+    }
+
+    LibelChangeFreqPacket * libelChangeFreqPacket = new LibelChangeFreqPacket(std::vector<unsigned char>(zigbee64BitAddress.begin(), zigbee64BitAddress.end()), newFrequencies);
+
+    zbSenderQueue->addPacket(libelChangeFreqPacket);
+    std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
+    zbSenderConditionVariable->notify_all();
+
+    changeFreqSentPackets->addPacket(libelChangeFreqPacket);
 }
 
 void MainClass::addNodeHandler(WSPacket * wsPacket) throw (InvalidWSXML)
@@ -491,6 +574,7 @@ void MainClass::addNodeHandler(WSPacket * wsPacket) throw (InvalidWSXML)
 		else
 		{
 			std::cerr << "invalid XML" << std::endl;
+            throw InvalidWSXML();
 		}
 
 		nextElement = nextElement->getNextElementSibling();

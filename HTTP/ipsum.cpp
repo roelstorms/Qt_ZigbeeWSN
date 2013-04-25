@@ -68,10 +68,28 @@ void Ipsum::uploadDataHandler(IpsumUploadPacket * packet)
 
 void Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)
 {
-    http->changeInUse(packet);
+    std::cout << "Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)" << std::endl;
+    try
+    {
+        http->changeInUse(packet);
+    }
+    catch(HttpError)
+    {
+        std::cerr << "Error trying to changing inuse on ipsum" << std::endl;
+    }
+    delete packet;
 }
 
 void Ipsum::changeFrequencyHandler(IpsumChangeFreqPacket * packet)
 {
-
+    std::cout << "Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)" << std::endl;
+    try
+    {
+        http->changeFreq(packet);
+    }
+    catch(HttpError)
+    {
+        std::cerr << "Error trying to changing change frequency" << std::endl;
+    }
+    delete packet;
 }

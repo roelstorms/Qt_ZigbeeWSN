@@ -1,7 +1,7 @@
 #include "ipsumchangefreqpacket.h"
 
 
-IpsumChangeFreqPacket::IpsumChangeFreqPacket(int installationID, int sensorGroupID, std::vector<std::tuple<SensorType, int, int>> frequencies) : IpsumPacket(), installationID(installationID), sensorGroupID(sensorGroupID), frequencies(frequencies)
+IpsumChangeFreqPacket::IpsumChangeFreqPacket(int installationID, int sensorGroupID, std::vector<std::pair<int, int>> frequencies) : IpsumPacket(), installationID(installationID), sensorGroupID(sensorGroupID), frequencies(frequencies)
 {
 
 
@@ -17,7 +17,7 @@ int IpsumChangeFreqPacket::getSensorGroupID() const
 	return sensorGroupID;
 }
 
-const std::vector<std::tuple<SensorType, int, int>>& IpsumChangeFreqPacket::getFrequencies() const
+const std::vector<std::pair<int, int>>& IpsumChangeFreqPacket::getFrequencies() const
 {
 	return frequencies;
 }

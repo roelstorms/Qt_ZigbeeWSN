@@ -73,8 +73,11 @@ class Http
 		std::string createNewSensor(std::string sensorGroupIDValue, std::string nameValue, std::string dataNameValue, std::string descriptionValue, std::string inuseValue) throw (HttpError);
 		std::string createNewType(std::string aName, std::vector<std::pair<std::string, std::string>> aListOfFields) throw (HttpError);
         std::string changeSensorGroup(std::string newXML);
+        std::string changeSensor(std::string newXML);
 
 		void changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError);
+        void changeFreq(IpsumChangeFreqPacket * packet) throw (HttpError);
+
 		//std::string createNewSensorGroup(const std::string& installationIDValue, const std::string& nameValue, const std::string& descriptionValue, const std::string& inuseValue) throw (HttpError);
 		
 };

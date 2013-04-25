@@ -52,6 +52,7 @@ class MainClass
 	Http * socket;
 	
     SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>  * addNodeSentPackets;
+    SentPackets<LibelChangeFreqPacket *, LibelChangeFreqResponse *>  * changeFreqSentPackets;
 
     PacketQueue * zbReceiveQueue, * zbSenderQueue, * wsQueue, * ipsumSendQueue, * ipsumReceiveQueue;
     std::queue<Packet *> * localZBReceiveQueue, * localWSQueue, * localIpsumSendQueue, * localIpsumReceiveQueue, * sentZBPackets;
