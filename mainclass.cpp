@@ -32,7 +32,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) : packet
 		std::cerr << "also provide the port number" << std::endl;
 		//return 1;
 	}
-    db = new Sql("../Qt_ZigbeeWSN/zigbee.dbs");
+    db = new Sql("../zigbee.dbs");
 	con = new Connection(); 
 	int connectionDescriptor = con->openPort(atoi(argv[1]), 9600);
 
@@ -115,11 +115,11 @@ void MainClass::operator() ()
 {
 	std::cout << "going into main while loop" << std::endl;
 
-    /*
+
     std::cout << "sending add node packet" << std::endl;
 
     std::vector<SensorType> sensors{TEMP, BAT, PRES};
-    std::vector<unsigned char> zigbee64BitAddress{0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x73, 0x77};
+    std::vector<unsigned char> zigbee64BitAddress{0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x73, 0x7c};
     LibelAddNodePacket * packet =  new LibelAddNodePacket(zigbee64BitAddress, sensors);
     std::cout << "packet to be sent: " << *packet << std::endl;
     zbSenderQueue->addPacket(dynamic_cast<Packet *> (packet));
@@ -130,7 +130,7 @@ void MainClass::operator() ()
         zbSenderConditionVariable->notify_all();
     }
     std::cout << "zbSender notified" << std::endl;
-    */
+
 	while(true)
 	{
         //checkExpiredPackets();
@@ -592,7 +592,7 @@ void MainClass::addNodeHandler(WSPacket * wsPacket) throw (InvalidWSXML)
 	xercesc::DOMElement * nextElement;
 	nextElement = docElement->getFirstElementChild();
 	
-	XMLCh * installationIDString = xercesc::XMLString::transcode("installationID");
+    XMLCh * installationIDString = xercesc::XMLString::transcode("installationID");
 	XMLCh * sensorGroupIDString = xercesc::XMLString::transcode("sensorGroupID");
 	XMLCh * zigbeeAddressString = xercesc::XMLString::transcode("zigbeeAddress");
 	while(nextElement != NULL)
@@ -604,7 +604,7 @@ void MainClass::addNodeHandler(WSPacket * wsPacket) throw (InvalidWSXML)
 			xercesc::XMLString::release(&temp);
 
 		}
-		if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorGroupIDString) == 0)
+        else if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorGroupIDString) == 0)
 		{
 			temp = xercesc::XMLString::transcode(nextElement->getTextContent());
 			sensorGroupID = std::string(temp);
@@ -619,7 +619,9 @@ void MainClass::addNodeHandler(WSPacket * wsPacket) throw (InvalidWSXML)
 		}
 		else
 		{
-			std::cerr << "invalid XML" << std::endl;
+            std::cerr << "invalid XML: " << std::endl;
+            std::cerr << "textContent of invalid xml: " << std::string(xercesc::XMLString::transcode(nextElement->getTextContent())) << std::endl;
+            std::cerr << "tagname of invalid XML: " << std::string(xercesc::XMLString::transcode(nextElement->getTagName())) << std::endl;
             throw InvalidWSXML();
 		}
 

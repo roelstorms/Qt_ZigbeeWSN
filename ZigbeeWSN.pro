@@ -39,7 +39,7 @@ SOURCES += \
     webservice/wspacket.cpp \
     webservice/webservice.cpp \
     webservice/mongoose.c \
-    config.cpp
+    #config.cpp
 
 HEADERS += \
     mainclass.h \
@@ -80,7 +80,7 @@ HEADERS += \
     webservice/webservice.h \
     webservice/mongoose.h \
     sentpackets.h \
-    config.h
+    #config.h
 
 unix:!macx:!symbian: LIBS += -lcurl -lxerces-c -lboost_thread -lboost_date_time -ldl
 

@@ -37,6 +37,13 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 	catch (WebserviceInvalidCommand)
 	{
 		std::cerr << "invalid command was sent to the webservice" << std::endl;
+
+        mg_printf(conn,"HTTP/1.1 405 Method Not Allowed\r\n"
+                  "Content-Type: text/plain\r\n"
+                  "Content-Length: 19\r\n"        // Always set Content-Length
+                  "\r\n"
+                  "<error>True</error>"
+                  );
 		return 1;	
 	}
 	
@@ -50,7 +57,7 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 	
 	// Send HTTP reply to the client
 	mg_printf(conn,
-			"HTTP/1.1 200 OK\r\n"
+            "HTTP/1.1 202 Accepted\r\n"
 			"Content-Type: text/plain\r\n"
 			"Content-Length: %d\r\n"        // Always set Content-Length
 			"\r\n"
@@ -63,84 +70,12 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 
 }
 
-std::string Webservice::login(std::string , std::string )
-{
-    /*
-    XML XMLParser;
-    xercesc::DOMDocument * doc = XMLParser.parseToDom(data);
-
-    xercesc::DOMElement * docElement = doc->getDocumentElement();
-    xercesc::DOMElement * nextElement;
-    nextElement = docElement->getFirstElementChild();
-
-    int sensorGroupID = -1;
-
-    XMLCh * usernameString = xercesc::XMLString::transcode("username");
-    XMLCh * passwordIDString = xercesc::XMLString::transcode("password");
-
-
-    std::vector<std::pair<int, int> > frequencies;      // IpsumID + frequency (interval) in seconds
-
-    while(nextElement != NULL)
-    {
-        if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorGroupIDString) == 0)
-        {
-            temp = xercesc::XMLString::transcode(nextElement->getTextContent());
-            sensorGroupID = boost::lexical_cast<int>(std::string(temp));
-            xercesc::XMLString::release(&temp);
-
-        }
-        if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorString) == 0)
-        {
-            std::pair<int, int> freq;
-            xercesc::DOMElement * child;
-            child = nextElement->getFirstElementChild();
-
-            if(xercesc::XMLString::compareIString(child->getTagName(), sensorIDString) == 0)
-            {
-                temp = xercesc::XMLString::transcode(child->getTextContent());
-                freq.first = boost::lexical_cast<int>(temp);
-                xercesc::XMLString::release(&temp);
-
-            }
-            else
-            {
-                throw InvalidWSXML();
-            }
-
-            child = child->getNextElementSibling();
-
-            if(xercesc::XMLString::compareIString(child->getTagName(), frequencyString) == 0)
-            {
-                temp = xercesc::XMLString::transcode(child->getTextContent());
-                freq.second = boost::lexical_cast<int> (temp);
-
-                xercesc::XMLString::release(&temp);
-            }
-            else
-            {
-                throw InvalidWSXML();
-            }
-            std::cout << "adding sensor to vector" << std::endl;
-            frequencies.push_back(freq);
-        }
-        else
-        {
-            std::cerr << "invalid XML" << std::endl;
-            throw InvalidWSXML();
-        }
-
-        nextElement = nextElement->getNextElementSibling();
-    }
-    */
-}
-
-
 
 Webservice::Webservice(PacketQueue * aWSQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex) : wsQueue(aWSQueue), mainConditionVariable(mainConditionVariable), mainConditionVariableMutex(mainConditionVariableMutex)
 {
-	const char *options[] = {"listening_ports", "8080", "error_log_file", "./webservice_error.txt", NULL};
-	std::cout << "begin of Webservice constructor" << std::endl;
+    const char *options[] = {"listening_ports", "8080s", "ssl_certificate",  "../server.pem","error_log_file", "./webservice_error.txt", NULL};
+    //const char *options[] = {"listening_ports", "8080", "error_log_file", "./webservice_error.txt", NULL};
+    std::cout << "begin of Webservice constructor" << std::endl;
     struct mg_callbacks callbacks;
 
 	// Prepare callbacks structure. We have only one callback, the rest are NULL.

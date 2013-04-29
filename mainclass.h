@@ -45,7 +45,7 @@
 #include <xercesc/framework/Wrapper4InputSource.hpp>
 
 
-#include "config.h"
+//#include "config.h"
 
 class MainClass
 {

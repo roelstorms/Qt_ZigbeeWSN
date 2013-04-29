@@ -20,8 +20,6 @@ public:
     std::vector<P> findExpiredPacket(int expirationTime);
 };
 
-
-
 template <class P, class R>
 SentPackets<P,R>::SentPackets()
 {
