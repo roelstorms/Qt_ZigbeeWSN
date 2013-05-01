@@ -59,9 +59,9 @@ class MainClass
 
     PacketQueue * zbReceiveQueue, * zbSenderQueue, * wsQueue, * ipsumSendQueue, * ipsumReceiveQueue;
     std::queue<Packet *> * localZBReceiveQueue, * localWSQueue, * localIpsumSendQueue, * localIpsumReceiveQueue, * sentZBPackets;
-
-	std::condition_variable * mainConditionVariable, * ipsumConditionVariable, * zbSenderConditionVariable;
-	std::mutex * conditionVariableMutex, * ipsumConditionVariableMutex, * zbSenderConditionVariableMutex;
+    std::vector<Packet *> * localZBSenderQueue;
+    std::condition_variable * mainConditionVariable, * ipsumConditionVariable, * zbSenderConditionVariable, * wsConditionVariable;
+    std::mutex * conditionVariableMutex, * ipsumConditionVariableMutex, * zbSenderConditionVariableMutex, * wsConditionVariableMutex;
 
 	Connection * con;
 	Sql * db;
@@ -95,6 +95,7 @@ class MainClass
 
 
     SensorType stringToSensorType(std::string sensorType) throw (InvalidWSXML) ;
+    std::vector<unsigned char> convertStringToVector(std::string input);
 };
 
 #endif

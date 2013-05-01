@@ -3,7 +3,7 @@
 LibelAddNodePacket::LibelAddNodePacket(std::vector<unsigned char> zigbeeAddress64bit, std::vector<SensorType> sensors) : TransmitRequestPacket()
 {
     std::vector<unsigned char> data;
-	int mask;
+    int mask = 0;
 
 	for( auto it = sensors.begin(); it < sensors.end(); ++it)
 	{

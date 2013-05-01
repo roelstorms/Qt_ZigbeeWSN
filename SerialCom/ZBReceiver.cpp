@@ -15,7 +15,10 @@ ZBReceiver::~ZBReceiver()
 unsigned char ZBReceiver::readByte()
 {
 	int input = 0x0;
-    read(connectionDescriptor, &input, 1);
+    if(read(connectionDescriptor, &input, 1) != 1)
+    {
+        std::cerr << "reading a byte didn't return 1 byte" << std::endl;
+    }
             /*
     while(read(fd, &input, 1) <= 0)
 	{
@@ -130,7 +133,8 @@ void ZBReceiver::operator() ()
 
 						
 						default:
-						throw UnknownPacketType();
+                        std::cerr << "unknown packet type: " << std::endl;
+                        //throw UnknownPacketType();
 				
 					}
 					break;

@@ -35,7 +35,7 @@ void ZBSender::operator() ()
 	{
         std::unique_lock<std::mutex> uniqueLock(*zbSenderConditionVariableMutex);
         zbSenderConditionVariable->wait(uniqueLock, [this]{return (!zbSendQueue->empty());});
-        //std::cout << "zb sender out of wait" << std::endl;
+        std::cout << "zb sender out of wait" << std::endl;
 		ZBPacket * packet;
 
 		while(!zbSendQueue->empty())

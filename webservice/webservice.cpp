@@ -71,7 +71,7 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 }
 
 
-Webservice::Webservice(PacketQueue * aWSQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex) : wsQueue(aWSQueue), mainConditionVariable(mainConditionVariable), mainConditionVariableMutex(mainConditionVariableMutex)
+Webservice::Webservice(PacketQueue * aWSQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex, std::condition_variable * webserviceConditionVariable, std::mutex * webserviceConditionVariableMutex) : wsQueue(aWSQueue), mainConditionVariable(mainConditionVariable), mainConditionVariableMutex(mainConditionVariableMutex), webserviceConditionVariable(webserviceConditionVariable), webserviceConditionVariableMutex(webserviceConditionVariableMutex)
 {
     const char *options[] = {"listening_ports", "8080s", "ssl_certificate",  "../server.pem","error_log_file", "./webservice_error.txt", NULL};
     //const char *options[] = {"listening_ports", "8080", "error_log_file", "./webservice_error.txt", NULL};

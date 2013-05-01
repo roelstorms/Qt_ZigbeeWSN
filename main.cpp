@@ -23,25 +23,15 @@ int main(int argc, char* argv[])
 {
     std::cout << "Main" << std::endl;
 
-
-    MainClass mainClass(argc, argv, 60);
-    mainClass();
-
-    /*
-    std::vector<unsigned char> zigbeeAddress64bit{0x00, 0X13, 0xA2, 0X00, 0x40, 0X69, 0x73, 0x6C};
-    std::vector<SensorType> sensors{TEMP,PRES,BAT};
-
-    LibelAddNodePacket libelAddNodePacket(zigbeeAddress64bit, sensors);
-    std::cout << libelAddNodePacket << std::endl;
-
-    Connection con;
-    int cd = con.openPort(atoi(argv[1]), 9600);
-    while (true)
+    int user = getuid();
+    if (user != 0)
     {
-        write(cd, libelAddNodePacket.getEncodedPacket().data(), libelAddNodePacket.getEncodedPacket().size());
-        sleep(3);
+        std::cerr << "root privileges needed" << std::endl;
+        throw NoRoot();
     }
-    */
+
+    MainClass mainClass(argc, argv, 6000);
+    mainClass();
 
 	return 0;
 }
