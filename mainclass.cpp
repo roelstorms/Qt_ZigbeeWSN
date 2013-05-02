@@ -5,10 +5,10 @@
 MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) : packetExpirationTime(packetExpirationTime)
 {
     //Config::loadConfig("configFile.txt");
-
+    int fd = open("errors.txt");
+    dup2(fd, STDERR_FILENO);
 
     socket = new Http("http://ipsum.groept.be", "a31dd4f1-9169-4475-b316-764e1e737653");
-
 
     try
     {
