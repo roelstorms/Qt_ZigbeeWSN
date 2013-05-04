@@ -20,30 +20,50 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 	Packet * packet; 
     std::string url(request_info->uri);
 
-    /*
-    if(url.find("login") != std::string::npos)
-    {
-        login(std::string(post_data), url);
+    try{
+        if(url.find("changeFrequency") != std::string::npos)
+        {
+            std::cout << "request type set to CHANGE_FREQUENCY" << std::endl;
+            packet = dynamic_cast<Packet *> (new WSChangeFrequencyPacket(std::string(post_data)));
+        }
+        else if(url.find("addNode") != std::string::npos)
+        {
+            std::cout << "request type set to ADD_NODE" << std::endl;
+            packet = dynamic_cast<Packet *> (new WSAddNodePacket(std::string(post_data)));
+        }
+        else if(url.find("addSensor") != std::string::npos)
+        {
+            std::cout << "request type set to ADD_SENSOR" << std::endl;
+            packet = dynamic_cast<Packet *> (new WSAddSensorsPacket(std::string(post_data)));
+        }
+        else if(url.find("requestData") != std::string::npos)
+        {
+            std::cout << "request type set to ADD_SENSOR" << std::endl;
+            packet = dynamic_cast<Packet *> (new WSRequestDataPacket(std::string(post_data)));
+        }
+        else
+        {
+            std::cerr << "invalid command was sent to the webservice" << std::endl;
+            int content_length = snprintf(content, sizeof(content),	"<error>Invalid URL</error>");
+            mg_printf(conn,"HTTP/1.1 405 Method Not Allowed\r\n"
+                      "Content-Type: text/plain\r\n"
+                      "Content-Length: 19\r\n"        // Always set Content-Length
+                      "\r\n"
+                      "%s",
+                      content_length, content);
+            return 1;
+        }
     }
-    */
-
-	try
-	{
-		packet= /*dynamic_cast<Packet *>*/ (new WSPacket(std::string(request_info->uri), std::string(post_data)));
-		std::cout << "type of WSPacket* in webservice.cpp: " << typeid(packet).name() << std::endl;
-	}
-	catch (WebserviceInvalidCommand)
-	{
-		std::cerr << "invalid command was sent to the webservice" << std::endl;
-
+    catch(InvalidWSXML)
+    {
+        int content_length = snprintf(content, sizeof(content),	"<error>invalid XML</error>");
         mg_printf(conn,"HTTP/1.1 405 Method Not Allowed\r\n"
                   "Content-Type: text/plain\r\n"
                   "Content-Length: 19\r\n"        // Always set Content-Length
                   "\r\n"
-                  "<error>True</error>"
-                  );
-		return 1;	
-	}
+                  "%s",
+                  content_length, content);
+    }
 	
     wsReceiveQueue->addPacket(packet);
 	std::cout << "adding ws packet to wsqueue" << std::endl;

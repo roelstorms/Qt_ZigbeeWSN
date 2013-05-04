@@ -407,22 +407,22 @@ void MainClass::libelAddNodeResponseHandler(Packet * packet)
 void MainClass::webserviceHandler(Packet * packet)
 {
     WSPacket * wsPacket = dynamic_cast<WSPacket *> (packet);
-    switch(wsPacket->getRequestType())
+    switch(wsPacket->getPacketType())
     {
-        case CHANGE_FREQUENCY:
+        case WS_CHANGE_FREQUENCY_COMMAND:
             std::cout << "CHANGE_FREQUENCY request being handled" << std::endl;
-            changeFrequencyHandler(wsPacket);
+            changeFrequencyHandler(dynamic_cast<WSChangeFrequencyPacket*> (wsPacket));
             break;
-        case ADD_NODE:
+        case WS_ADD_NODE_COMMAND:
             std::cout << "ADD_NODE request being handled" << std::endl;
-            addNodeHandler(wsPacket);
+            addNodeHandler(dynamic_cast<WSAddNodePacket *> (wsPacket));
 
             break;
-        case ADD_SENSOR:
+        case WS_ADD_SENSORS_COMMAND:
             std::cout << "ADD_SENSOR request being handled" << std::endl;
             try
             {
-                addSensorHandler(wsPacket);
+                addSensorHandler(dynamic_cast<WSAddSensorsPacket*> (wsPacket));
             }
             catch(InvalidWSXML)
             {
@@ -431,8 +431,8 @@ void MainClass::webserviceHandler(Packet * packet)
             }
 
         break;
-        case REQUEST_DATA:
-            requestIOHandler(wsPacket);
+        case WS_REQUEST_DATA_COMMAND:
+            requestDataHandler(dynamic_cast<WSRequestDataPacket*> (wsPacket));
                 break;
         default:
              std::cerr << "unrecognized packet" << std::endl;
@@ -441,49 +441,14 @@ void MainClass::webserviceHandler(Packet * packet)
     delete wsPacket;
 }
 
-void MainClass::requestIOHandler(WSPacket * wsPacket) throw (InvalidWSXML)
+void MainClass::requestDataHandler(WSRequestDataPacket * wsRequestDataPacket)
 {
-    XML XMLParser;
-    xercesc::DOMDocument * doc = XMLParser.parseToDom( wsPacket->getRequestData() );
-    char * temp;
 
-    xercesc::DOMElement * docElement = doc->getDocumentElement();
-    xercesc::DOMElement * nextElement;
-    nextElement = docElement->getFirstElementChild();
 
-    int sensorGroupID = -1;
+    std::string zigbee64BitAddress = db->getNodeAddress(wsRequestDataPacket->getSensorGroupID());
+    std::map<SensorType,int> sensorsFromDB = db->getSensorsFromNode(wsRequestDataPacket->getSensorGroupID());
 
-    XMLCh * sensorString = xercesc::XMLString::transcode("sensorID");
-    XMLCh * sensorGroupIDString = xercesc::XMLString::transcode("sensorGroupID");
-
-    std::vector<int> sensors;      // IpsumID + frequency (interval) in seconds
-
-    while(nextElement != NULL)
-    {
-        if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorGroupIDString) == 0)
-        {
-            temp = xercesc::XMLString::transcode(nextElement->getTextContent());
-            sensorGroupID = boost::lexical_cast<int>(std::string(temp));
-            xercesc::XMLString::release(&temp);
-        }
-        else if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorString) == 0)
-        {
-
-                temp = xercesc::XMLString::transcode(nextElement->getTextContent());
-                sensors.push_back(boost::lexical_cast<int>(temp));
-                xercesc::XMLString::release(&temp);
-
-        }
-        else
-        {
-            throw InvalidWSXML();
-        }
-        nextElement = nextElement->getNextElementSibling();
-    }
-
-    std::string zigbee64BitAddress = db->getNodeAddress(sensorGroupID);
-    std::map<SensorType,int> sensorsFromDB = db->getSensorsFromNode(sensorGroupID);
-
+    std::vector<int> sensors = wsRequestDataPacket->getSensors();
     std::vector<SensorType> sensorTypes;    // vector of SensorTypes used to construct a LibelRequestIOPacket
     for(auto sensorsIt = sensors.begin(); sensorsIt < sensors.end(); ++sensorsIt)
     {
@@ -506,81 +471,16 @@ void MainClass::requestIOHandler(WSPacket * wsPacket) throw (InvalidWSXML)
 
 }
 
-void MainClass::changeFrequencyHandler(WSPacket * wsPacket) throw (InvalidWSXML)
+void MainClass::changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFrequencyPacket)
 {
-    char * temp;
-    XML XMLParser;
-    xercesc::DOMDocument * doc = XMLParser.parseToDom(wsPacket->getRequestData());
 
-    xercesc::DOMElement * docElement = doc->getDocumentElement();
-    xercesc::DOMElement * nextElement;
-    nextElement = docElement->getFirstElementChild();
 
-    int sensorGroupID = -1;
-
-    XMLCh * sensorString = xercesc::XMLString::transcode("sensorID");
-    XMLCh * sensorIDString = xercesc::XMLString::transcode("sensorID");
-    XMLCh * sensorGroupIDString = xercesc::XMLString::transcode("sensorGroupID");
-    XMLCh * frequencyString = xercesc::XMLString::transcode("frequency");
-
-    std::vector<std::pair<int, int> > frequencies;      // IpsumID + frequency (interval) in seconds
-
-    while(nextElement != NULL)
-    {
-        if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorGroupIDString) == 0)
-        {
-            temp = xercesc::XMLString::transcode(nextElement->getTextContent());
-            sensorGroupID = boost::lexical_cast<int>(std::string(temp));
-            xercesc::XMLString::release(&temp);
-
-        }
-        if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorString) == 0)
-        {
-            std::pair<int, int> freq;
-            xercesc::DOMElement * child;
-            child = nextElement->getFirstElementChild();
-
-            if(xercesc::XMLString::compareIString(child->getTagName(), sensorIDString) == 0)
-            {
-                temp = xercesc::XMLString::transcode(child->getTextContent());
-                freq.first = boost::lexical_cast<int>(temp);
-                xercesc::XMLString::release(&temp);
-
-            }
-            else
-            {
-                throw InvalidWSXML();
-            }
-
-            child = child->getNextElementSibling();
-
-            if(xercesc::XMLString::compareIString(child->getTagName(), frequencyString) == 0)
-            {
-                temp = xercesc::XMLString::transcode(child->getTextContent());
-                freq.second = boost::lexical_cast<int> (temp);
-
-                xercesc::XMLString::release(&temp);
-            }
-            else
-            {
-                throw InvalidWSXML();
-            }
-            std::cout << "adding sensor to vector" << std::endl;
-            frequencies.push_back(freq);
-        }
-        else
-        {
-            std::cerr << "invalid XML" << std::endl;
-            throw InvalidWSXML();
-        }
-
-        nextElement = nextElement->getNextElementSibling();
-    }
-
-    std::string zigbee64BitAddress = db->getNodeAddress(sensorGroupID);
-    std::map<SensorType,int> sensors = db->getSensorsFromNode(sensorGroupID);
+    std::string zigbee64BitAddress = db->getNodeAddress(wsChangeFrequencyPacket->getSensorGroupID());
+    std::map<SensorType,int> sensors = db->getSensorsFromNode(wsChangeFrequencyPacket->getSensorGroupID());
 
     std::vector<std::pair<SensorType, int> > newFrequencies;    // SensorType + frequency(interval) in seconds
+    std::vector<std::pair<int, int> > frequencies = wsChangeFrequencyPacket->getFrequencies();
+
     for(auto it = frequencies.begin(); it < frequencies.end(); ++it)
     {
         for(auto sensorsIt = sensors.begin(); sensorsIt != sensors.end(); ++it)
@@ -605,131 +505,15 @@ void MainClass::changeFrequencyHandler(WSPacket * wsPacket) throw (InvalidWSXML)
     std::cout << "end of addnodehandler()" << std::endl;
 }
 
-void MainClass::addNodeHandler(WSPacket * wsPacket) throw (InvalidWSXML)
+void MainClass::addNodeHandler(WSAddNodePacket *wsAddNodePacket)
 {
-    char * temp;
-    XML XMLParser;
-    xercesc::DOMDocument * doc = XMLParser.parseToDom(wsPacket->getRequestData());
-
-    std::string installationID, sensorGroupID, zigbeeAddress;
-
-    xercesc::DOMElement * docElement = doc->getDocumentElement();
-    xercesc::DOMElement * nextElement;
-    nextElement = docElement->getFirstElementChild();
-
-    XMLCh * installationIDString = xercesc::XMLString::transcode("installationID");
-    XMLCh * sensorGroupIDString = xercesc::XMLString::transcode("sensorGroupID");
-    XMLCh * zigbeeAddressString = xercesc::XMLString::transcode("zigbeeAddress");
-    while(nextElement != NULL)
-    {
-        if(xercesc::XMLString::compareIString(nextElement->getTagName(), installationIDString) == 0)
-        {
-            temp = xercesc::XMLString::transcode(nextElement->getTextContent());
-            installationID = std::string(temp);
-            xercesc::XMLString::release(&temp);
-
-        }
-        else if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorGroupIDString) == 0)
-        {
-            temp = xercesc::XMLString::transcode(nextElement->getTextContent());
-            sensorGroupID = std::string(temp);
-            xercesc::XMLString::release(&temp);
-
-        }
-        else if(xercesc::XMLString::compareIString(nextElement->getTagName(), zigbeeAddressString) == 0)
-        {
-            temp = xercesc::XMLString::transcode(nextElement->getTextContent());
-            zigbeeAddress = std::string(temp);
-            xercesc::XMLString::release(&temp);
-        }
-        else
-        {
-            std::cerr << "invalid XML: " << std::endl;
-            std::cerr << "textContent of invalid xml: " << std::string(xercesc::XMLString::transcode(nextElement->getTextContent())) << std::endl;
-            std::cerr << "tagname of invalid XML: " << std::string(xercesc::XMLString::transcode(nextElement->getTagName())) << std::endl;
-            throw InvalidWSXML();
-        }
-
-        nextElement = nextElement->getNextElementSibling();
-    }
-
-
-    std::string makeNewNode(int installationID, int nodeID, std::string zigbee64bitAddress);
-
-    xercesc::XMLString::release(&installationIDString);
-    xercesc::XMLString::release(&sensorGroupIDString);
-    xercesc::XMLString::release(&zigbeeAddressString);
-
-    db->makeNewNode(boost::lexical_cast<int> (installationID), boost::lexical_cast<int> (sensorGroupID), zigbeeAddress);
+    db->makeNewNode(wsAddNodePacket->getInstallationID(),wsAddNodePacket->getSensorGroupID(), wsAddNodePacket->getZigbeeAddress64Bit());
 }
 
-void MainClass::addSensorHandler(WSPacket * wsPacket) throw (InvalidWSXML)
+void MainClass::addSensorHandler(WSAddSensorsPacket *wsAddSensorsPacket)
 {
-    char * temp;
-    XML XMLParser;
-    xercesc::DOMDocument * doc = XMLParser.parseToDom(wsPacket->getRequestData());
-
-    int sensorGroupID = -1;
-    std::map<SensorType, int> sensors;
-
-    xercesc::DOMElement * docElement = doc->getDocumentElement();
-    xercesc::DOMElement * nextElement;
-    nextElement = docElement->getFirstElementChild();
-
-    XMLCh * sensorGroupIDString = xercesc::XMLString::transcode("sensorGroupID");
-    XMLCh * sensorString = xercesc::XMLString::transcode("sensor");
-    XMLCh * sensorIDString = xercesc::XMLString::transcode("sensorID");
-    XMLCh * sensorTypeString = xercesc::XMLString::transcode("sensorType");
-
-    while(nextElement != NULL)
-    {
-        if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorGroupIDString) == 0)
-        {
-            temp = xercesc::XMLString::transcode(nextElement->getTextContent());
-            sensorGroupID = boost::lexical_cast<int>(temp);
-            xercesc::XMLString::release(&temp);
-
-        }
-        if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorString) == 0)
-        {
-            std::pair<SensorType, int> sensor;
-            xercesc::DOMElement * child;
-            child = nextElement->getFirstElementChild();
-
-            if(xercesc::XMLString::compareIString(child->getTagName(), sensorIDString) == 0)
-            {
-                temp = xercesc::XMLString::transcode(child->getTextContent());
-                sensor.second = boost::lexical_cast<int>(temp);
-                xercesc::XMLString::release(&temp);
-
-            }
-            else
-            {
-                throw InvalidWSXML();
-            }
-
-            child = child->getNextElementSibling();
-
-            if(xercesc::XMLString::compareIString(child->getTagName(), sensorTypeString) == 0)
-            {
-                temp = xercesc::XMLString::transcode(child->getTextContent());
-                std::cout << "sensorType in XML from WS: " << temp << std::endl;
-                sensor.first = stringToSensorType(temp);
-
-                xercesc::XMLString::release(&temp);
-            }
-            else
-            {
-                throw InvalidWSXML();
-            }
-            std::cout << "adding sensor to vector" << std::endl;
-            sensors.insert(sensor);
-
-        }
-
-        nextElement = nextElement->getNextElementSibling();
-    }
-
+    std::map<SensorType, int> sensors = wsAddSensorsPacket->getSensors();
+    int sensorGroupID = wsAddSensorsPacket->getSensorGroupID();
 
     // Add these sensors to the right node in the database
 
@@ -770,46 +554,7 @@ void MainClass::addSensorHandler(WSPacket * wsPacket) throw (InvalidWSXML)
 
 }
 
-SensorType MainClass::stringToSensorType(std::string sensorType) throw (InvalidWSXML)
-{
-    std::cout << "stringToSensorType" << std::endl;
-    if(sensorType == "zigbeeTemp")
-    {
-        return TEMP;
-    }
-    else if (sensorType == "zigbeeHum")
-    {
-        return HUM;
-    }
-    else if (sensorType == "zigbeePres")
-    {
-        return PRES;
-    }
-    else if (sensorType == "zigbeeBat")
-    {
-        return BAT;
-    }
-    else if (sensorType == "zigbeeCO2")
-    {
-        return CO2;
-    }
-    else if (sensorType == "zigbeeAnemo")
-    {
-        return ANEMO;
-    }
-    else if (sensorType == "zigbeeVane")
-    {
-        return VANE;
-    }
-    else if (sensorType == "zigbeePluvio")
-    {
-        return PLUVIO;
-    }
-    else
-    {
-        throw InvalidWSXML();
-    }
-}
+
 
 std::vector<unsigned char> MainClass::convertStringToVector(std::string input)
 {

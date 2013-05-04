@@ -25,6 +25,11 @@
 #include "./SerialCom/packets/libelchangenodefreqpacket.h"
 #include "./SerialCom/packets/libelchangenodefreqresponse.h"
 
+#include "webservice/wsaddsensorspacket.h"
+#include "webservice/wsaddnodepacket.h"
+#include "webservice/wschangefrequencypacket.h"
+#include "webservice/wsrequestdatapacket.h"
+
 #include "./HTTP/http.h"
 #include "./HTTP/ipsum.h"
 #include "./HTTP/ipsumchangefreqpacket.h"
@@ -88,10 +93,10 @@ class MainClass
 	void libelAddNodeResponseHandler(Packet * packet);
 		
 	void webserviceHandler(Packet * packet);
-    void requestIOHandler(WSPacket * wsPacket) throw (InvalidWSXML);
-    void changeFrequencyHandler(WSPacket * wsPacket) throw (InvalidWSXML);
-    void addNodeHandler(WSPacket * wsPacket) throw (InvalidWSXML);
-    void addSensorHandler(WSPacket * wsPacket) throw (InvalidWSXML);
+    void requestDataHandler(WSRequestDataPacket *  wsRequestDataPacket);
+    void changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFrequencyPacket);
+    void addNodeHandler(WSAddNodePacket * wsAddNodePacket);
+    void addSensorHandler(WSAddSensorsPacket * wsAddSensorsPacket);
 
 
     SensorType stringToSensorType(std::string sensorType) throw (InvalidWSXML) ;

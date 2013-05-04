@@ -1,33 +1,8 @@
 #include "wspacket.h"
 
-WSPacket::WSPacket(std::string URI, std::string data) throw(WebserviceInvalidCommand) : Packet(), data(data)
+WSPacket::WSPacket() : Packet()
 {
-	std::cout << "WSPacket constructor" << std::endl;	
-    if(URI.find("changeFrequency") != std::string::npos)
-	{
-		std::cout << "request type set to CHANGE_FREQUENCY" << std::endl;
-		requestType = CHANGE_FREQUENCY;
-	}
-    else if(URI.find("addNode") != std::string::npos)
-	{
-		std::cout << "request type set to ADD_NODE" << std::endl;
-		requestType = ADD_NODE;
-	}
-    else if(URI.find("addSensor") != std::string::npos)
-	{
-		std::cout << "request type set to ADD_SENSOR" << std::endl;
-		requestType = ADD_SENSOR;
-	}
-    else if(URI.find("requestData") != std::string::npos)
-	{
-		std::cout << "request type set to ADD_SENSOR" << std::endl;
-		requestType = ADD_SENSOR;
-	}
-	else
-	{
-		throw WebserviceInvalidCommand();
-	}
-	
+    std::cout << "WSPacket constructor" << std::endl;
 }
 
 WSPacket::~WSPacket()
@@ -35,12 +10,43 @@ WSPacket::~WSPacket()
 
 }
 
-const RequestType&  WSPacket::getRequestType() const
+SensorType WSPacket::stringToSensorType(std::string sensorType) throw (InvalidWSXML)
 {
-	return requestType;
-}
-
-const std::string& WSPacket::getRequestData() const
-{
-	return data;
+    std::cout << "stringToSensorType" << std::endl;
+    if(sensorType == "zigbeeTemp")
+    {
+        return TEMP;
+    }
+    else if (sensorType == "zigbeeHum")
+    {
+        return HUM;
+    }
+    else if (sensorType == "zigbeePres")
+    {
+        return PRES;
+    }
+    else if (sensorType == "zigbeeBat")
+    {
+        return BAT;
+    }
+    else if (sensorType == "zigbeeCO2")
+    {
+        return CO2;
+    }
+    else if (sensorType == "zigbeeAnemo")
+    {
+        return ANEMO;
+    }
+    else if (sensorType == "zigbeeVane")
+    {
+        return VANE;
+    }
+    else if (sensorType == "zigbeePluvio")
+    {
+        return PLUVIO;
+    }
+    else
+    {
+        throw InvalidWSXML();
+    }
 }

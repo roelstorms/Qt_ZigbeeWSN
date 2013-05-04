@@ -9,7 +9,10 @@
 #include <mutex>
 #include <condition_variable>
 #include "XML/XML.h"
-
+#include "wsaddnodepacket.h"
+#include "wsaddsensorspacket.h"
+#include "wschangefrequencypacket.h"
+#include "wsrequestdatapacket.h"
 
 class Webservice
 {

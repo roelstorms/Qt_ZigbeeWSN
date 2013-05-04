@@ -4,6 +4,9 @@
 #include "../errors.h"
 #include "../packet.h"
 #include <iostream>
+#include "enums.h"
+#include <boost/lexical_cast.hpp>
+#include "XML/XML.h"
 
 enum RequestType
 {
@@ -16,13 +19,12 @@ class WSPacket : public Packet
 		RequestType requestType;
 		std::string data;
 	public:
-        WSPacket(std::string URI, std::string data) throw (WebserviceInvalidCommand);
+        WSPacket();
+
+        PacketType getPacketType() = 0;
 		~WSPacket();
-		const RequestType& getRequestType() const;
-		const std::string& getRequestData() const;
 
-		PacketType getPacketType(){ return WS_COMMAND; };
-
+        SensorType stringToSensorType(std::string sensorType) throw (InvalidWSXML);
 };
 
 #endif

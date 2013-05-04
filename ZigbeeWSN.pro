@@ -39,7 +39,10 @@ SOURCES += \
     webservice/wspacket.cpp \
     webservice/webservice.cpp \
     webservice/mongoose.c \
-    webservice/wsaddnodepacket.cpp
+    webservice/wsaddnodepacket.cpp \
+    webservice/wsaddsensorspacket.cpp \
+    webservice/wsrequestdatapacket.cpp \
+    webservice/wschangefrequencypacket.cpp
     #config.cpp
 
 HEADERS += \
@@ -81,7 +84,10 @@ HEADERS += \
     webservice/webservice.h \
     webservice/mongoose.h \
     sentpackets.h \
-    webservice/wsaddnodepacket.h
+    webservice/wsaddnodepacket.h \
+    webservice/wsaddsensorspacket.h \
+    webservice/wsrequestdatapacket.h \
+    webservice/wschangefrequencypacket.h
     #config.h
 
 unix:!macx:!symbian: LIBS += -lcurl -lxerces-c -lboost_thread -lboost_date_time -ldl
