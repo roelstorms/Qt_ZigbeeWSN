@@ -647,11 +647,6 @@ std::string XML::login(const std::string& username, const std::string& password)
 
 xercesc::DOMDocument * XML::parseToDom(std::string data)
 {
-
-	XMLCh tempStr[100];
-	
-	char * temp;
-
 	xercesc::DOMImplementation* impl = xercesc::DOMImplementation::getImplementation();
 	xercesc::DOMLSParser *parser = ((xercesc::DOMImplementationLS*)impl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, 0);
 	xercesc::DOMDocument *doc;
@@ -677,8 +672,7 @@ std::string XML::analyzeLoginReply(const std::string& reply)
 
 	std::string token;
 
-	char * temp;
-	xercesc::DOMImplementation* impl = xercesc::DOMImplementation::getImplementation();
+    char * temp;
 
 	xercesc::DOMDocument *doc;
 

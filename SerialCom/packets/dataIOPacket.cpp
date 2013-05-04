@@ -167,12 +167,12 @@ bool DataIOPacket::readDigital(int pin)
 	return false;
 }	
 
-void DataIOPacket::setSourceAddress(std::vector<unsigned char> aSourceAddress)
+void DataIOPacket::setSourceAddress(std::vector<unsigned char> )
 {
 	
 }
 
-void DataIOPacket::setNetworkAddress(std::vector<unsigned char> aNetworkAddress)
+void DataIOPacket::setNetworkAddress(std::vector<unsigned char> )
 {
 
 }

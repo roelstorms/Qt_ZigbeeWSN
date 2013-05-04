@@ -16,13 +16,14 @@ class Webservice
 	private:
 	struct mg_context *ctx;
 
+    PacketQueue * wsReceiveQueue, * wsSendQueue;
     std::condition_variable * mainConditionVariable, * webserviceConditionVariable;
     std::mutex * mainConditionVariableMutex, * webserviceConditionVariableMutex;
-    PacketQueue * wsQueue;
+
 
 
     public:
-    Webservice( PacketQueue * wsQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex, std::condition_variable * webserviceConditionVariable, std::mutex * webserviceConditionVariableMutex);
+    Webservice( PacketQueue * wsReceiveQueue, PacketQueue * wsSendQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex, std::condition_variable * webserviceConditionVariable, std::mutex * webserviceConditionVariableMutex);
 	~Webservice();
 	void operator() ();	
 	static int beginRequestHandlerWrapper(struct mg_connection *conn);

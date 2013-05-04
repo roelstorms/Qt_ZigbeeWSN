@@ -5,7 +5,7 @@
 MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) : packetExpirationTime(packetExpirationTime)
 {
     //Config::loadConfig("configFile.txt");
-    int fd = open("errors.txt");
+    int fd = open("errors.txt", O_WRONLY | O_APPEND);
     dup2(fd, STDERR_FILENO);
 
     socket = new Http("http://ipsum.groept.be", "a31dd4f1-9169-4475-b316-764e1e737653");
@@ -33,10 +33,12 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) : packet
 
     addNodeSentPackets = new SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>;
     changeFreqSentPackets = new SentPackets<LibelChangeFreqPacket *, LibelChangeFreqResponse *>;
-    wsQueue = new PacketQueue();
+
+    wsReceiveQueue = new PacketQueue();
+    wsSendQueue = new PacketQueue();
     zbReceiveQueue = new PacketQueue();
     localZBReceiveQueue = new std::queue<Packet *>;
-    localWSQueue = new std::queue<Packet *>;
+    localWSReceiveQueue = new std::queue<Packet *>;
 
     mainConditionVariable = new std::condition_variable;
     conditionVariableMutex = new std::mutex;
@@ -54,7 +56,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) : packet
     zbReceiver = new ZBReceiver(connectionDescriptor, conditionVariableMutex, mainConditionVariable, zbReceiveQueue);
     zbReceiverThread = new boost::thread(boost::ref(*zbReceiver));
 
-    webService = new Webservice (wsQueue, mainConditionVariable, conditionVariableMutex, wsConditionVariable, wsConditionVariableMutex);
+    webService = new Webservice (wsReceiveQueue, wsSendQueue, mainConditionVariable, conditionVariableMutex, wsConditionVariable, wsConditionVariableMutex);
 
     ipsumSendQueue = new PacketQueue();
     ipsumReceiveQueue = new PacketQueue();
@@ -65,7 +67,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) : packet
 
     sentZBPackets = new std::queue<Packet *>;
 
-    ipsum = new Ipsum(ipsumSendQueue, ipsumReceiveQueue, conditionVariableMutex, mainConditionVariable, ipsumConditionVariableMutex, ipsumConditionVariable);
+    ipsum = new Ipsum("http://ipsum.groept.be", "a31dd4f1-9169-4475-b316-764e1e737653", ipsumSendQueue, ipsumReceiveQueue, conditionVariableMutex, mainConditionVariable, ipsumConditionVariableMutex, ipsumConditionVariable);
     ipsumThread = new boost::thread(boost::ref(*ipsum));
 
     localZBSenderQueue = new std::vector<Packet *>;
@@ -93,8 +95,9 @@ MainClass::~MainClass()
     delete localZBReceiveQueue;
     delete zbReceiver;
 
-    delete wsQueue;
-    delete localWSQueue;
+    delete wsSendQueue;
+    delete wsReceiveQueue;
+    delete localWSReceiveQueue;
     delete webService;
 
     delete ipsumSendQueue;
@@ -138,7 +141,7 @@ void MainClass::operator() ()
 
         {	// Scope of unique_lock
             std::unique_lock<std::mutex> uniqueLock(*conditionVariableMutex);
-            mainConditionVariable->wait(uniqueLock, [this]{ return ((!zbReceiveQueue->empty()) || (!wsQueue->empty() || (!ipsumReceiveQueue->empty()))); });
+            mainConditionVariable->wait(uniqueLock, [this]{ return ((!zbReceiveQueue->empty()) || (!wsReceiveQueue->empty() || (!ipsumReceiveQueue->empty()))); });
             std::cout << "mainconditionvariable notification received" << std::endl;
             while(!zbReceiveQueue->empty())
             {
@@ -146,11 +149,11 @@ void MainClass::operator() ()
                 std::cout << "adding ZBPacket to local ZBReceiverQueue" << std::endl;
             }
 
-            while(!wsQueue->empty())
+            while(!wsReceiveQueue->empty())
             {
-                std::cout << "type of ws packet from wsQueue: " << typeid(wsQueue->getPacket()).name() << std::endl;
+                std::cout << "type of ws packet from wsQueue: " << typeid(wsReceiveQueue->getPacket()).name() << std::endl;
                 std::cout << "adding WSPacket to local WSQueue" << std::endl;
-                localWSQueue->push(wsQueue->getPacket());
+                localWSReceiveQueue->push(wsReceiveQueue->getPacket());
             }
 
             while(!ipsumReceiveQueue->empty())
@@ -193,10 +196,10 @@ void MainClass::operator() ()
             }
         }
 
-        while(!localWSQueue->empty())
+        while(!localWSReceiveQueue->empty())
         {
-            packet = localWSQueue->front();
-            localWSQueue->pop();
+            packet = localWSReceiveQueue->front();
+            localWSReceiveQueue->pop();
             std::cout << "popped WSPacket from local WSQueue, type:" << typeid(packet).name() << std::endl;
             if(packet->getPacketType() == WS_COMMAND)
             {
@@ -209,19 +212,10 @@ void MainClass::operator() ()
         {
             packet = localIpsumReceiveQueue->front();
             localIpsumReceiveQueue->pop();
-            /*
-            if(typeid(packet) ==  typeid(IpsumPacket *))
-            {
-                std::cout << "Ipsum_PACKET received in main" << std::endl;
-
-                std::cout << "post data: "  << (dynamic_cast<WSPacket *> (packet))->getRequestData() << std::endl;
-            }
-            */
         }
-
-
     }
-zbReceiverThread->join();
+
+    zbReceiverThread->join();
 }
 
 void MainClass::checkExpiredPackets()
@@ -254,7 +248,8 @@ void MainClass::libelIOHandler(Packet * packet)
             TransmitRequestPacket * zbPacket = dynamic_cast<TransmitRequestPacket *>(packet);
             if(zbPacket == NULL)
             {
-                std::cerr << "localZBSenderQueue had invalid packet type (MainClass)" << std::endl;
+                std::cerr << "localZBSenderQueue had invalid packet type | type != ZBPacket (MainClass)" << std::endl;
+                return true;
             }
             else
             {
@@ -263,6 +258,10 @@ void MainClass::libelIOHandler(Packet * packet)
                     zbSenderQueue->addPacket(dynamic_cast<Packet *> (zbPacket));
                     return true;
                 }
+                else
+                {
+                    return false;
+                }
             }}), localZBSenderQueue->end());
 
     {
@@ -270,7 +269,6 @@ void MainClass::libelIOHandler(Packet * packet)
         zbSenderConditionVariable->notify_all();
         std::cout << "zbsender notified from libeliohandler" << std::endl;
     }
-
 
     std::string zigbee64BitAddressString(ucharVectToString(zigbee64BitAddress));
     int nodeID, installationID;
@@ -325,7 +323,6 @@ void MainClass::libelIOHandler(Packet * packet)
     std::cout << "ipsumuploadpacket added" << std::endl;
     std::lock_guard<std::mutex> lg(*ipsumConditionVariableMutex);
     ipsumConditionVariable->notify_all();
-
 }
 
 void MainClass::libelMaskResponseHandler(Packet * packet)

@@ -57,8 +57,8 @@ class MainClass
     SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>  * addNodeSentPackets;
     SentPackets<LibelChangeFreqPacket *, LibelChangeFreqResponse *>  * changeFreqSentPackets;
 
-    PacketQueue * zbReceiveQueue, * zbSenderQueue, * wsQueue, * ipsumSendQueue, * ipsumReceiveQueue;
-    std::queue<Packet *> * localZBReceiveQueue, * localWSQueue, * localIpsumSendQueue, * localIpsumReceiveQueue, * sentZBPackets;
+    PacketQueue * zbReceiveQueue, * zbSenderQueue, * wsSendQueue, * wsReceiveQueue, * ipsumSendQueue, * ipsumReceiveQueue;
+    std::queue<Packet *> * localZBReceiveQueue, * localWSReceiveQueue, * localIpsumSendQueue, * localIpsumReceiveQueue, * sentZBPackets;
     std::vector<Packet *> * localZBSenderQueue;
     std::condition_variable * mainConditionVariable, * ipsumConditionVariable, * zbSenderConditionVariable, * wsConditionVariable;
     std::mutex * conditionVariableMutex, * ipsumConditionVariableMutex, * zbSenderConditionVariableMutex, * wsConditionVariableMutex;

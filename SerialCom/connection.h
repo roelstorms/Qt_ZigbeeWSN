@@ -40,10 +40,7 @@ class Connection
 	 *	To get a list of all available ports use listPorts();
 	 *	Return: filedescriptor
 	 */
-	int openPort(int portNumber, int baudrate = 9600);
-	
-
-	bool sendPacket(std::vector<unsigned char> packet);
+    int openPort(int portNumber, int baudrate = 9600);
 
 	/*
 	 *	statInputHandler();

@@ -101,23 +101,6 @@ int Connection::openPort(int portNumber, int baudrate)
 	return connectionDescriptor;
 }
 
-
-
-bool Connection::sendPacket(std::vector<unsigned char> packet)
-{
-	//write(connectionDescriptor, data, 4); 	
-	write(connectionDescriptor, (void*) packet.data(), packet.size());
-	fsync(connectionDescriptor);
-	std::cout << "Packet sent: ";
-	for(unsigned int i = 0; i < packet.size(); ++i)
-	{
-		std::cout << std::uppercase << std::setw(2) << std::setfill('0') << std::hex << (int) *(packet.data() + i);
-		//std::cout << std::hex << (int)packet.at(i);
-	}
-	std::cout << std::endl;
-	return true;
-}
-
 void Connection::closeConnection()
 {	
 	std::cout << "Closing connection file descriptor" << std::endl;

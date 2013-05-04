@@ -3,7 +3,7 @@
 LibelChangeFreqPacket::LibelChangeFreqPacket(std::vector<unsigned char> zigbeeAddress64bit, std::vector<std::pair<SensorType, int>> newFrequencies) : TransmitRequestPacket()
 {
     std::vector<unsigned char> data;
-	int mask;
+    int mask = 0;
 
 	for(auto it = newFrequencies.begin(); it < newFrequencies.end(); ++it)
 	{

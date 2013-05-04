@@ -39,6 +39,7 @@ SOURCES += \
     webservice/wspacket.cpp \
     webservice/webservice.cpp \
     webservice/mongoose.c \
+    webservice/wsaddnodepacket.cpp
     #config.cpp
 
 HEADERS += \
@@ -80,6 +81,7 @@ HEADERS += \
     webservice/webservice.h \
     webservice/mongoose.h \
     sentpackets.h \
+    webservice/wsaddnodepacket.h
     #config.h
 
 unix:!macx:!symbian: LIBS += -lcurl -lxerces-c -lboost_thread -lboost_date_time -ldl

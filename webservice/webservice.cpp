@@ -13,11 +13,9 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 	const struct mg_request_info *request_info = mg_get_request_info(conn);
 
 	char content[500];
-	int post_data_len;
 	char post_data[1024] = "";
 
 	// Prepare the message we're going to send
-	post_data_len = mg_read(conn, post_data, sizeof(post_data));
 	std::cout << std::endl << "url: "<< request_info->uri << std::endl;
 	Packet * packet; 
     std::string url(request_info->uri);
@@ -47,12 +45,12 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 		return 1;	
 	}
 	
-    wsQueue->addPacket(packet);
+    wsReceiveQueue->addPacket(packet);
 	std::cout << "adding ws packet to wsqueue" << std::endl;
 	std::lock_guard<std::mutex> lg(*mainConditionVariableMutex);
 	mainConditionVariable->notify_all();
 
-	int content_length = snprintf(content, sizeof(content),	"<error>false</error>",request_info->uri, post_data);
+    int content_length = snprintf(content, sizeof(content),	"<error>false</error>");//,request_info->uri, post_data);
 		printf("%s: %d\n", post_data, content_length);
 	
 	// Send HTTP reply to the client
@@ -71,7 +69,7 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 }
 
 
-Webservice::Webservice(PacketQueue * aWSQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex, std::condition_variable * webserviceConditionVariable, std::mutex * webserviceConditionVariableMutex) : wsQueue(aWSQueue), mainConditionVariable(mainConditionVariable), mainConditionVariableMutex(mainConditionVariableMutex), webserviceConditionVariable(webserviceConditionVariable), webserviceConditionVariableMutex(webserviceConditionVariableMutex)
+Webservice::Webservice(PacketQueue * wsReceiveQueue, PacketQueue * wsSendQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex, std::condition_variable * webserviceConditionVariable, std::mutex * webserviceConditionVariableMutex) : wsReceiveQueue(wsReceiveQueue), wsSendQueue(wsSendQueue), mainConditionVariable(mainConditionVariable), mainConditionVariableMutex(mainConditionVariableMutex), webserviceConditionVariable(webserviceConditionVariable), webserviceConditionVariableMutex(webserviceConditionVariableMutex)
 {
     const char *options[] = {"listening_ports", "8080s", "ssl_certificate",  "../server.pem","error_log_file", "./webservice_error.txt", NULL};
     //const char *options[] = {"listening_ports", "8080", "error_log_file", "./webservice_error.txt", NULL};

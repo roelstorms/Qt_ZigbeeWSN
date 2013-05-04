@@ -61,7 +61,7 @@ class Http
 
         void uploadData(IpsumUploadPacket * packet) throw (HttpError);
 
-		void uploadData(std::string aSensorType, std::string destinationBase64, std::vector<std::pair<std::string, double>> input) throw (HttpError);
+        void uploadData(std::string aSensorType, std::string destinationBase64, std::vector<std::pair<std::string, double> > input) throw (HttpError);
 		bool login() throw (HttpError, InvalidLogin);
 		void setUserRights(std::string entity, int userID, int rights) throw (HttpError);
 		std::string getEntity(std::string destinationBase64) throw (HttpError);	
@@ -71,7 +71,7 @@ class Http
 		std::string testQuery() throw (HttpError);
 		std::string ipsumInfo() throw (HttpError);
 		std::string createNewSensor(std::string sensorGroupIDValue, std::string nameValue, std::string dataNameValue, std::string descriptionValue, std::string inuseValue) throw (HttpError);
-		std::string createNewType(std::string aName, std::vector<std::pair<std::string, std::string>> aListOfFields) throw (HttpError);
+        std::string createNewType(std::string aName, std::vector<std::pair<std::string, std::string> > aListOfFields) throw (HttpError);
         std::string changeSensorGroup(std::string newXML);
         std::string changeSensor(std::string newXML);
 

@@ -46,12 +46,14 @@ void ZBSender::operator() ()
 				packet = dynamic_cast<ZBPacket *> (zbSendQueue->getPacket());
 				std::cout << "sending : " << *packet << std::endl;
 				auto data = escape(packet->getEncodedPacket());
-                write(connectionDescriptor, (void*) data.data(),  data.size());
+                if (write(connectionDescriptor, (void*) data.data(),  data.size()) != (signed int) data.size())
+                {
+                    std::cerr << "In ZBSender::operator() () | write didn't return data.size()" << std::endl;
+                }
                 fsync(connectionDescriptor);
 
-                delete packet;
+                //delete packet;    // Packet gets deleted when the corresponding reply is recieved in the main thread. A second pointer to packet is kept in the corresponding sentPacket queue in main.
 			}
 		}
 	}
-
 }

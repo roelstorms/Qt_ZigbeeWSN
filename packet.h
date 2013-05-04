@@ -24,7 +24,7 @@ class Packet
 		Packet& operator=(const Packet&);
 	public:
 		Packet() throw (InvalidPacketType);
-
+        virtual ~Packet(){};
 		// Purpose of this function is to make packets bind virtually as needed by the dynamic cast to put packets in a queueu.
 		virtual PacketType getPacketType() = 0;
 };
