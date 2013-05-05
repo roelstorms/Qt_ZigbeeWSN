@@ -77,30 +77,38 @@ class MainClass
 	Webservice * webService;
 	Ipsum * ipsum;
 
+    /*
+     * A function that converts std::string to std::vector<unsigned char>, mainly used to translate the string retrieved from
+     * the sqlite DB to a vector of unsigned chars that is needed by the libelium packets.
+     */
+    std::vector<unsigned char> convertStringToVector(std::string input);
+
+    /*
+     *  Handles incoming IO packets from the zigbee network. These packets come from the ZBReceiver thread. Each incoming packet is analyzed and generates
+     *  and ipsum packet to upload this data to ipsum. Also locally stored packets for a zigbee node are sent out when a data packet is received.
+     *  This is done because only at this moment we know that the zigbee node is not sleeping and will receive packets from the gateway.
+     *
+     */
+    void libelIOHandler(LibelIOPacket * libelIOPacket);
+    void libelMaskResponseHandler(LibelMaskResponse * libelMaskResponse);
+    void libelChangeFreqResponseHandler(LibelChangeFreqResponse * libelChangeFreqResponse);
+    void libelChangeNodeFreqResponseHandler(LibelChangeNodeFreqResponse * libelChangeNodeFreqResponse);
+    void libelAddNodeResponseHandler(LibelAddNodeResponse * libelAddNodeResponse);
+
+    void webserviceHandler(Packet * packet);
+    void requestDataHandler(WSRequestDataPacket *  wsRequestDataPacket);
+    void changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFrequencyPacket);
+    void addNodeHandler(WSAddNodePacket * wsAddNodePacket);
+    void addSensorHandler(WSAddSensorsPacket * wsAddSensorsPacket);
+
+    void checkExpiredPackets();
+    std::string ucharVectToString(const std::vector<unsigned char> &ucharVect);
 
 	public:
     MainClass(int argc, char * argv[], int packetExpirationTime);
 	~MainClass();
 	void operator () ();
 
-    void checkExpiredPackets();
-    std::string ucharVectToString(const std::vector<unsigned char> &ucharVect);
-
-	void libelIOHandler(Packet * packet);
-	void libelMaskResponseHandler(Packet * packet);
-    void libelChangeFreqResponseHandler(Packet * packet);
-	void libelChangeNodeFreqResponseHandler(Packet * packet);
-	void libelAddNodeResponseHandler(Packet * packet);
-		
-	void webserviceHandler(Packet * packet);
-    void requestDataHandler(WSRequestDataPacket *  wsRequestDataPacket);
-    void changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFrequencyPacket);
-    void addNodeHandler(WSAddNodePacket * wsAddNodePacket);
-    void addSensorHandler(WSAddSensorsPacket * wsAddSensorsPacket);
-
-
-    SensorType stringToSensorType(std::string sensorType) throw (InvalidWSXML) ;
-    std::vector<unsigned char> convertStringToVector(std::string input);
 };
 
 #endif

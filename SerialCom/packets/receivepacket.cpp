@@ -74,16 +74,6 @@ void ReceivePacket::setRFData(std::vector<unsigned char> rfData)
 // Bits in the mask have this meaning: 15,14,13,12,11,10,9,8,PLUVIO, ANEMO, CO2, BAT, PRES, HUMID, TEMP
 std::vector<unsigned char> ReceivePacket::getMask() const
 {
-	/*
-	   std::vector<bool> mask;
-
-	unsigned int maskChars = getRFData().at(1) * 256 + getRFData().at(2);
-	for(int i = 0; i < 16; ++i)
-	{	
-		mask.push_back(maskChars & 0x0001);
-		maskChars = maskChars >> 1;
-	}
-	*/
 	std::vector<unsigned char> mask;
 	mask.push_back(getRFData().at(6));
 	mask.push_back(getRFData().at(7));

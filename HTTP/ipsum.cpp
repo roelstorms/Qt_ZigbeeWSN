@@ -56,11 +56,12 @@ void Ipsum::operator()()
                     break;
                     case IPSUM_CHANGE_IN_USE:
                         changeInUseHandler(dynamic_cast<IpsumChangeInUsePacket *> (ipsumPacket));
+                    break;
                     case IPSUM_CHANGE_FREQ:
                         changeFrequencyHandler(dynamic_cast<IpsumChangeFreqPacket *> (ipsumPacket));
                     break;
                     default:
-                    std::cout << "packet not found" << std::endl;
+                    std::cout << "packet type not recognized in ipsum" << std::endl;
                     // Packet not recognized
 
                 }
@@ -80,6 +81,7 @@ void Ipsum::uploadDataHandler(IpsumUploadPacket * packet)
     try
     {
         http->uploadData(packet);
+        delete packet;
     }
     catch(HttpError)
     {
@@ -93,7 +95,6 @@ void Ipsum::uploadDataHandler(IpsumUploadPacket * packet)
             IpsumUnreachable = true;
         }
     }
-    delete packet;
 }
 
 void Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)
@@ -102,6 +103,7 @@ void Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)
     try
     {
         http->changeInUse(packet);
+        delete packet;
     }
     catch(HttpError)
     {
@@ -115,7 +117,6 @@ void Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)
             IpsumUnreachable = true;
         }
     }
-    delete packet;
 }
 
 void Ipsum::changeFrequencyHandler(IpsumChangeFreqPacket * packet)
@@ -124,6 +125,7 @@ void Ipsum::changeFrequencyHandler(IpsumChangeFreqPacket * packet)
     try
     {
         http->changeFreq(packet);
+        delete packet;
     }
     catch(HttpError)
     {
@@ -137,5 +139,5 @@ void Ipsum::changeFrequencyHandler(IpsumChangeFreqPacket * packet)
             IpsumUnreachable = true;
         }
     }
-    delete packet;
+
 }

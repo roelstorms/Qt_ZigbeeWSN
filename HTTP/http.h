@@ -45,28 +45,23 @@ class Http
 
 		~Http();
 
-        size_t read_data(void *, size_t size, size_t nmemb);	//Currently not used nor implemented correctly (to send data you just pass a pointer to the data to Curl
 		static size_t standardReplyWrapper(void *buffer, size_t size, size_t nmemb, void *obj);
 		size_t write_data(void *buffer, size_t size, size_t nmemb);
 		static size_t headerHandlerWrapper(void *buffer, size_t size, size_t nmemb, void *obj);
 		size_t headerHandler(void *buffer, size_t size, size_t nmemb);
 
-	
 		std::string sendGet(std::string urlAddition, size_t (*callback) (void*, size_t, size_t, void*)) throw (HttpError);
 		std::string sendPost(std::string urlAddition, std::string data, size_t (*callback) (void *, size_t, size_t, void *)) throw (HttpError);
-
 		std::string generateCode(std::string url);
 		std::string calculateDestination(int userID, int installationID = -1, int sensorGroupID = -1, int sensorID = -1);
 		std::string toBase64(std::string input);
-
         void uploadData(IpsumUploadPacket * packet) throw (HttpError);
-
-        void uploadData(std::string aSensorType, std::string destinationBase64, std::vector<std::pair<std::string, double> > input) throw (HttpError);
-		bool login() throw (HttpError, InvalidLogin);
-		void setUserRights(std::string entity, int userID, int rights) throw (HttpError);
-		std::string getEntity(std::string destinationBase64) throw (HttpError);	
-		std::string getChildren(std::string destinationBase64) throw (HttpError);	
-		void setToken(std::string aToken);
+        void uploadData(std::string aSensorType, std::string destinationBase64, std::vector<std::pair<std::string, double> > input) throw (HttpError);      
+		bool login() throw (HttpError, InvalidLogin);       
+		void setUserRights(std::string entity, int userID, int rights) throw (HttpError);       
+		std::string getEntity(std::string destinationBase64) throw (HttpError);	        
+		std::string getChildren(std::string destinationBase64) throw (HttpError);	     
+        void setToken(std::string token);
 		std::string selectData(std::string destinationBase64, std::vector<std::string> fields) throw (HttpError);
 		std::string testQuery() throw (HttpError);
 		std::string ipsumInfo() throw (HttpError);

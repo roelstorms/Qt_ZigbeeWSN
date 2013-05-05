@@ -15,13 +15,6 @@ Http::~Http()
 	std::cout << "Http destructor" << std::endl;
 }
 
-//Currently not in use
-size_t Http::read_data( void *, size_t size, size_t nmemb)
-{
-
-	return size * nmemb;
-}
-
 size_t Http::standardReplyWrapper(void *buffer, size_t size, size_t nmemb, void *obj)
 {
 	std::cout << "standardReplyWrapper" << std::endl;
@@ -38,7 +31,6 @@ size_t Http::write_data(void *buffer, size_t size, size_t nmemb)
 
 size_t Http::headerHandlerWrapper(void *buffer, size_t size, size_t nmemb, void *obj)
 {
-	std::cout << "Http::headerHandlerWrapper" << std::endl << std::endl;
 	return static_cast<Http*>(obj)->headerHandler(buffer, size, nmemb);
 }
 
@@ -280,7 +272,7 @@ void Http::uploadData(IpsumUploadPacket * packet) throw (HttpError)
 				fieldName = "pluvio";
 			break;
 		}
-		
+
         sendPost(url, xmlParser.uploadData(sensorType, "value", std::get<2>(*it), timeStamp), &Http::standardReplyWrapper);
 	}
 	
@@ -305,12 +297,7 @@ void Http::uploadData(std::string aSensorType, std::string destinationBase64, st
 	url.append(generateCode(temp));
 	
 	XML XMLParser;
-	httpError = -1;
 	sendPost(url, XMLParser.uploadData(aSensorType, input), &Http::standardReplyWrapper);
-	if(httpError != 200)
-	{
-		throw HttpError();
-	}
 }
 
 bool Http::login() throw (HttpError, InvalidLogin)
@@ -322,9 +309,10 @@ bool Http::login() throw (HttpError, InvalidLogin)
 		temp.append(url);
         url.append(generateCode(temp.append(PersonalKey)));
 
-		XML XMLParser;
-		httpError = -1;	
-		
+        XML XMLParser;
+
+        httpError = -1;
+
 		std::string loginReply = sendPost(url, XMLParser.login(std::string("roel"), std::string("roel")), &Http::standardReplyWrapper);
 		if(httpError != 200)
 		{
@@ -369,8 +357,8 @@ void Http::setUserRights(std::string entity, int userID, int rights) throw (Http
 	temp.clear();
 	temp.append(url);
     temp.append(PersonalKey);
-	url.append(generateCode(temp));
-	sendPost(url, entity, &Http::standardReplyWrapper);
+    url.append(generateCode(temp));
+    sendPost(url, entity, &Http::standardReplyWrapper);
 
 }
 
@@ -424,13 +412,11 @@ std::string Http::getChildren(std::string destinationBase64) throw (HttpError)
     temp.append(PersonalKey);
 	url.append(generateCode(temp));
 	return sendGet(url, &Http::standardReplyWrapper);
-	
-
 }
 
-void Http::setToken(std::string aToken)
+void Http::setToken(std::string token)
 {
-	token = aToken;
+    this->token = token;
 }
 
 std::string Http::selectData(std::string destinationBase64, std::vector<std::string> fields) throw (HttpError)
@@ -457,10 +443,10 @@ std::string Http::selectData(std::string destinationBase64, std::vector<std::str
 	temp.clear();
 	temp.append(url);
     temp.append(PersonalKey);
-	url.append(generateCode(temp));
+    url.append(generateCode(temp));
 
-	
-	return sendPost(url, XMLParser.selectData(fields,  XMLParser.getTimestamp(1, 0, 0, 1, 3, 2013), XMLParser.getCurrentTimestamp()), &Http::standardReplyWrapper);
+
+    return sendPost(url, XMLParser.selectData(fields,  XMLParser.getTimestamp(1, 0, 0, 1, 3, 2013), XMLParser.getCurrentTimestamp()), &Http::standardReplyWrapper);
 	//sendPost(url, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<get>\n<start>2012-01-01T00:00:00</start>\n<end>9999-12-31T23:59:59</end>\n<select>\n<field>\n<name>intensity</name>\n</field>\n</select>\n</get>", &Http::standardReplyWrapper);
 
 

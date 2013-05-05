@@ -3,7 +3,6 @@
 TransmitRequestPacket::TransmitRequestPacket() : OutgoingPacket()
 {
 
-
 }
 
 
@@ -13,7 +12,7 @@ void TransmitRequestPacket::setData( unsigned char applicationID, std::vector<un
     applicationData.push_back(applicationID);
     applicationData.push_back(0x01);                // Fragment number or in case of first fragment it means total number of fragments
     applicationData.push_back('#');                 // First fragment identifier
-    applicationData.push_back(0x01);                // Source ID (1 means 64bit)
+    applicationData.push_back(0x01);                // Source ID (1 means 64bit)    This is not the most effecient way, 16 bit address would be better but would have to look it up or save it as well. 16 bit address can change
     applicationData.insert(applicationData.end(), zigbeeAddress64Bit.begin(), zigbeeAddress64Bit.end());
     applicationData.insert(applicationData.end(), data.begin(), data.end());
     setRFData(zigbeeAddress64Bit, applicationData);
@@ -35,14 +34,6 @@ void TransmitRequestPacket::setRFData(std::vector<unsigned char> zigbeeAddress64
 
 std::vector<unsigned char> TransmitRequestPacket::getMask() const
 {
-/*	std::vector<bool> mask;
-
-	unsigned int maskChars = getRFData().at(1) * 256 + getRFData().at(2);
-	for(int i = 0; i < 16; ++i)
-	{	
-		mask.push_back(maskChars & 0x0001);
-		maskChars = maskChars >> 1;
-	}*/
 	std::vector<unsigned char> mask;
 	mask.push_back(getRFData().at(1));
 	mask.push_back(getRFData().at(2));

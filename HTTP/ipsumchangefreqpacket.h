@@ -9,7 +9,8 @@ class IpsumChangeFreqPacket : public IpsumPacket
 {
 	private:
 	int installationID, sensorGroupID;
-    std::vector<std::pair<int, int>> frequencies;   //SensorID and new frequency
+    std::vector<std::pair<int, int>> frequencies;   //SensorID and new frequency (frequency is actually the interval in 10s between sampling
+
 	public:
 
 	// Parameters: data is a tuple of sensor type, sensorID as used in ipsum and a float with the data

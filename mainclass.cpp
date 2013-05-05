@@ -117,24 +117,6 @@ MainClass::~MainClass()
 void MainClass::operator() ()
 {
     std::cout << "going into main while loop" << std::endl;
-
-/*
-    std::cout << "sending add node packet" << std::endl;
-
-    std::vector<SensorType> sensors{TEMP, BAT, PRES};
-    std::vector<unsigned char> zigbee64BitAddress{0x00, 0x13, 0xA2, 0x00, 0x40, 0x69, 0x73, 0x7c};
-    LibelAddNodePacket * packet =  new LibelAddNodePacket(zigbee64BitAddress, sensors);
-    std::cout << "packet to be sent: " << *packet << std::endl;
-    zbSenderQueue->addPacket(dynamic_cast<Packet *> (packet));
-
-    addNodeSentPackets->addPacket(packet);
-    {
-        //std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
-        //zbSenderConditionVariable->notify_all();
-    }
-    std::cout << "zbSender notified" << std::endl;
-*/
-
     while(true)
     {
         //checkExpiredPackets();
@@ -156,7 +138,7 @@ void MainClass::operator() ()
                 localWSReceiveQueue->push(wsReceiveQueue->getPacket());
             }
 
-            while(!ipsumReceiveQueue->empty())
+            while(!ipsumReceiveQueue->empty())  // At the moment the ipsumReceiveQueue is not used. It could be used to back up packets that could not be sent because ipsum was down. Now these packets are cached in a queue in the ipsum thread itself.
             {
                 localIpsumReceiveQueue->push(ipsumReceiveQueue->getPacket());
                 std::cout << "adding IpsumPacket to local IpsumReceiveQueue" << std::endl;
@@ -172,27 +154,63 @@ void MainClass::operator() ()
             if(packet->getPacketType() == ZB_LIBEL_IO)
             {
                 std::cout << "ZB_LIBEL_IO received in main" << std::endl;
-                libelIOHandler(packet);
+                if(dynamic_cast<LibelIOPacket *> (packet) != NULL)
+                {
+                    libelIOHandler(dynamic_cast<LibelIOPacket *> (packet));
+                }
+                else
+                {
+                    std::cerr << "dynamic cast failed on LibelIOPacket in main" << std::endl;
+                }
             }
             else if (packet->getPacketType() == ZB_LIBEL_MASK_RESPONSE)
             {
                 std::cout << "ZB_LIBEL_MASK_RESPONSE received in main" << std::endl;
-                libelMaskResponseHandler(packet);
+                if(dynamic_cast<LibelMaskResponse *> (packet) != NULL)
+                {
+                    libelMaskResponseHandler(dynamic_cast<LibelMaskResponse *> (packet));
+                }
+                else
+                {
+                    std::cerr << "dynamic cast failed on LibelMaskResponse in main" << std::endl;
+                }
             }
             else if (packet->getPacketType() == ZB_LIBEL_CHANGE_FREQ_RESPONSE)
             {
                 std::cout << "ZB_LIBEL_CHANGE_FREQ_RESPONSE received in main" << std::endl;
-                libelChangeFreqResponseHandler(packet);
+                if(dynamic_cast<LibelMaskResponse *> (packet) != NULL)
+                {
+                    libelChangeFreqResponseHandler(dynamic_cast<LibelChangeFreqResponse *> (packet));
+                }
+                else
+                {
+                    std::cerr << "dynamic cast failed on LibelChangeFreqResponse in main" << std::endl;
+                }
             }
             else if (packet->getPacketType() == ZB_LIBEL_CHANGE_NODE_FREQ_RESPONSE)
             {
                 std::cout << "ZB_LIBEL_CHANGE_NODE_FREQ_RESPONSE received in main" << std::endl;
-                libelChangeNodeFreqResponseHandler(packet);
+                if(dynamic_cast<LibelChangeNodeFreqResponse *> (packet) != NULL)
+                {
+                    libelChangeNodeFreqResponseHandler(dynamic_cast<LibelChangeNodeFreqResponse *> (packet));
+                }
+                else
+                {
+                    std::cerr << "dynamic cast failed on LibelChangeNodeFreqResponse in main" << std::endl;
+                }
             }
             else if (packet->getPacketType() == ZB_LIBEL_ADD_NODE_RESPONSE)
             {
                 std::cout << "ZB_LIBEL_ADD_NODE_RESPONSE received in main" << std::endl;
-                libelAddNodeResponseHandler(packet);
+                if(dynamic_cast<LibelAddNodeResponse *> (packet) != NULL)
+                {
+                    libelAddNodeResponseHandler(dynamic_cast<LibelAddNodeResponse *> (packet));
+                }
+                else
+                {
+                    std::cerr << "dynamic cast failed on LibelAddNodeResponse in main" << std::endl;
+                }
+
             }
         }
 
@@ -225,6 +243,15 @@ void MainClass::checkExpiredPackets()
     {
         std::cerr << "LibelAddNodePacket received no reply. " << (*it) <<  std::endl;
         addNodeSentPackets->removePacket(*it);
+        // Could do a resend here.
+    }
+
+    std::vector<LibelChangeFreqPacket *> expiredChangeFrequencyPackets = changeFreqSentPackets->findExpiredPacket(packetExpirationTime);
+    for( auto it = expiredChangeFrequencyPackets.begin(); it < expiredChangeFrequencyPackets.end(); ++it )
+    {
+        std::cerr << "LibelAddNodePacket received no reply. " << (*it) <<  std::endl;
+        changeFreqSentPackets->removePacket(*it);
+        // Could do a resend here.
     }
 }
 
@@ -238,10 +265,8 @@ std::string MainClass::ucharVectToString(const std::vector<unsigned char>& uchar
     return stream.str();
 }
 
-void MainClass::libelIOHandler(Packet * packet)
+void MainClass::libelIOHandler(LibelIOPacket * libelIOPacket)
 {
-    LibelIOPacket * libelIOPacket = dynamic_cast<LibelIOPacket *> (packet);
-
     std::vector<unsigned char> zigbee64BitAddress = libelIOPacket->getZigbee64BitAddress();
 
     localZBSenderQueue->erase(std::remove_if(localZBSenderQueue->begin(), localZBSenderQueue->end(), [&zigbee64BitAddress, this](Packet * packet) {
@@ -307,7 +332,7 @@ void MainClass::libelIOHandler(Packet * packet)
 
     }
 
-    delete packet;
+    delete libelIOPacket;
 
 
     IpsumUploadPacket * ipsumUploadPacket = new IpsumUploadPacket(installationID, nodeID, data);
@@ -318,24 +343,22 @@ void MainClass::libelIOHandler(Packet * packet)
         std::cout << "sensortypes in retreived data: " << std::get<0>(*it) << std::endl;
     }
 
-
     ipsumSendQueue->addPacket(dynamic_cast<Packet*> (ipsumUploadPacket));
     std::cout << "ipsumuploadpacket added" << std::endl;
     std::lock_guard<std::mutex> lg(*ipsumConditionVariableMutex);
     ipsumConditionVariable->notify_all();
 }
 
-void MainClass::libelMaskResponseHandler(Packet * packet)
+void MainClass::libelMaskResponseHandler(LibelMaskResponse * libelMaskResponse)
 {
-    LibelMaskResponse * libelMaskResponse = dynamic_cast<LibelMaskResponse *> (packet);
-
+    // Mask requests are never sent so responses are not handled yet. The mask of a sensor can be found by checking ipsum on the in use parameter of every sensor.
     delete libelMaskResponse;
 }
 
 
-void MainClass::libelChangeFreqResponseHandler(Packet * packet)
+void MainClass::libelChangeFreqResponseHandler(LibelChangeFreqResponse * libelChangeFreqResponse)
 {
-    LibelChangeFreqResponse * libelChangeFreqResponse = dynamic_cast<LibelChangeFreqResponse *> (packet);
+
     LibelChangeFreqPacket * libelChangeFreqPacket = changeFreqSentPackets->retrieveCorrespondingPacket(libelChangeFreqResponse);
 
     if(libelChangeFreqPacket != nullptr)
@@ -371,21 +394,19 @@ void MainClass::libelChangeFreqResponseHandler(Packet * packet)
     delete libelChangeFreqResponse;
 }
 
-void MainClass::libelChangeNodeFreqResponseHandler(Packet * packet)
+void MainClass::libelChangeNodeFreqResponseHandler(LibelChangeNodeFreqResponse * libelChangeNodeFreqResponse)
 {
-    LibelChangeNodeFreqResponse * libelChangeNodeFreqResponse = dynamic_cast<LibelChangeNodeFreqResponse *> (packet);
+    // Node frequency packets should not be sent so responses on these packets are not handled. Frequencies are changed sensor per sensor and not for 1 node at once.
+
 
     delete libelChangeNodeFreqResponse;
 }
 
-void MainClass::libelAddNodeResponseHandler(Packet * packet)
+void MainClass::libelAddNodeResponseHandler(LibelAddNodeResponse * libelAddNodeResponse)
 {
-    std::cout << "entering libelAddNodeResponseHandler()" << std::endl;
-    LibelAddNodeResponse * libelAddNodeResponse = dynamic_cast<LibelAddNodeResponse *> (packet);
-    std::cout << "entering libelAddNodeResponseHandler()2" << std::endl;
-    //LibelAddNodePacket * libelAddNodePacket = addNodeSentPackets->retrieveCorrespondingPacket(libelAddNodeResponse);
-    std::cout << "entering libelAddNodeResponseHandler()3" << std::endl;
-    //if(libelAddNodePacket != nullptr)
+    LibelAddNodePacket * libelAddNodePacket = addNodeSentPackets->retrieveCorrespondingPacket(libelAddNodeResponse);
+
+    if(libelAddNodePacket != nullptr)
     {
         //addNodeSentPackets->removePacket(libelAddNodePacket);
         std::cout << "removed libelAddNodePacket from sentQueue" << std::endl;
@@ -416,26 +437,16 @@ void MainClass::webserviceHandler(Packet * packet)
         case WS_ADD_NODE_COMMAND:
             std::cout << "ADD_NODE request being handled" << std::endl;
             addNodeHandler(dynamic_cast<WSAddNodePacket *> (wsPacket));
-
             break;
         case WS_ADD_SENSORS_COMMAND:
             std::cout << "ADD_SENSOR request being handled" << std::endl;
-            try
-            {
-                addSensorHandler(dynamic_cast<WSAddSensorsPacket*> (wsPacket));
-            }
-            catch(InvalidWSXML)
-            {
-                std::cerr << "invalid XML in webservice request" << std::endl;
-                // Could send a reply to the client by using a queue going to the webservice.
-            }
-
+            addSensorHandler(dynamic_cast<WSAddSensorsPacket*> (wsPacket));
         break;
         case WS_REQUEST_DATA_COMMAND:
             requestDataHandler(dynamic_cast<WSRequestDataPacket*> (wsPacket));
-                break;
+        break;
         default:
-             std::cerr << "unrecognized packet" << std::endl;
+             std::cerr << "unrecognized packet in localWSReceiveQueue" << std::endl;
 
     }
     delete wsPacket;

@@ -42,7 +42,8 @@ SOURCES += \
     webservice/wsaddnodepacket.cpp \
     webservice/wsaddsensorspacket.cpp \
     webservice/wsrequestdatapacket.cpp \
-    webservice/wschangefrequencypacket.cpp
+    webservice/wschangefrequencypacket.cpp \
+    sqlite/sqlite3.c
     #config.cpp
 
 HEADERS += \
@@ -87,10 +88,12 @@ HEADERS += \
     webservice/wsaddnodepacket.h \
     webservice/wsaddsensorspacket.h \
     webservice/wsrequestdatapacket.h \
-    webservice/wschangefrequencypacket.h
+    webservice/wschangefrequencypacket.h \
+    sqlite/sqlite3.h
     #config.h
 
-unix:!macx:!symbian: LIBS += -lcurl -lxerces-c -lboost_thread -lboost_date_time -ldl
+unix:!macx:!symbian: LIBS += -lcrypto -lcurl -lxerces-c -lboost_thread -lpthread -lboost_date_time -ldl
 
 OTHER_FILES += \
-    sqlite/zigbee.dbs
+    sqlite/zigbee.dbs \
+    sqlite/sqlite3.o

@@ -11,7 +11,7 @@ template <class P, class R> // P for packet, R for response
 class SentPackets
 {
 private:
-    std::vector<std::pair<P, int> > sentPackets;     // Packet and timestamp
+    std::vector<std::pair<P, int> > sentPackets;     // Packet + timestamp
 public:
     SentPackets();
     void addPacket(P packet);
