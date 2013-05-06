@@ -199,7 +199,7 @@ int Sql::getInstallationID(std::string zigbeeAddress64Bit) throw (SqlError)
 
     std::string query("SELECT installationID from nodes WHERE zigbee64bitaddress = '" + zigbeeAddress64Bit + "'");
 	auto data = executeQuery(query);
-    if(data.size() != 1)
+    if(data.size() < 1)
     {
         throw SqlError();
     }

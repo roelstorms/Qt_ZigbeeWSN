@@ -3,7 +3,7 @@
 
 LibelChangeFreqResponse::LibelChangeFreqResponse(std::vector<unsigned char> input) : ReceivePacket(input)
 {
-	if(getRFData().at(0) != 0X06)
+    if(getRFData().at(0) != 0X08)
 	{
 		std::cerr << "Tried to put a packed into a LibelChangeFreqResponse that was of the wrong type (see application ID != 0X06)" << std::endl;	
     }

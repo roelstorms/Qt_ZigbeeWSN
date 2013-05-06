@@ -17,10 +17,11 @@
 
 
 #include "mainclass.h"
-
+#include "SerialCom/packet_test.cpp"
 
 int main(int argc, char* argv[])
 {
+    //test();
     std::cout << "Main" << std::endl;
 
     int user = getuid();

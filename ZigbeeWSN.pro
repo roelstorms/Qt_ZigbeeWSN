@@ -43,7 +43,8 @@ SOURCES += \
     webservice/wsaddsensorspacket.cpp \
     webservice/wsrequestdatapacket.cpp \
     webservice/wschangefrequencypacket.cpp \
-    sqlite/sqlite3.c
+    sqlite/sqlite3.c \
+    SerialCom/packet_test.cpp
     #config.cpp
 
 HEADERS += \

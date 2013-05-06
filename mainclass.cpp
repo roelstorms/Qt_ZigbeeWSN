@@ -219,7 +219,7 @@ void MainClass::operator() ()
             packet = localWSReceiveQueue->front();
             localWSReceiveQueue->pop();
             std::cout << "popped WSPacket from local WSQueue, type:" << typeid(packet).name() << std::endl;
-            if(packet->getPacketType() == WS_COMMAND)
+            //if(packet->getPacketType() == WS_COMMAND)
             {
                 std::cout << "WS_PACKET received in main" << std::endl;
                 webserviceHandler(packet);
@@ -278,8 +278,21 @@ void MainClass::libelIOHandler(LibelIOPacket * libelIOPacket)
             }
             else
             {
-                if(zbPacket->getZigbee64BitAddress() == zigbee64BitAddress)
+                std::vector<unsigned char> packetAddress = zbPacket->getZigbee64BitAddress();
+                std::cout << "packetaddress:" << std::endl;
+                for(auto it = packetAddress.begin(); it < packetAddress.end(); ++it)
                 {
+                    std::cout << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it) << " ";
+                }
+                std::cout << std::endl << "zigbee64BitAddress:" << std::endl;
+                for(auto it = zigbee64BitAddress.begin(); it < zigbee64BitAddress.end(); ++it)
+                {
+                    std::cout << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it) << " ";
+                }
+
+                if(std::equal(packetAddress.begin(), packetAddress.end(), zigbee64BitAddress.begin()))
+                {
+                    std::cout << "packet added to zbSenderQueue from localZBSenderQueue" << std::endl;
                     zbSenderQueue->addPacket(dynamic_cast<Packet *> (zbPacket));
                     return true;
                 }
@@ -431,18 +444,19 @@ void MainClass::webserviceHandler(Packet * packet)
     switch(wsPacket->getPacketType())
     {
         case WS_CHANGE_FREQUENCY_COMMAND:
-            std::cout << "CHANGE_FREQUENCY request being handled" << std::endl;
+            std::cout << "WS_CHANGE_FREQUENCY_COMMAND request being handled" << std::endl;
             changeFrequencyHandler(dynamic_cast<WSChangeFrequencyPacket*> (wsPacket));
             break;
         case WS_ADD_NODE_COMMAND:
-            std::cout << "ADD_NODE request being handled" << std::endl;
+            std::cout << "WS_ADD_NODE_COMMAND request being handled" << std::endl;
             addNodeHandler(dynamic_cast<WSAddNodePacket *> (wsPacket));
             break;
         case WS_ADD_SENSORS_COMMAND:
-            std::cout << "ADD_SENSOR request being handled" << std::endl;
+            std::cout << "WS_ADD_SENSORS_COMMAND request being handled" << std::endl;
             addSensorHandler(dynamic_cast<WSAddSensorsPacket*> (wsPacket));
         break;
         case WS_REQUEST_DATA_COMMAND:
+            std::cout << "WS_REQUEST_DATA_COMMAND request being handled" << std::endl;
             requestDataHandler(dynamic_cast<WSRequestDataPacket*> (wsPacket));
         break;
         default:
@@ -475,7 +489,7 @@ void MainClass::requestDataHandler(WSRequestDataPacket * wsRequestDataPacket)
 
     LibelRequestIOPacket * libelRequestIOPacket = new LibelRequestIOPacket(std::vector<unsigned char>(zigbee64BitAddress.begin(), zigbee64BitAddress.end()), sensorTypes);
 
-    localZBSenderQueue->push_back(libelRequestIOPacket);
+    localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelRequestIOPacket));
     //zbSenderQueue->addPacket(libelRequestIOPacket);
     //std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
     //zbSenderConditionVariable->notify_all();
@@ -484,7 +498,7 @@ void MainClass::requestDataHandler(WSRequestDataPacket * wsRequestDataPacket)
 
 void MainClass::changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFrequencyPacket)
 {
-
+    std::cout << "changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFrequencyPacket)" << std::endl;
 
     std::string zigbee64BitAddress = db->getNodeAddress(wsChangeFrequencyPacket->getSensorGroupID());
     std::map<SensorType,int> sensors = db->getSensorsFromNode(wsChangeFrequencyPacket->getSensorGroupID());
@@ -494,8 +508,10 @@ void MainClass::changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFreque
 
     for(auto it = frequencies.begin(); it < frequencies.end(); ++it)
     {
-        for(auto sensorsIt = sensors.begin(); sensorsIt != sensors.end(); ++it)
+        std::cout << "frequencies.first: " << it->first << std::endl;
+        for(auto sensorsIt = sensors.begin(); sensorsIt != sensors.end(); ++sensorsIt)
         {
+            std::cout << "sensors.second: " << sensorsIt->first << std::endl;
             if(sensorsIt->second == it->first)
             {
                 newFrequencies.push_back(std::pair<SensorType, int>(sensorsIt->first, it->second/10));  // interval / 10 since ZB works with 10s as a unit of time
@@ -504,16 +520,16 @@ void MainClass::changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFreque
 
     }
 
-    LibelChangeFreqPacket * libelChangeFreqPacket = new LibelChangeFreqPacket(std::vector<unsigned char>(zigbee64BitAddress.begin(), zigbee64BitAddress.end()), newFrequencies);
+    LibelChangeFreqPacket * libelChangeFreqPacket = new LibelChangeFreqPacket(convertStringToVector(zigbee64BitAddress), newFrequencies);
 
-    localZBSenderQueue->push_back(libelChangeFreqPacket);
-
+    localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelChangeFreqPacket));
+    std::cout << "libelChangeFreqPacket added tot localZBSenderQueue" << std::endl;
     //zbSenderQueue->addPacket(libelChangeFreqPacket);
     //std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
     //zbSenderConditionVariable->notify_all();
 
     changeFreqSentPackets->addPacket(libelChangeFreqPacket);
-    std::cout << "end of addnodehandler()" << std::endl;
+    std::cout << "end of changeFreqHandler()" << std::endl;
 }
 
 void MainClass::addNodeHandler(WSAddNodePacket *wsAddNodePacket)

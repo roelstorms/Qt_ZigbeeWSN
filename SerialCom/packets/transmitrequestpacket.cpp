@@ -43,7 +43,7 @@ std::vector<unsigned char> TransmitRequestPacket::getMask() const
 std::vector<unsigned char> TransmitRequestPacket::getZigbee16BitAddress() const
 {
 	auto frameData = getFrameData();
-	std::vector<unsigned char> zigbee16BitAddress(getFrameData().begin() + 10, getFrameData().begin() + 12);
+    std::vector<unsigned char> zigbee16BitAddress(frameData.begin() + 10, frameData.begin() + 12);
 
 	return zigbee16BitAddress;
 }
@@ -51,7 +51,7 @@ std::vector<unsigned char> TransmitRequestPacket::getZigbee16BitAddress() const
 std::vector<unsigned char> TransmitRequestPacket::getZigbee64BitAddress() const 
 {
 	auto frameData = getFrameData();
-	std::vector<unsigned char> zigbee64BitAddress(getFrameData().begin() + 2, getFrameData().begin() + 10);
+    std::vector<unsigned char> zigbee64BitAddress(frameData.begin() + 2, frameData.begin() + 10);
 
 	return zigbee64BitAddress;	
 }

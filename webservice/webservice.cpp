@@ -14,12 +14,12 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 
 	char content[500];
 	char post_data[1024] = "";
-
+    int post_data_len = mg_read(conn, post_data, sizeof(post_data));
 	// Prepare the message we're going to send
 	std::cout << std::endl << "url: "<< request_info->uri << std::endl;
 	Packet * packet; 
     std::string url(request_info->uri);
-
+    std::cout << "data: " << std::endl << post_data << std::endl;
     try{
         if(url.find("changeFrequency") != std::string::npos)
         {

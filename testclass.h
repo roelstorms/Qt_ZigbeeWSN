@@ -8,7 +8,7 @@ class TestClass
 
 		TestClass();
 	public:
-		static void assert(bool condition, std::string message)
+        static void assertTest(bool condition, std::string message)
 		{
 			if(condition)
 			{

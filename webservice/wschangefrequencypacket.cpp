@@ -12,7 +12,7 @@ WSChangeFrequencyPacket::WSChangeFrequencyPacket(std::string data)
 
     sensorGroupID = -1;
 
-    XMLCh * sensorString = xercesc::XMLString::transcode("sensorID");
+    XMLCh * sensorString = xercesc::XMLString::transcode("sensor");
     XMLCh * sensorIDString = xercesc::XMLString::transcode("sensorID");
     XMLCh * sensorGroupIDString = xercesc::XMLString::transcode("sensorGroupID");
     XMLCh * frequencyString = xercesc::XMLString::transcode("frequency");
@@ -26,7 +26,7 @@ WSChangeFrequencyPacket::WSChangeFrequencyPacket(std::string data)
             xercesc::XMLString::release(&temp);
 
         }
-        if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorString) == 0)
+        else if(xercesc::XMLString::compareIString(nextElement->getTagName(), sensorString) == 0)
         {
             std::pair<int, int> freq;
             xercesc::DOMElement * child;

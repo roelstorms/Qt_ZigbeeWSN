@@ -46,9 +46,6 @@ WSAddNodePacket::WSAddNodePacket(std::string data) : WSPacket()
 
         nextElement = nextElement->getNextElementSibling();
     }
-
-    installationID = boost::lexical_cast<int> (installationIDString);
-    sensorGroupID = boost::lexical_cast<int> (sensorGroupIDString);
 }
 
 const int &WSAddNodePacket::getInstallationID() const
