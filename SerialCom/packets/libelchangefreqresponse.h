@@ -17,7 +17,7 @@ class LibelChangeFreqResponse : public ReceivePacket
 	private:
         std::map<SensorType, int> sensorFrequencies;
 	public:
-		LibelChangeFreqResponse(std::vector<unsigned char> input);
+        LibelChangeFreqResponse(std::vector<unsigned char> input);
 
         const std::map<SensorType, int>& getFrequencies() const;
 

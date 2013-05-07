@@ -26,6 +26,7 @@ ERROR(WebserviceInvalidCommand, "Command specified by the URL has not been recog
 ERROR(DataNotAvailable, "Sensordata requested from this package is not available. Probably this node does not have such a sensor or hasn't transmitted that data.")
 ERROR(InvalidPacketType, "Invalid packet type, the stored packet type does not exist.")
 ERROR(ZbCorruptedFrameData, "The framedata in this packet is invalid")
+ERROR(ZbCorruptedPacket, "The packet structure is not what is expected.")
 ERROR(NoRoot, "Run the program using sudo")
 ERROR(CorruptedPacket, "Packet used to construct an object of type Incoming Packet is invalid (length, checksum, startbyte)");
 ERROR(SqlError, "An unexpected error happend in connection with the sql database.");

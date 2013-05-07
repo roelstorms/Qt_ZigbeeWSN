@@ -27,7 +27,7 @@
 class ZBReceiver
 {
 	private:
-	std::ofstream logFile;
+    std::ofstream logFile;
     int connectionDescriptor;
 	std::mutex  * conditionVariableMutex;
 	std::condition_variable * mainConditionVariable;

@@ -14,7 +14,8 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 
 	char content[500];
 	char post_data[1024] = "";
-    int post_data_len = mg_read(conn, post_data, sizeof(post_data));
+    int post_data_len = mg_read(conn, post_data, sizeof(post_data));    // warning since post_data_len is never used, maybe used in the future.
+
 	// Prepare the message we're going to send
 	std::cout << std::endl << "url: "<< request_info->uri << std::endl;
 	Packet * packet; 
@@ -47,7 +48,7 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
             int content_length = snprintf(content, sizeof(content),	"<error>Invalid URL</error>");
             mg_printf(conn,"HTTP/1.1 405 Method Not Allowed\r\n"
                       "Content-Type: text/plain\r\n"
-                      "Content-Length: 19\r\n"        // Always set Content-Length
+                      "Content-Length: %d\r\n"        // Always set Content-Length
                       "\r\n"
                       "%s",
                       content_length, content);
@@ -59,7 +60,7 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
         int content_length = snprintf(content, sizeof(content),	"<error>invalid XML</error>");
         mg_printf(conn,"HTTP/1.1 405 Method Not Allowed\r\n"
                   "Content-Type: text/plain\r\n"
-                  "Content-Length: 19\r\n"        // Always set Content-Length
+                  "Content-Length: %d\r\n"        // Always set Content-Length
                   "\r\n"
                   "%s",
                   content_length, content);

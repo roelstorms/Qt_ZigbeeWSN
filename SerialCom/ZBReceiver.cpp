@@ -102,7 +102,10 @@ void ZBReceiver::operator() ()
 						break;
 						case 0x6:
 							std::cout << "found LibelChangeNodeFreqResponse" << std::endl;
-							packet = dynamic_cast<Packet*> (new LibelChangeNodeFreqResponse(packetVector));
+
+
+                            packet = dynamic_cast<Packet*> (new LibelChangeNodeFreqResponse(packetVector));
+
 							zbReceiveQueue->addPacket(packet);
 							{
 								std::lock_guard<std::mutex> lg(*conditionVariableMutex);

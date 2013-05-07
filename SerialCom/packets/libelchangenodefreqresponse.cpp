@@ -3,10 +3,18 @@
 
 LibelChangeNodeFreqResponse::LibelChangeNodeFreqResponse(std::vector<unsigned char> input) : ReceivePacket(input)
 {
-    if(getRFData().at(0) != 0X06)
-	{
-		std::cerr << "Tried to put a packed into a LibelChangeNodeFreqResponse that was of the wrong type (see application ID != 0X08)" << std::endl;	
-	}
+    try
+    {
+        if(getRFData().at(0) != 0X06)
+        {
+            std::cerr << "Tried to put a packed into a LibelChangeNodeFreqResponse that was of the wrong type (see application ID != 0X08)" << std::endl;
+        }
+    }
+    catch(...)
+    {
+        std::cerr << "Invalid LibelChangeNodeFreqResponse packet structure, see constructor" << std::endl;
+
+    }
 }
 
 
