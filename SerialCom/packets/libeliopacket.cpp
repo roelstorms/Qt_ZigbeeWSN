@@ -1,4 +1,4 @@
-
+#define DEBUG
 #include "libeliopacket.h"
 
 LibelIOPacket::LibelIOPacket(std::vector<unsigned char> input) : ReceivePacket(input)
@@ -85,7 +85,6 @@ LibelIOPacket::LibelIOPacket(std::vector<unsigned char> input) : ReceivePacket(i
 
         if(mask.at(5) == 1)
         {
-            value = data.at(count++) * 256 ;
             value += data.at(count++);
             sensorData.insert(std::pair<SensorType, float>(ANEMO, value));
             std::cout << "Anemo data found in packet: " << value << std::endl;
@@ -94,7 +93,6 @@ LibelIOPacket::LibelIOPacket(std::vector<unsigned char> input) : ReceivePacket(i
 
         if(mask.at(6) == 1)
         {
-            value = data.at(count++) * 256 ;
             value += data.at(count++);
             sensorData.insert(std::pair<SensorType, float>(VANE, value));
             std::cout << "Vane data found in packet: " << value << std::endl;

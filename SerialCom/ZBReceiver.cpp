@@ -136,7 +136,7 @@ void ZBReceiver::operator() ()
 
 						
 						default:
-                        std::cerr << "unknown packet type: " << std::endl;
+                        std::cout << "unknown packet type: " << std::endl;
                         //throw UnknownPacketType();
 				
 					}

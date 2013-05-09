@@ -31,8 +31,18 @@ int main(int argc, char* argv[])
         throw NoRoot();
     }
 
-    MainClass mainClass(argc, argv, 6000);
-    mainClass();
+    try
+    {
+        MainClass mainClass(argc, argv, 6000);
+        mainClass();
+    }
+    catch(StartupError)
+    {
+        std::cerr << "error at startup" << std::endl;
+        return 1;
+    }
+
+
 
 	return 0;
 }

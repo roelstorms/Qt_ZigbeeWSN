@@ -18,7 +18,9 @@ class TestClass
 			{
 				std::cout << message << "\033[1;31m failed\033[0m" << std::endl;
 			}
-		};
+        };
+        void runAll();
+        void testXML();
 };
 
 

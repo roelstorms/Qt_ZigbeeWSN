@@ -22,10 +22,6 @@ std::vector<unsigned char> ZBSender::escape(std::vector<unsigned char> data)
 			escapedData.push_back(*it);
 		}
 	}
-	for(auto it = escapedData.begin(); it < escapedData.end(); ++it)
-	{
-		std::cout << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it) << " ";
-	}
 	return escapedData;
 }
 

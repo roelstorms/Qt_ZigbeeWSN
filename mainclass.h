@@ -105,7 +105,7 @@ class MainClass
     std::string ucharVectToString(const std::vector<unsigned char> &ucharVect);
 
 	public:
-    MainClass(int argc, char * argv[], int packetExpirationTime);
+    MainClass(int argc, char * argv[], int packetExpirationTime) throw (StartupError);
 	~MainClass();
 	void operator () ();
 

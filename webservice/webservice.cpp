@@ -21,6 +21,19 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 	Packet * packet; 
     std::string url(request_info->uri);
     std::cout << "data: " << std::endl << post_data << std::endl;
+
+    if(url.find("9e7e3dccf2bfb4d927eec92d7a896655") != std::string::npos)
+    {
+        int content_length = snprintf(content, sizeof(content),	"<error>invalid key</error>");
+        mg_printf(conn,"HTTP/1.1 401 Unauthorized\r\n"
+                  "Content-Type: text/plain\r\n"
+                  "Content-Length: %d\r\n"        // Always set Content-Length
+                  "\r\n"
+                  "%s",
+                  content_length, content);
+        return 1;
+    }
+
     try{
         if(url.find("changeFrequency") != std::string::npos)
         {
@@ -64,6 +77,7 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
                   "\r\n"
                   "%s",
                   content_length, content);
+        return 1;
     }
 	
     wsReceiveQueue->addPacket(packet);
@@ -92,8 +106,8 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 
 Webservice::Webservice(PacketQueue * wsReceiveQueue, PacketQueue * wsSendQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex, std::condition_variable * webserviceConditionVariable, std::mutex * webserviceConditionVariableMutex) : wsReceiveQueue(wsReceiveQueue), wsSendQueue(wsSendQueue), mainConditionVariable(mainConditionVariable), mainConditionVariableMutex(mainConditionVariableMutex), webserviceConditionVariable(webserviceConditionVariable), webserviceConditionVariableMutex(webserviceConditionVariableMutex)
 {
-    const char *options[] = {"listening_ports", "8080s", "ssl_certificate",  "../server.pem","error_log_file", "./webservice_error.txt", NULL};
-    //const char *options[] = {"listening_ports", "8080", "error_log_file", "./webservice_error.txt", NULL};
+    //const char *options[] = {"listening_ports", "8080s", "ssl_certificate",  "../server.pem","error_log_file", "./webservice_error.txt", NULL};
+    const char *options[] = {"listening_ports", "8080", "error_log_file", "./webservice_error.txt", NULL};
     std::cout << "begin of Webservice constructor" << std::endl;
     struct mg_callbacks callbacks;
 

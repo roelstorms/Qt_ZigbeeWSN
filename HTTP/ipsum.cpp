@@ -61,7 +61,7 @@ void Ipsum::operator()()
                         changeFrequencyHandler(dynamic_cast<IpsumChangeFreqPacket *> (ipsumPacket));
                     break;
                     default:
-                    std::cout << "packet type not recognized in ipsum" << std::endl;
+                    std::cerr << "packet type not recognized in ipsum" << std::endl;
                     // Packet not recognized
 
                 }

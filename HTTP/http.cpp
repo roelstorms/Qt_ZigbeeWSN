@@ -17,13 +17,13 @@ Http::~Http()
 
 size_t Http::standardReplyWrapper(void *buffer, size_t size, size_t nmemb, void *obj)
 {
-	std::cout << "standardReplyWrapper" << std::endl;
+    //std::cout << "standardReplyWrapper" << std::endl;
 	return static_cast<Http*>(obj)->write_data(buffer, size, nmemb);
 }
 
 size_t Http::write_data(void *buffer, size_t size, size_t nmemb)
 {
-	std::cout << "write_data" << std::endl;
+    //std::cout << "write_data" << std::endl;
 	curlReply = std::string((char *)buffer);
 
 	return size * nmemb;
@@ -58,8 +58,6 @@ std::string Http::sendGet(std::string urlAddition, size_t (*callback) (void*, si
 	std::cout << "string used:" << std::endl << url << std::endl << std::endl;
 	if(curl) {
 		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-		/* example.com is redirected, so we tell libcurl to follow redirection */
-		//curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
 		
 		curl_easy_setopt(curl, CURLOPT_HEADER, 1);			// Enables the output of header information
 		curl_easy_setopt(curl, CURLOPT_WRITEHEADER, this);		// Give this as a paramater to the HEADERFUNCTION
@@ -274,7 +272,8 @@ void Http::uploadData(IpsumUploadPacket * packet) throw (HttpError)
 		}
 
         sendPost(url, xmlParser.uploadData(sensorType, "value", std::get<2>(*it), timeStamp), &Http::standardReplyWrapper);
-	}
+        std::cout << fieldName << " data uploaded to ipsum" << std::endl;
+    }
 	
 }
 
@@ -582,6 +581,10 @@ std::string Http::changeSensor(std::string newXML)
 
 void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
 {
+    /*
+     *  Changing in use of the sensorGroup
+     */
+
 	std::string entity = getEntity(calculateDestination(21 ,packet->getInstallationID(), packet->getSensorGroupID()));
 	XML XMLParser;
 	xercesc::DOMDocument * doc= XMLParser.parseToDom(entity);
@@ -615,6 +618,48 @@ void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
 		nextElement = nextElement->getNextElementSibling();
 	}	
     changeSensorGroup(XMLParser.serializeDOM(doc));
+
+
+    /*
+     * Changing in use of all sensors
+     */
+    std::map<int, bool> sensors = packet->getSensors();
+    for(auto sensorsIt = sensors.begin(); sensorsIt != sensors.end(); ++sensorsIt)
+    {
+        std::string entity = getEntity(calculateDestination(21 ,packet->getInstallationID(), packet->getSensorGroupID(), sensorsIt->first));
+        XML XMLParser;
+        xercesc::DOMDocument * doc= XMLParser.parseToDom(entity);
+        xercesc::DOMElement * docElement = doc->getDocumentElement();
+
+        xercesc::DOMElement * nextElement;
+        nextElement = docElement->getFirstElementChild();
+        while(nextElement != NULL)
+        {
+            XMLCh * inusetemp = xercesc::XMLString::transcode("inuse");
+
+            if(xercesc::XMLString::compareIString(nextElement->getTagName(), inusetemp) == 0)
+            {
+                XMLCh * inUse;
+                if(sensorsIt->second)
+                {
+                    inUse = xercesc::XMLString::transcode("True");
+                }
+                else
+                {
+
+                    inUse = xercesc::XMLString::transcode("False");
+                }
+                nextElement->setTextContent(inUse);
+                xercesc::XMLString::release(&inUse);
+
+            }
+
+            xercesc::XMLString::release(&inusetemp);
+
+            nextElement = nextElement->getNextElementSibling();
+        }
+        changeSensor(XMLParser.serializeDOM(doc));
+    }
 }
 
 void Http::changeFreq(IpsumChangeFreqPacket *packet)  throw (HttpError)

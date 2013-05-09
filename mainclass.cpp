@@ -2,11 +2,12 @@
 
 
 
-MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) : packetExpirationTime(packetExpirationTime)
+MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) throw (StartupError): packetExpirationTime(packetExpirationTime)
 {
     //Config::loadConfig("configFile.txt");
-    int fd = open("errors.txt", O_WRONLY | O_APPEND);
-    dup2(fd, STDERR_FILENO);
+    int fd = open("errors.txt", O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
+    dup2 (fd, STDERR_FILENO);
+
 
     socket = new Http("http://ipsum.groept.be", "a31dd4f1-9169-4475-b316-764e1e737653");
 
@@ -17,7 +18,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) : packet
     catch(HttpError)
     {
         std::cerr << "Could not connect to Ipsum" << std::endl;
-        //return 1;
+        throw StartupError();
     }
 
 
@@ -25,8 +26,9 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) : packet
     if(argc != 2)
     {
         std::cerr << "also provide the port number" << std::endl;
-        //return 1;
+        throw StartupError();
     }
+
     db = new Sql("../zigbee.dbs");
     con = new Connection();
     int connectionDescriptor = con->openPort(atoi(argv[1]), 9600);
@@ -117,9 +119,20 @@ MainClass::~MainClass()
 void MainClass::operator() ()
 {
     std::cout << "going into main while loop" << std::endl;
+
+    /*
+    std::vector<unsigned char> zigbee64BitAddress {0X00, 0X13, 0XA2, 0X00, 0X40, 0X69, 0X73, 0X76}; //0013A20040697376
+    std::vector<SensorType> sensors {TEMP, HUM, BAT, VANE, PLUVIO, ANEMO, PRES};
+    LibelAddNodePacket * libelAddNodePacket = new LibelAddNodePacket(zigbee64BitAddress, sensors);
+    localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelAddNodePacket));
+    addNodeSentPackets->addPacket(libelAddNodePacket);
+    */
     while(true)
     {
         //checkExpiredPackets();
+
+
+
 
         {	// Scope of unique_lock
             std::unique_lock<std::mutex> uniqueLock(*conditionVariableMutex);
@@ -249,7 +262,7 @@ void MainClass::checkExpiredPackets()
     std::vector<LibelChangeFreqPacket *> expiredChangeFrequencyPackets = changeFreqSentPackets->findExpiredPacket(packetExpirationTime);
     for( auto it = expiredChangeFrequencyPackets.begin(); it < expiredChangeFrequencyPackets.end(); ++it )
     {
-        std::cerr << "LibelAddNodePacket received no reply. " << (*it) <<  std::endl;
+        std::cerr << "LibelChangeFreqPacket received no reply. " << (*it) <<  std::endl;
         changeFreqSentPackets->removePacket(*it);
         // Could do a resend here.
     }
@@ -268,7 +281,7 @@ std::string MainClass::ucharVectToString(const std::vector<unsigned char>& uchar
 void MainClass::libelIOHandler(LibelIOPacket * libelIOPacket)
 {
     std::vector<unsigned char> zigbee64BitAddress = libelIOPacket->getZigbee64BitAddress();
-
+    std::cout << "Amount of packets in localZBSenderQueue before erase: " <<  localZBSenderQueue->size() << std::endl;
     localZBSenderQueue->erase(std::remove_if(localZBSenderQueue->begin(), localZBSenderQueue->end(), [&zigbee64BitAddress, this](Packet * packet) {
             TransmitRequestPacket * zbPacket = dynamic_cast<TransmitRequestPacket *>(packet);
             if(zbPacket == NULL)
@@ -301,7 +314,7 @@ void MainClass::libelIOHandler(LibelIOPacket * libelIOPacket)
                     return false;
                 }
             }}), localZBSenderQueue->end());
-
+    std::cout << "Amount of packets left in localZBSenderQueue after erase: " <<  localZBSenderQueue->size() << std::endl;
     {
         std::lock_guard<std::mutex> lgSender(*zbSenderConditionVariableMutex);
         zbSenderConditionVariable->notify_all();
@@ -376,11 +389,22 @@ void MainClass::libelChangeFreqResponseHandler(LibelChangeFreqResponse * libelCh
 
     if(libelChangeFreqPacket != nullptr)
     {
+        int installationID = -1;
+        int sensorGroupID = -1;
+        std::map<SensorType, int> sensors;
         changeFreqSentPackets->removePacket(libelChangeFreqPacket);
+        try
+        {
+        db->getInstallationID(ucharVectToString(libelChangeFreqResponse->getZigbee64BitAddress()));
+        db->getNodeID(ucharVectToString(libelChangeFreqResponse->getZigbee64BitAddress()));
+        sensors = db->getSensorsFromNode(sensorGroupID); // sensors is a vector of sensorType + ipsum ID
+        }
+        catch(SqlError e)
+        {
+            std::cout << e.what() << std::endl;
+            return;
+        }
 
-        int installationID = db->getInstallationID(ucharVectToString(libelChangeFreqResponse->getZigbee64BitAddress()));
-        int sensorGroupID = db->getNodeID(ucharVectToString(libelChangeFreqResponse->getZigbee64BitAddress()));
-        std::map<SensorType, int> sensors = db->getSensorsFromNode(sensorGroupID); // sensors is a vector of sensorType + ipsum ID
         std::map<SensorType, int> frequencies = libelChangeFreqResponse->getFrequencies(); // frequencies is a map of sensortype + frequency(interval)
         std::vector<std::pair<int, int> > ipsumFreqVector;
         for(auto it = sensors.begin(); it != sensors.end(); ++it)
@@ -421,11 +445,43 @@ void MainClass::libelAddNodeResponseHandler(LibelAddNodeResponse * libelAddNodeR
 
     if(libelAddNodePacket != nullptr)
     {
-        //addNodeSentPackets->removePacket(libelAddNodePacket);
+        addNodeSentPackets->removePacket(libelAddNodePacket);
         std::cout << "removed libelAddNodePacket from sentQueue" << std::endl;
-        int installationID = db->getInstallationID(ucharVectToString(libelAddNodeResponse->getZigbee64BitAddress()));
-        int sensorGroupID = db->getNodeID(ucharVectToString(libelAddNodeResponse->getZigbee64BitAddress()));
-        IpsumChangeInUsePacket * ipsumChangeInUsePacket = new IpsumChangeInUsePacket(installationID, sensorGroupID, true);
+        int installationID = -1;
+        int sensorGroupID = -1;
+        std::map<SensorType, int> sensorsFromDB ;
+        try
+        {
+            installationID = db->getInstallationID(ucharVectToString(libelAddNodeResponse->getZigbee64BitAddress()));
+            sensorGroupID = db->getNodeID(ucharVectToString(libelAddNodeResponse->getZigbee64BitAddress()));
+            sensorsFromDB = db->getSensorsFromNode(sensorGroupID);
+        }
+        catch (SqlError)
+        {
+            std::cerr << "Could not upload data since this sensor was not known to the sql db" << std::endl;
+            return;
+        }
+
+        std::vector<SensorType> sensorsFromPacket = libelAddNodeResponse->getSensors();
+        std::map<int, bool> sensorIDs;       // Sensor IDs needed for the ipsum packet to change the inuse of that sensor to either true or false.
+
+        bool sensorFound = false;
+        for(auto sensorsFromDBIt = sensorsFromDB.begin(); sensorsFromDBIt != sensorsFromDB.end(); ++sensorsFromDBIt)
+        {
+            for(auto sensorsFromPacketIt = sensorsFromPacket.begin(); sensorsFromPacketIt < sensorsFromPacket.end(); ++sensorsFromPacketIt)
+            {
+                if ((*sensorsFromPacketIt) == (sensorsFromDBIt->first))
+                {
+                    sensorFound = true;
+                }
+            }
+            sensorIDs.insert(std::pair<int, bool> (sensorsFromDBIt->second, sensorFound));
+            sensorFound = false;
+        }
+
+
+
+        IpsumChangeInUsePacket * ipsumChangeInUsePacket = new IpsumChangeInUsePacket(installationID, sensorGroupID, sensorIDs, true);
         std::cout << "adding ipsumpacket" << std::endl;
         ipsumSendQueue->addPacket(ipsumChangeInUsePacket);
         std::lock_guard<std::mutex> lg(*ipsumConditionVariableMutex);
@@ -505,7 +561,6 @@ void MainClass::changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFreque
 
     std::vector<std::pair<SensorType, int> > newFrequencies;    // SensorType + frequency(interval) in seconds
     std::vector<std::pair<int, int> > frequencies = wsChangeFrequencyPacket->getFrequencies();
-
     for(auto it = frequencies.begin(); it < frequencies.end(); ++it)
     {
         std::cout << "frequencies.first: " << it->first << std::endl;

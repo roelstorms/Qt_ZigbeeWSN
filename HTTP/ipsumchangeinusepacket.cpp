@@ -1,7 +1,7 @@
 #include "ipsumchangeinusepacket.h"
 
 
-IpsumChangeInUsePacket::IpsumChangeInUsePacket(int installationID, int sensorGroupID, bool inUse) : IpsumPacket(), installationID(installationID), sensorGroupID(sensorGroupID), inUse(inUse)
+IpsumChangeInUsePacket::IpsumChangeInUsePacket(int installationID, int sensorGroupID, std::map<int, bool> sensors, bool inUse) : IpsumPacket(), installationID(installationID), sensorGroupID(sensorGroupID), sensors(sensors), inUse(inUse)
 {
 
 
@@ -20,5 +20,10 @@ int IpsumChangeInUsePacket::getSensorGroupID() const
 bool IpsumChangeInUsePacket::getInUse() const
 {
 
-	return inUse;
+    return inUse;
+}
+
+const std::map<int, bool> &IpsumChangeInUsePacket::getSensors() const
+{
+    return sensors;
 }

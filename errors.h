@@ -14,6 +14,9 @@ public: \
 
 #include <exception>
 
+
+ERROR(StartupError, "Failed to start gateway")
+
 ERROR(HttpError, "HTTP error using libcurl")
 ERROR(InvalidLogin, "Login to ipsum database failed, check password and username")
 ERROR(InvalidXMLError, "XML passed was invalid")

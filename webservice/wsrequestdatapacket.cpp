@@ -10,7 +10,7 @@ WSRequestDataPacket::WSRequestDataPacket(std::string data)
     xercesc::DOMElement * nextElement;
     nextElement = docElement->getFirstElementChild();
 
-    int sensorGroupID = -1;
+    sensorGroupID = -1;
 
     XMLCh * sensorString = xercesc::XMLString::transcode("sensorID");
     XMLCh * sensorGroupIDString = xercesc::XMLString::transcode("sensorGroupID");

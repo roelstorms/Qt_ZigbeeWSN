@@ -44,7 +44,8 @@ SOURCES += \
     webservice/wsrequestdatapacket.cpp \
     webservice/wschangefrequencypacket.cpp \
     sqlite/sqlite3.c \
-    SerialCom/packet_test.cpp
+    SerialCom/packet_test.cpp \
+    testclass.cpp
     #config.cpp
 
 HEADERS += \
