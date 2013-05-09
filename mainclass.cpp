@@ -2,8 +2,9 @@
 
 
 
-MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) throw (StartupError): packetExpirationTime(packetExpirationTime)
+MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned char numberOfRetries) throw (StartupError): packetExpirationTime(packetExpirationTime)
 {
+    nextFrameID = 0;
     //Config::loadConfig("configFile.txt");
     int fd = open("errors.txt", O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
     dup2 (fd, STDERR_FILENO);
@@ -29,12 +30,13 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) throw (S
         throw StartupError();
     }
 
+    *exit = false;
     db = new Sql("../zigbee.dbs");
     con = new Connection();
     int connectionDescriptor = con->openPort(atoi(argv[1]), 9600);
 
-    addNodeSentPackets = new SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>;
-    changeFreqSentPackets = new SentPackets<LibelChangeFreqPacket *, LibelChangeFreqResponse *>;
+    addNodeSentPackets = new SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>(numberOfRetries, numberOfRetries);
+    changeFreqSentPackets = new SentPackets<LibelChangeFreqPacket *, LibelChangeFreqResponse *>(numberOfRetries, numberOfRetries);
 
     wsReceiveQueue = new PacketQueue();
     wsSendQueue = new PacketQueue();
@@ -55,7 +57,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime) throw (S
     wsConditionVariable = new std::condition_variable;
     wsConditionVariableMutex = new std::mutex;
 
-    zbReceiver = new ZBReceiver(connectionDescriptor, conditionVariableMutex, mainConditionVariable, zbReceiveQueue);
+    zbReceiver = new ZBReceiver(connectionDescriptor, conditionVariableMutex, mainConditionVariable, zbReceiveQueue, exit);
     zbReceiverThread = new boost::thread(boost::ref(*zbReceiver));
 
     webService = new Webservice (wsReceiveQueue, wsSendQueue, mainConditionVariable, conditionVariableMutex, wsConditionVariable, wsConditionVariableMutex);
@@ -129,15 +131,17 @@ void MainClass::operator() ()
     */
     while(true)
     {
-        //checkExpiredPackets();
-
-
-
+        checkExpiredPackets();
 
         {	// Scope of unique_lock
             std::unique_lock<std::mutex> uniqueLock(*conditionVariableMutex);
             mainConditionVariable->wait(uniqueLock, [this]{ return ((!zbReceiveQueue->empty()) || (!wsReceiveQueue->empty() || (!ipsumReceiveQueue->empty()))); });
             std::cout << "mainconditionvariable notification received" << std::endl;
+
+            /*
+             *  In this next part all shared queues will be empties into local queues. By doing this the lock can be unlocked faster then when handling
+             *  all packets directly from the shared queues. Thus assuring the other threads don't go into a waiting state for too long.
+             */
             while(!zbReceiveQueue->empty())
             {
                 localZBReceiveQueue->push(zbReceiveQueue->getPacket());
@@ -146,9 +150,8 @@ void MainClass::operator() ()
 
             while(!wsReceiveQueue->empty())
             {
-                std::cout << "type of ws packet from wsQueue: " << typeid(wsReceiveQueue->getPacket()).name() << std::endl;
-                std::cout << "adding WSPacket to local WSQueue" << std::endl;
                 localWSReceiveQueue->push(wsReceiveQueue->getPacket());
+                std::cout << "adding WSPacket to local WSQueue" << std::endl;
             }
 
             while(!ipsumReceiveQueue->empty())  // At the moment the ipsumReceiveQueue is not used. It could be used to back up packets that could not be sent because ipsum was down. Now these packets are cached in a queue in the ipsum thread itself.
@@ -163,7 +166,6 @@ void MainClass::operator() ()
         {
             packet = localZBReceiveQueue->front();
             localZBReceiveQueue->pop();
-            std::cout << "popped ZBPacket from local ZBQueue, type:" << typeid(packet).name() << std::endl;
             if(packet->getPacketType() == ZB_LIBEL_IO)
             {
                 std::cout << "ZB_LIBEL_IO received in main" << std::endl;
@@ -225,17 +227,45 @@ void MainClass::operator() ()
                 }
 
             }
+            else if (packet->getPacketType() == ZB_TRANSMIT_STATUS)
+            {
+                std::cout << "ZB_LIBEL_ADD_NODE_RESPONSE received in main" << std::endl;
+                if(dynamic_cast<TransmitStatusPacket *> (packet) != NULL)
+                {
+                    transmitStatusHandler(dynamic_cast<TransmitStatusPacket *> (packet));
+                }
+                else
+                {
+                    std::cerr << "dynamic cast failed on TransmitStatusPacket in main" << std::endl;
+                }
+
+            }
         }
 
         while(!localWSReceiveQueue->empty())
         {
             packet = localWSReceiveQueue->front();
             localWSReceiveQueue->pop();
-            std::cout << "popped WSPacket from local WSQueue, type:" << typeid(packet).name() << std::endl;
-            //if(packet->getPacketType() == WS_COMMAND)
+            switch (packet->getPacketType())
             {
-                std::cout << "WS_PACKET received in main" << std::endl;
-                webserviceHandler(packet);
+                case WS_CHANGE_FREQUENCY_COMMAND:
+                    std::cout << "WS_CHANGE_FREQUENCY_COMMAND request being handled" << std::endl;
+                    changeFrequencyHandler(dynamic_cast<WSChangeFrequencyPacket*> (packet));
+                    break;
+                case WS_ADD_NODE_COMMAND:
+                    std::cout << "WS_ADD_NODE_COMMAND request being handled" << std::endl;
+                    addNodeHandler(dynamic_cast<WSAddNodePacket *> (packet));
+                    break;
+                case WS_ADD_SENSORS_COMMAND:
+                    std::cout << "WS_ADD_SENSORS_COMMAND request being handled" << std::endl;
+                    addSensorHandler(dynamic_cast<WSAddSensorsPacket*> (packet));
+                break;
+                case WS_REQUEST_DATA_COMMAND:
+                    std::cout << "WS_REQUEST_DATA_COMMAND request being handled" << std::endl;
+                    requestDataHandler(dynamic_cast<WSRequestDataPacket*> (packet));
+                break;
+                default:
+                     std::cerr << "unrecognized packet in localWSReceiveQueue" << std::endl;
             }
         }
 
@@ -251,20 +281,16 @@ void MainClass::operator() ()
 
 void MainClass::checkExpiredPackets()
 {
-    std::vector<LibelAddNodePacket *> expiredAddNodePackets = addNodeSentPackets->findExpiredPacket(packetExpirationTime);
+    std::vector<LibelAddNodePacket *> expiredAddNodePackets = addNodeSentPackets->findExpiredPacket(localZBSenderQueue);
     for( auto it = expiredAddNodePackets.begin(); it < expiredAddNodePackets.end(); ++it )
     {
         std::cerr << "LibelAddNodePacket received no reply. " << (*it) <<  std::endl;
-        addNodeSentPackets->removePacket(*it);
-        // Could do a resend here.
     }
 
-    std::vector<LibelChangeFreqPacket *> expiredChangeFrequencyPackets = changeFreqSentPackets->findExpiredPacket(packetExpirationTime);
+    std::vector<LibelChangeFreqPacket *> expiredChangeFrequencyPackets = changeFreqSentPackets->findExpiredPacket(localZBSenderQueue);
     for( auto it = expiredChangeFrequencyPackets.begin(); it < expiredChangeFrequencyPackets.end(); ++it )
     {
         std::cerr << "LibelChangeFreqPacket received no reply. " << (*it) <<  std::endl;
-        changeFreqSentPackets->removePacket(*it);
-        // Could do a resend here.
     }
 }
 
@@ -278,8 +304,21 @@ std::string MainClass::ucharVectToString(const std::vector<unsigned char>& uchar
     return stream.str();
 }
 
+unsigned char MainClass::getNextFrameID()
+{
+    nextFrameID++;
+    if(nextFrameID == 0) // If nextFrameID overflows it can not be 0, because 0 means : do not send an ack to this packet. And we always want an ack.
+        nextFrameID++;
+    return nextFrameID;
+}
+
 void MainClass::libelIOHandler(LibelIOPacket * libelIOPacket)
 {
+    if(libelIOPacket == nullptr)
+    {
+        std::cerr << "dynamic cast failed on LibelIOPacket in main" << std::endl;
+        return;
+    }
     std::vector<unsigned char> zigbee64BitAddress = libelIOPacket->getZigbee64BitAddress();
     std::cout << "Amount of packets in localZBSenderQueue before erase: " <<  localZBSenderQueue->size() << std::endl;
     localZBSenderQueue->erase(std::remove_if(localZBSenderQueue->begin(), localZBSenderQueue->end(), [&zigbee64BitAddress, this](Packet * packet) {
@@ -378,54 +417,67 @@ void MainClass::libelIOHandler(LibelIOPacket * libelIOPacket)
 void MainClass::libelMaskResponseHandler(LibelMaskResponse * libelMaskResponse)
 {
     // Mask requests are never sent so responses are not handled yet. The mask of a sensor can be found by checking ipsum on the in use parameter of every sensor.
+    if(libelMaskResponse == nullptr)
+    {
+        std::cerr << "dynamic cast failed on LibelMaskResponse in main" << std::endl;
+        return;
+    }
     delete libelMaskResponse;
 }
 
 
 void MainClass::libelChangeFreqResponseHandler(LibelChangeFreqResponse * libelChangeFreqResponse)
 {
+    if(libelChangeFreqResponse == nullptr)
+    {
+        std::cerr << "dynamic cast failed on LibelChangeFreqResponse in main" << std::endl;
+        return;
+    }
 
     LibelChangeFreqPacket * libelChangeFreqPacket = changeFreqSentPackets->retrieveCorrespondingPacket(libelChangeFreqResponse);
 
     if(libelChangeFreqPacket != nullptr)
     {
-        int installationID = -1;
-        int sensorGroupID = -1;
-        std::map<SensorType, int> sensors;
         changeFreqSentPackets->removePacket(libelChangeFreqPacket);
-        try
-        {
-        db->getInstallationID(ucharVectToString(libelChangeFreqResponse->getZigbee64BitAddress()));
-        db->getNodeID(ucharVectToString(libelChangeFreqResponse->getZigbee64BitAddress()));
-        sensors = db->getSensorsFromNode(sensorGroupID); // sensors is a vector of sensorType + ipsum ID
-        }
-        catch(SqlError e)
-        {
-            std::cout << e.what() << std::endl;
-            return;
-        }
-
-        std::map<SensorType, int> frequencies = libelChangeFreqResponse->getFrequencies(); // frequencies is a map of sensortype + frequency(interval)
-        std::vector<std::pair<int, int> > ipsumFreqVector;
-        for(auto it = sensors.begin(); it != sensors.end(); ++it)
-        {
-            auto found = frequencies.find(it->first);
-            if (found != frequencies.end())
-            {
-                ipsumFreqVector.push_back(std::pair<int, int> (it->second, found->second));      // adding ipsumId and frequency to the output vector
-            }
-            else
-            {
-                std::cerr << "MainClass: A sensor frequency has been changed for an unknown sensor" << std::endl;
-            }
-        }
-        IpsumChangeFreqPacket * ipsumChangeFreqPacket = new IpsumChangeFreqPacket(installationID, sensorGroupID, ipsumFreqVector);
-
-        ipsumSendQueue->addPacket(ipsumChangeFreqPacket);
-        std::lock_guard<std::mutex> lg(*ipsumConditionVariableMutex);
-        ipsumConditionVariable->notify_all();
-        std::cout << "ChangeFreqResponse handled and ipsum packet created" << std::endl;
     }
+
+    int installationID = -1;
+    int sensorGroupID = -1;
+    std::map<SensorType, int> sensors;
+
+    try
+    {
+    db->getInstallationID(ucharVectToString(libelChangeFreqResponse->getZigbee64BitAddress()));
+    db->getNodeID(ucharVectToString(libelChangeFreqResponse->getZigbee64BitAddress()));
+    sensors = db->getSensorsFromNode(sensorGroupID); // sensors is a vector of sensorType + ipsum ID
+    }
+    catch(SqlError e)
+    {
+        std::cout << e.what() << std::endl;
+        return;
+    }
+
+    std::map<SensorType, int> frequencies = libelChangeFreqResponse->getFrequencies(); // frequencies is a map of sensortype + frequency(interval)
+    std::vector<std::pair<int, int> > ipsumFreqVector;
+    for(auto it = sensors.begin(); it != sensors.end(); ++it)
+    {
+        auto found = frequencies.find(it->first);
+        if (found != frequencies.end())
+        {
+            ipsumFreqVector.push_back(std::pair<int, int> (it->second, found->second));      // adding ipsumId and frequency to the output vector
+        }
+        else
+        {
+            std::cerr << "MainClass: A sensor frequency has been changed for an unknown sensor" << std::endl;
+        }
+    }
+    IpsumChangeFreqPacket * ipsumChangeFreqPacket = new IpsumChangeFreqPacket(installationID, sensorGroupID, ipsumFreqVector);
+
+    ipsumSendQueue->addPacket(ipsumChangeFreqPacket);
+    std::lock_guard<std::mutex> lg(*ipsumConditionVariableMutex);
+    ipsumConditionVariable->notify_all();
+    std::cout << "ChangeFreqResponse handled and ipsum packet created" << std::endl;
+
     std::cout << "exiting libelChangeFreqResponseHandler" << std::endl;
 
     delete libelChangeFreqResponse;
@@ -435,96 +487,120 @@ void MainClass::libelChangeNodeFreqResponseHandler(LibelChangeNodeFreqResponse *
 {
     // Node frequency packets should not be sent so responses on these packets are not handled. Frequencies are changed sensor per sensor and not for 1 node at once.
 
+    if(libelChangeNodeFreqResponse == nullptr)
+    {
+        std::cerr << "dynamic cast failed on LibelChangeNodeFreqResponse in main" << std::endl;
+        return;
+    }
+
 
     delete libelChangeNodeFreqResponse;
 }
 
 void MainClass::libelAddNodeResponseHandler(LibelAddNodeResponse * libelAddNodeResponse)
 {
+    if(libelAddNodeResponse == nullptr)
+    {
+        std::cerr << "dynamic cast failed on LibelAddNodeResponse in main" << std::endl;
+        return;
+    }
+
     LibelAddNodePacket * libelAddNodePacket = addNodeSentPackets->retrieveCorrespondingPacket(libelAddNodeResponse);
 
     if(libelAddNodePacket != nullptr)
     {
         addNodeSentPackets->removePacket(libelAddNodePacket);
         std::cout << "removed libelAddNodePacket from sentQueue" << std::endl;
-        int installationID = -1;
-        int sensorGroupID = -1;
-        std::map<SensorType, int> sensorsFromDB ;
-        try
-        {
-            installationID = db->getInstallationID(ucharVectToString(libelAddNodeResponse->getZigbee64BitAddress()));
-            sensorGroupID = db->getNodeID(ucharVectToString(libelAddNodeResponse->getZigbee64BitAddress()));
-            sensorsFromDB = db->getSensorsFromNode(sensorGroupID);
-        }
-        catch (SqlError)
-        {
-            std::cerr << "Could not upload data since this sensor was not known to the sql db" << std::endl;
-            return;
-        }
-
-        std::vector<SensorType> sensorsFromPacket = libelAddNodeResponse->getSensors();
-        std::map<int, bool> sensorIDs;       // Sensor IDs needed for the ipsum packet to change the inuse of that sensor to either true or false.
-
-        bool sensorFound = false;
-        for(auto sensorsFromDBIt = sensorsFromDB.begin(); sensorsFromDBIt != sensorsFromDB.end(); ++sensorsFromDBIt)
-        {
-            for(auto sensorsFromPacketIt = sensorsFromPacket.begin(); sensorsFromPacketIt < sensorsFromPacket.end(); ++sensorsFromPacketIt)
-            {
-                if ((*sensorsFromPacketIt) == (sensorsFromDBIt->first))
-                {
-                    sensorFound = true;
-                }
-            }
-            sensorIDs.insert(std::pair<int, bool> (sensorsFromDBIt->second, sensorFound));
-            sensorFound = false;
-        }
-
-
-
-        IpsumChangeInUsePacket * ipsumChangeInUsePacket = new IpsumChangeInUsePacket(installationID, sensorGroupID, sensorIDs, true);
-        std::cout << "adding ipsumpacket" << std::endl;
-        ipsumSendQueue->addPacket(ipsumChangeInUsePacket);
-        std::lock_guard<std::mutex> lg(*ipsumConditionVariableMutex);
-        ipsumConditionVariable->notify_all();
-        std::cout << "AddNodeResponse handled and ipsum packet created" << std::endl;
     }
+
+
+    int installationID = -1;
+    int sensorGroupID = -1;
+    std::map<SensorType, int> sensorsFromDB ;
+    try
+    {
+        installationID = db->getInstallationID(ucharVectToString(libelAddNodeResponse->getZigbee64BitAddress()));
+        sensorGroupID = db->getNodeID(ucharVectToString(libelAddNodeResponse->getZigbee64BitAddress()));
+        sensorsFromDB = db->getSensorsFromNode(sensorGroupID);
+    }
+    catch (SqlError)
+    {
+        std::cerr << "Could not upload data since this sensor was not known to the sql db" << std::endl;
+        return;
+    }
+
+    std::vector<SensorType> sensorsFromPacket = libelAddNodeResponse->getSensors();
+    std::map<int, bool> sensorIDs;       // Sensor IDs needed for the ipsum packet to change the inuse of that sensor to either true or false.
+
+    bool sensorFound = false;
+    for(auto sensorsFromDBIt = sensorsFromDB.begin(); sensorsFromDBIt != sensorsFromDB.end(); ++sensorsFromDBIt)
+    {
+        for(auto sensorsFromPacketIt = sensorsFromPacket.begin(); sensorsFromPacketIt < sensorsFromPacket.end(); ++sensorsFromPacketIt)
+        {
+            if ((*sensorsFromPacketIt) == (sensorsFromDBIt->first))
+            {
+                sensorFound = true;
+            }
+        }
+        sensorIDs.insert(std::pair<int, bool> (sensorsFromDBIt->second, sensorFound));
+        sensorFound = false;
+    }
+
+    IpsumChangeInUsePacket * ipsumChangeInUsePacket = new IpsumChangeInUsePacket(installationID, sensorGroupID, sensorIDs, true);
+    std::cout << "adding ipsumpacket" << std::endl;
+    ipsumSendQueue->addPacket(ipsumChangeInUsePacket);
+    std::lock_guard<std::mutex> lg(*ipsumConditionVariableMutex);
+    ipsumConditionVariable->notify_all();
+    std::cout << "AddNodeResponse handled and ipsum packet created" << std::endl;
+
     std::cout << "exiting libelAddNodeResponseHandler" << std::endl;
 
     delete libelAddNodeResponse;
 }
 
-
-void MainClass::webserviceHandler(Packet * packet)
+void MainClass::transmitStatusHandler(TransmitStatusPacket * transmitStatusPacket)
 {
-    WSPacket * wsPacket = dynamic_cast<WSPacket *> (packet);
-    switch(wsPacket->getPacketType())
+    if(transmitStatusPacket == nullptr)
     {
-        case WS_CHANGE_FREQUENCY_COMMAND:
-            std::cout << "WS_CHANGE_FREQUENCY_COMMAND request being handled" << std::endl;
-            changeFrequencyHandler(dynamic_cast<WSChangeFrequencyPacket*> (wsPacket));
-            break;
-        case WS_ADD_NODE_COMMAND:
-            std::cout << "WS_ADD_NODE_COMMAND request being handled" << std::endl;
-            addNodeHandler(dynamic_cast<WSAddNodePacket *> (wsPacket));
-            break;
-        case WS_ADD_SENSORS_COMMAND:
-            std::cout << "WS_ADD_SENSORS_COMMAND request being handled" << std::endl;
-            addSensorHandler(dynamic_cast<WSAddSensorsPacket*> (wsPacket));
-        break;
-        case WS_REQUEST_DATA_COMMAND:
-            std::cout << "WS_REQUEST_DATA_COMMAND request being handled" << std::endl;
-            requestDataHandler(dynamic_cast<WSRequestDataPacket*> (wsPacket));
-        break;
-        default:
-             std::cerr << "unrecognized packet in localWSReceiveQueue" << std::endl;
-
+        std::cerr << "dynamic cast failed on TransmitStatusPacket in main" << std::endl;
+        return;
     }
-    delete wsPacket;
+    if(transmitStatusPacket->getDeliveryStatus() != 0)          // else packet was delivered succesfully to the zigbee radio it was intended for. But we can not be sure that the waspmote received it correctly. For this we wait for the response packet from libelium.
+    {
+        // Find a packet in one of the sent packet queues that has a corresponding frame ID and if so check if sending failed.
+        // If sending failed then send it again.
+        std::pair <LibelAddNodePacket *, int> addNodePacket = addNodeSentPackets->findResendablePacket(transmitStatusPacket->getFrameID());
+        std::pair <LibelChangeFreqPacket *, int> changeFreqPacket = changeFreqSentPackets->findResendablePacket(transmitStatusPacket->getFrameID());
+        if(addNodePacket.first != nullptr && changeFreqPacket.first  != nullptr)
+        {
+            if(addNodePacket.second > changeFreqPacket.second)
+            {
+                localZBSenderQueue->push_back(addNodePacket.first);
+            }
+            else
+            {
+                localZBSenderQueue->push_back(changeFreqPacket.first);
+            }
+        }
+        else if(addNodePacket.first  != nullptr)
+        {
+            localZBSenderQueue->push_back(addNodePacket.first);
+        }
+        else if(changeFreqPacket.first  != nullptr)
+        {
+            localZBSenderQueue->push_back(changeFreqPacket.first);
+        }
+    }
+    delete transmitStatusPacket;
 }
 
 void MainClass::requestDataHandler(WSRequestDataPacket * wsRequestDataPacket)
 {
-
+    if(wsRequestDataPacket == nullptr)
+    {
+        std::cerr << "dynamic cast failed on WSRequestDataPacket in main" << std::endl;
+        return;
+    }
 
     std::string zigbee64BitAddress = db->getNodeAddress(wsRequestDataPacket->getSensorGroupID());
     std::map<SensorType,int> sensorsFromDB = db->getSensorsFromNode(wsRequestDataPacket->getSensorGroupID());
@@ -543,17 +619,24 @@ void MainClass::requestDataHandler(WSRequestDataPacket * wsRequestDataPacket)
 
     }
 
-    LibelRequestIOPacket * libelRequestIOPacket = new LibelRequestIOPacket(std::vector<unsigned char>(zigbee64BitAddress.begin(), zigbee64BitAddress.end()), sensorTypes);
+    LibelRequestIOPacket * libelRequestIOPacket = new LibelRequestIOPacket(std::vector<unsigned char>(zigbee64BitAddress.begin(), zigbee64BitAddress.end()), sensorTypes, getNextFrameID());
 
     localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelRequestIOPacket));
     //zbSenderQueue->addPacket(libelRequestIOPacket);
     //std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
     //zbSenderConditionVariable->notify_all();
-
+    delete wsRequestDataPacket;
 }
 
 void MainClass::changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFrequencyPacket)
 {
+    if(wsChangeFrequencyPacket == nullptr)
+    {
+        std::cerr << "dynamic cast failed on WSChangeFrequencyPacket in main" << std::endl;
+        return;
+    }
+
+
     std::cout << "changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFrequencyPacket)" << std::endl;
 
     std::string zigbee64BitAddress = db->getNodeAddress(wsChangeFrequencyPacket->getSensorGroupID());
@@ -575,7 +658,7 @@ void MainClass::changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFreque
 
     }
 
-    LibelChangeFreqPacket * libelChangeFreqPacket = new LibelChangeFreqPacket(convertStringToVector(zigbee64BitAddress), newFrequencies);
+    LibelChangeFreqPacket * libelChangeFreqPacket = new LibelChangeFreqPacket(convertStringToVector(zigbee64BitAddress), newFrequencies, getNextFrameID());
 
     localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelChangeFreqPacket));
     std::cout << "libelChangeFreqPacket added tot localZBSenderQueue" << std::endl;
@@ -585,15 +668,29 @@ void MainClass::changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFreque
 
     changeFreqSentPackets->addPacket(libelChangeFreqPacket);
     std::cout << "end of changeFreqHandler()" << std::endl;
+    delete wsChangeFrequencyPacket;
 }
 
 void MainClass::addNodeHandler(WSAddNodePacket *wsAddNodePacket)
 {
+    if(wsAddNodePacket == nullptr)
+    {
+        std::cerr << "dynamic cast failed on WSAddNodePacket in main" << std::endl;
+        return;
+    }
+
     db->makeNewNode(wsAddNodePacket->getInstallationID(),wsAddNodePacket->getSensorGroupID(), wsAddNodePacket->getZigbeeAddress64Bit());
+    delete wsAddNodePacket;
 }
 
 void MainClass::addSensorHandler(WSAddSensorsPacket *wsAddSensorsPacket)
 {
+    if(wsAddSensorsPacket == nullptr)
+    {
+        std::cerr << "dynamic cast failed on WSAddSensorsPacket in main" << std::endl;
+        return;
+    }
+
     std::map<SensorType, int> sensors = wsAddSensorsPacket->getSensors();
     int sensorGroupID = wsAddSensorsPacket->getSensorGroupID();
 
@@ -602,7 +699,6 @@ void MainClass::addSensorHandler(WSAddSensorsPacket *wsAddSensorsPacket)
     for(auto it = sensors.begin(); it != sensors.end(); ++it)
     {
         db->updateSensorsInNode(sensorGroupID, it->first, it->second);
-
     }
 
     // Send a LibelAddNodePacket
@@ -624,7 +720,7 @@ void MainClass::addSensorHandler(WSAddSensorsPacket *wsAddSensorsPacket)
         sensorTypes.push_back(it->first);
     }
 
-    LibelAddNodePacket * packet =  new LibelAddNodePacket(zigbee64BitAddress, sensorTypes);
+    LibelAddNodePacket * packet =  new LibelAddNodePacket(zigbee64BitAddress, sensorTypes, getNextFrameID());
 
     //zbSenderQueue->addPacket(dynamic_cast<Packet *> (packet));
     localZBSenderQueue->push_back(dynamic_cast<Packet *> (packet));
@@ -633,10 +729,8 @@ void MainClass::addSensorHandler(WSAddSensorsPacket *wsAddSensorsPacket)
 
     //std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
     //zbSenderConditionVariable->notify_azigbeeAddressll();
-
+    delete wsAddSensorsPacket;
 }
-
-
 
 std::vector<unsigned char> MainClass::convertStringToVector(std::string input)
 {

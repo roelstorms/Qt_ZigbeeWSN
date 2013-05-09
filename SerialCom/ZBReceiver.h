@@ -16,6 +16,7 @@
 #include "packets/libelchangefreqresponse.h"
 #include "packets/libelchangenodefreqresponse.h"
 #include "packets/libelmaskresponse.h"
+#include "packets/transmitstatuspacket.h"
 
 #include "../errors.h"
 #include <boost/thread/mutex.hpp>
@@ -31,12 +32,13 @@ class ZBReceiver
     int connectionDescriptor;
 	std::mutex  * conditionVariableMutex;
 	std::condition_variable * mainConditionVariable;
-	PacketQueue * zbReceiveQueue;	
+    PacketQueue * zbReceiveQueue;
+    bool * exit;
 	// Copy constructor
 	ZBReceiver(const ZBReceiver& source);	 
 
 	public:
-    ZBReceiver(int connectionDescriptor, std::mutex * conditionVariableMutex, std::condition_variable * mainConditionVariable, PacketQueue * zbReceiveQueue);
+    ZBReceiver(int connectionDescriptor, std::mutex * conditionVariableMutex, std::condition_variable * mainConditionVariable, PacketQueue * zbReceiveQueue, bool * exit);
 	~ZBReceiver();
 	
 

@@ -14,8 +14,10 @@ class TransmitRequestPacket : public  OutgoingPacket, public LibelPacket
 	public:
         TransmitRequestPacket();
 
-        void setData(unsigned char applicationID, std::vector<unsigned char> zigbeeAddress64Bit, std::vector<unsigned char> data);
-        void setRFData(std::vector<unsigned char> zigbeeAddress64Bit, std::vector<unsigned char> applicationData);
+        void setData(unsigned char applicationID, std::vector<unsigned char> zigbeeAddress64Bit, std::vector<unsigned char> data, unsigned char frameID = 0);
+        void setRFData(std::vector<unsigned char> zigbeeAddress64Bit, std::vector<unsigned char> applicationData, unsigned char frameID);
+
+        unsigned char getFrameID() const throw (ZbCorruptedFrameData);
 
 		virtual std::vector<unsigned char> getMask() const;
 		virtual std::vector<unsigned char> getZigbee16BitAddress() const;

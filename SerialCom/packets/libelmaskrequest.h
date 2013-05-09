@@ -17,7 +17,7 @@ class LibelMaskRequest : public TransmitRequestPacket
 	private:
 	public:
 		//LibelAddNodePacket(std::vector<unsigned char> input);
-		LibelMaskRequest(std::vector<unsigned char> zigbeeAddress64bit);	 	
+        LibelMaskRequest(std::vector<unsigned char> zigbeeAddress64bit, unsigned char frameID = 0);
 
 		PacketType getPacketType(){ return ZB_LIBEL_MASK_REQUEST; };
 };

@@ -69,7 +69,7 @@ const std::vector<SensorType> &LibelAddNodeResponse::getSensors() const
 
 bool LibelAddNodeResponse::correspondsTo(LibelAddNodePacket * packet)
 {
-	if((getZigbee64BitAddress() == packet->getZigbee64BitAddress()))
+    if((getZigbee64BitAddress() == packet->getZigbee64BitAddress()) && (getFrameID() == packet->getFrameID()))
 	{
 		std::vector<unsigned char> mask = getMask();
 		std::vector<unsigned char> otherMask = packet->getMask();

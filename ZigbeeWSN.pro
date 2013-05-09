@@ -44,8 +44,9 @@ SOURCES += \
     webservice/wsrequestdatapacket.cpp \
     webservice/wschangefrequencypacket.cpp \
     sqlite/sqlite3.c \
-    SerialCom/packet_test.cpp \
-    testclass.cpp
+    #SerialCom/packet_test.cpp \
+    testclass.cpp \
+    SerialCom/packets/transmitstatuspacket.cpp
     #config.cpp
 
 HEADERS += \
@@ -91,7 +92,8 @@ HEADERS += \
     webservice/wsaddsensorspacket.h \
     webservice/wsrequestdatapacket.h \
     webservice/wschangefrequencypacket.h \
-    sqlite/sqlite3.h
+    sqlite/sqlite3.h \
+    SerialCom/packets/transmitstatuspacket.h
     #config.h
 
 unix:!macx:!symbian: LIBS += -lcrypto -lcurl -lxerces-c -lboost_thread -lpthread -lboost_date_time -ldl

@@ -65,7 +65,7 @@ const std::map<SensorType, int>& LibelChangeFreqResponse::getFrequencies() const
 
 bool LibelChangeFreqResponse::correspondsTo(LibelChangeFreqPacket * packet)
 {
-	if((getZigbee64BitAddress() == packet->getZigbee64BitAddress()))
+    if((getZigbee64BitAddress() == packet->getZigbee64BitAddress()) && (getFrameID() == packet->getFrameID()))
 	{
 		std::vector<unsigned char> mask = getMask();
 		std::vector<unsigned char> otherMask = packet->getMask();

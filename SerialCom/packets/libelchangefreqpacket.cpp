@@ -1,6 +1,6 @@
 #include "libelchangefreqpacket.h"
 
-LibelChangeFreqPacket::LibelChangeFreqPacket(std::vector<unsigned char> zigbeeAddress64bit, std::vector<std::pair<SensorType, int>> newFrequencies) : TransmitRequestPacket()
+LibelChangeFreqPacket::LibelChangeFreqPacket(std::vector<unsigned char> zigbeeAddress64bit, std::vector<std::pair<SensorType, int>> newFrequencies, unsigned char frameID) : TransmitRequestPacket()
 {
     std::vector<unsigned char> data;
     int mask = 0;
@@ -44,5 +44,5 @@ LibelChangeFreqPacket::LibelChangeFreqPacket(std::vector<unsigned char> zigbeeAd
         data.push_back((*it).second / 256);
         data.push_back((*it).second % 256);
 	}
-        setData(0x07, zigbeeAddress64bit, data);
+        setData(0x07, zigbeeAddress64bit, data, frameID);
 }

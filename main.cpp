@@ -17,11 +17,13 @@
 
 
 #include "mainclass.h"
-#include "SerialCom/packet_test.cpp"
+#include "testclass.h"
 
 int main(int argc, char* argv[])
 {
-    //test();
+    TestClass test;
+    test.testTransmitStatusPacket();
+
     std::cout << "Main" << std::endl;
 
     int user = getuid();
@@ -33,8 +35,8 @@ int main(int argc, char* argv[])
 
     try
     {
-        MainClass mainClass(argc, argv, 6000);
-        mainClass();
+//        MainClass mainClass(argc, argv, 6000);
+//        mainClass();
     }
     catch(StartupError)
     {

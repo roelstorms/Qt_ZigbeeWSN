@@ -8,7 +8,7 @@ class WSAddNodePacket : public WSPacket
 {
 private:
     int installationID, sensorGroupID;
-    std::string zigbee64BitAddress;
+    std::string zigbeeAddress64Bit;
 
 public:
     WSAddNodePacket(std::string data);

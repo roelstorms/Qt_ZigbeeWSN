@@ -18,6 +18,8 @@ public:
 
     const int& getSensorGroupID() const;
     const std::map<SensorType, int>& getSensors() const;
+
+    SensorType stringToSensorType(std::string sensorType) throw (InvalidWSXML);
 };
 
 #endif // WSADDSENSORSPACKET_H

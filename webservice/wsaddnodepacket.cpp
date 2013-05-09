@@ -33,7 +33,7 @@ WSAddNodePacket::WSAddNodePacket(std::string data) : WSPacket()
         else if(xercesc::XMLString::compareIString(nextElement->getTagName(), zigbeeAddressString) == 0)
         {
             temp = xercesc::XMLString::transcode(nextElement->getTextContent());
-            zigbee64BitAddress = std::string(temp);
+            zigbeeAddress64Bit = std::string(temp);
             xercesc::XMLString::release(&temp);
         }
         else
@@ -60,6 +60,6 @@ const int &WSAddNodePacket::getSensorGroupID() const
 
 const std::string &WSAddNodePacket::getZigbeeAddress64Bit() const
 {
-    return zigbee64BitAddress;
+    return zigbeeAddress64Bit;
 }
 

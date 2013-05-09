@@ -116,3 +116,10 @@ std::vector<unsigned char> ReceivePacket::getData() const throw(ZbCorruptedFrame
 	std::vector<unsigned char> rfData = getRFData();
 	return std::vector<unsigned char> (rfData.begin() + 5, rfData.end());
 }
+
+
+unsigned char ReceivePacket::getFrameID() const
+{
+    std::vector<unsigned char> frameData = getFrameData();
+    return frameData.at(1);
+}

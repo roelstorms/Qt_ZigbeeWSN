@@ -2,25 +2,21 @@
 #define TESTCLASS_H
 #include <iostream>
 #include <string>
+
+#include "SerialCom/packets/transmitstatuspacket.h"
+#include "XML/XML.h"
+
 class TestClass
 {
 	private:
 
-		TestClass();
+
 	public:
-        static void assertTest(bool condition, std::string message)
-		{
-			if(condition)
-			{
-				std::cout << message << "\033[1;32m succes\033[0m" << std::endl;
-			}
-			else
-			{
-				std::cout << message << "\033[1;31m failed\033[0m" << std::endl;
-			}
-        };
-        void runAll();
-        void testXML();
+    void assertTest(bool condition, std::string message);
+
+    void runAll();
+    void testXML();
+    void testTransmitStatusPacket();
 };
 
 

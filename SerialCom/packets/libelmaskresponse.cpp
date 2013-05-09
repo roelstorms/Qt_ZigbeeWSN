@@ -20,7 +20,7 @@ LibelMaskResponse::LibelMaskResponse(std::vector<unsigned char> input) : Receive
 
 bool LibelMaskResponse::correspondsTo(LibelMaskRequest * packet)
 {
-	if((getZigbee64BitAddress() == packet->getZigbee64BitAddress()))
+    if((getZigbee64BitAddress() == packet->getZigbee64BitAddress()) && (getFrameID() == packet->getFrameID()))
 	{
 		return true;	
 	}

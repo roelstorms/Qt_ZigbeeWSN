@@ -9,6 +9,8 @@
 #include "packets/libeladdnoderesponse.h"
 #include <cmath>
 #define DEBUG
+
+
 void test()
 {
 	//Testing OutgoingPacket
@@ -144,3 +146,4 @@ void test()
         TestClass::assertTest(libelRequestIOPacket.getRFData() == std::vector<unsigned char>{0x09, 0x00, 0X13}, "libelRequestIOPacket checking if mask and application ID are set correctly");
 
 }
+

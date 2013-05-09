@@ -1,7 +1,7 @@
 #include "ZBReceiver.h"
 
 
-ZBReceiver::ZBReceiver(int connectionDescriptor, std::mutex * conditionVariableMutex, std::condition_variable * mainConditionVariable, PacketQueue * zbReceiveQueue) : connectionDescriptor(connectionDescriptor), conditionVariableMutex(conditionVariableMutex), mainConditionVariable(mainConditionVariable), zbReceiveQueue(zbReceiveQueue)
+ZBReceiver::ZBReceiver(int connectionDescriptor, std::mutex * conditionVariableMutex, std::condition_variable * mainConditionVariable, PacketQueue * zbReceiveQueue, bool * exit) : connectionDescriptor(connectionDescriptor), conditionVariableMutex(conditionVariableMutex), mainConditionVariable(mainConditionVariable), zbReceiveQueue(zbReceiveQueue), exit(exit)
 {	
 	std::cout << "ZBReceiver constructor" << std::endl;
 }
@@ -29,9 +29,9 @@ unsigned char ZBReceiver::readByte()
 	printf("%X\n", input);
 	if(input == 0x7D)
 	{
-        while(read(connectionDescriptor, &input, 1) <= 0)
+        if(read(connectionDescriptor, &input, 1) <= 0)
 		{
-
+            std::cerr << "reading a byte didn't return 1 byte" << std::endl;
 		}
 		std::cout << "input: " << std::hex << input << std::endl;	
 		input = input ^ 0x20;
@@ -49,7 +49,7 @@ void ZBReceiver::operator() ()
 {
 	unsigned char input = 0x0;
 	std::vector<unsigned char> packetVector;	
-	while(true)
+    while(!(*exit))
     	{
         input = readByte();
 		if(input == 0x7E)
@@ -82,7 +82,16 @@ void ZBReceiver::operator() ()
 					{
 						case 0x2:
                             std::cout << "found LibelAddNodeResponse" << std::endl;
-							packet = dynamic_cast<Packet*> (new LibelAddNodeResponse(packetVector));
+                            try
+                            {
+                                packet = dynamic_cast<Packet*> (new LibelAddNodeResponse(packetVector));
+                            }
+                            catch(InvalidPacketType e)
+                            {
+                                std::cerr << e.what() << std::endl;
+                                break;
+                            }
+
 							zbReceiveQueue->addPacket(packet);
 							{
 								std::lock_guard<std::mutex> lg(*conditionVariableMutex);
@@ -92,7 +101,16 @@ void ZBReceiver::operator() ()
 						break;
 						case 0x4:
 							std::cout << "found LibelMaskResponse" << std::endl;
-							packet = dynamic_cast<Packet*> (new LibelMaskResponse(packetVector));
+                            try
+                            {
+                                packet = dynamic_cast<Packet*> (new LibelMaskResponse(packetVector));
+                            }
+                            catch(InvalidPacketType e)
+                            {
+                                std::cerr << e.what() << std::endl;
+                                break;
+                            }
+
 							zbReceiveQueue->addPacket(packet);
 							{
 								std::lock_guard<std::mutex> lg(*conditionVariableMutex);
@@ -103,9 +121,15 @@ void ZBReceiver::operator() ()
 						case 0x6:
 							std::cout << "found LibelChangeNodeFreqResponse" << std::endl;
 
-
-                            packet = dynamic_cast<Packet*> (new LibelChangeNodeFreqResponse(packetVector));
-
+                            try
+                            {
+                                packet = dynamic_cast<Packet*> (new LibelChangeNodeFreqResponse(packetVector));
+                            }
+                            catch(InvalidPacketType e)
+                            {
+                                std::cerr << e.what() << std::endl;
+                                break;
+                            }
 							zbReceiveQueue->addPacket(packet);
 							{
 								std::lock_guard<std::mutex> lg(*conditionVariableMutex);
@@ -115,7 +139,15 @@ void ZBReceiver::operator() ()
 						break;
 						case 0x8:
 							std::cout << "found LibelChangeFreqResponse" << std::endl;
-							packet = dynamic_cast<Packet*> (new LibelChangeFreqResponse(packetVector));
+                            try
+                            {
+                                packet = dynamic_cast<Packet*> (new LibelChangeFreqResponse(packetVector));
+                            }
+                            catch(InvalidPacketType e)
+                            {
+                                std::cerr << e.what() << std::endl;
+                                break;
+                            }
 							zbReceiveQueue->addPacket(packet);
 							{
 								std::lock_guard<std::mutex> lg(*conditionVariableMutex);
@@ -125,7 +157,15 @@ void ZBReceiver::operator() ()
 						break;
 						case 0xA:
 							std::cout << "found LibelIOpacket" << std::endl;
-							packet = dynamic_cast<Packet*> (new LibelIOPacket(packetVector));
+                            try
+                            {
+                                packet = dynamic_cast<Packet*> (new LibelIOPacket(packetVector));
+                            }
+                            catch(InvalidPacketType e)
+                            {
+                                std::cerr << e.what() << std::endl;
+                                break;
+                            }
 							zbReceiveQueue->addPacket(packet);
 							{
 								std::lock_guard<std::mutex> lg(*conditionVariableMutex);
@@ -136,29 +176,46 @@ void ZBReceiver::operator() ()
 
 						
 						default:
-                        std::cout << "unknown packet type: " << std::endl;
-                        //throw UnknownPacketType();
-				
+                        std::cerr << "unknown packet type received in ZBReceiver" << std::endl;
 					}
 					break;
 
 				case 0x92:
-					//packet = dynamic_cast<Packet*> (new DataIOPacket(packetVector));
+                    std::cerr << "DataIOPacket received, and thrown away (we use normal data packets to receive IO, not the ones defines by zigbee" << std::endl;
 					break;
 
 				case 0x88:
-					std::cout << "ATCommandResponsePacket received, and thrown away" << std::endl;
+                    std::cerr << "ATCommandResponsePacket received, and thrown away" << std::endl;
 						//Processing needed here
-				break;
+                break;
+
+                case 0X8B:
+                std::cout << "found TransmitStatus packet" << std::endl;
+                try
+                {
+                    packet = dynamic_cast<Packet*> (new TransmitStatusPacket(packetVector));
+                }
+                catch(InvalidPacketType e)
+                {
+                    std::cerr << e.what() << std::endl;
+                    break;
+                }
+                zbReceiveQueue->addPacket(packet);
+                {
+                    std::lock_guard<std::mutex> lg(*conditionVariableMutex);
+                    mainConditionVariable->notify_all();
+                    std::cout << "main notified" << std::endl;
+                }
+                break;
+
 				default :
-				throw UnknownPacketType();
+                std::cerr << "unknown packet type received in ZBReceiver" << std::endl;
 
 			}
 
 			packetVector.clear();
-		//	std::cout << "analog data on pin 1: " << std::to_string(APIPacket.readAnalog(0)) << std::endl;
 		}
-    	}
-	logFile.close();
+    }
+
 	std::cout << "End of inputhandler" << std::endl;	
 }

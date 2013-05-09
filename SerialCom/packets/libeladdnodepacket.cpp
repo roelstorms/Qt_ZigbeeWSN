@@ -1,6 +1,6 @@
 #include "libeladdnodepacket.h"
 
-LibelAddNodePacket::LibelAddNodePacket(std::vector<unsigned char> zigbeeAddress64bit, std::vector<SensorType> sensors) : TransmitRequestPacket()
+LibelAddNodePacket::LibelAddNodePacket(std::vector<unsigned char> zigbeeAddress64bit, std::vector<SensorType> sensors, unsigned char frameID) : TransmitRequestPacket()
 {
     std::vector<unsigned char> data;
     int mask = 0;
@@ -45,6 +45,6 @@ LibelAddNodePacket::LibelAddNodePacket(std::vector<unsigned char> zigbeeAddress6
 		std::cout << std::setfill('0') << std::hex << std::setw(2) <<  (int)(*it) << " ";
 	}
 	std::cout << std::endl;
-    setData(0x01, zigbeeAddress64bit, data);
+    setData(0x01, zigbeeAddress64bit, data, frameID);
 }
 

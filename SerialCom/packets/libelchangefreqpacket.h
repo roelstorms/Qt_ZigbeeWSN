@@ -16,7 +16,7 @@ class LibelChangeFreqPacket : public TransmitRequestPacket
 	private:
 	public:
 		
-		LibelChangeFreqPacket(std::vector<unsigned char> destinationZB64bitAddress, std::vector<std::pair<SensorType, int>> newFrequencies);
+        LibelChangeFreqPacket(std::vector<unsigned char> destinationZB64bitAddress, std::vector<std::pair<SensorType, int>> newFrequencies, unsigned char frameID = 0);
 	
 		PacketType getPacketType(){ return ZB_LIBEL_CHANGE_FREQ; };
 

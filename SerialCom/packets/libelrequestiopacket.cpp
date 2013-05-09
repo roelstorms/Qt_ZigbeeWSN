@@ -1,6 +1,6 @@
 #include "libelrequestiopacket.h"
 
-LibelRequestIOPacket::LibelRequestIOPacket(std::vector<unsigned char> zigbeeAddress64bit, std::vector<SensorType> sensors) : TransmitRequestPacket()
+LibelRequestIOPacket::LibelRequestIOPacket(std::vector<unsigned char> zigbeeAddress64bit, std::vector<SensorType> sensors, unsigned char frameID) : TransmitRequestPacket()
 {
     std::vector<unsigned char> data;
     int mask = 0;
@@ -38,6 +38,6 @@ LibelRequestIOPacket::LibelRequestIOPacket(std::vector<unsigned char> zigbeeAddr
     data.push_back(mask / 256);
     data.push_back(mask % 256);
 	
-    setData(0x09, zigbeeAddress64bit, data);
+    setData(0x09, zigbeeAddress64bit, data, frameID);
 
 }

@@ -57,6 +57,8 @@ class MainClass
 	private:
     int packetExpirationTime;
 
+    unsigned char nextFrameID;
+
 	Http * socket;
 	
     SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>  * addNodeSentPackets;
@@ -77,6 +79,7 @@ class MainClass
 	Webservice * webService;
 	Ipsum * ipsum;
 
+    bool * exit;
     /*
      * A function that converts std::string to std::vector<unsigned char>, mainly used to translate the string retrieved from
      * the sqlite DB to a vector of unsigned chars that is needed by the libelium packets.
@@ -94,8 +97,8 @@ class MainClass
     void libelChangeFreqResponseHandler(LibelChangeFreqResponse * libelChangeFreqResponse);
     void libelChangeNodeFreqResponseHandler(LibelChangeNodeFreqResponse * libelChangeNodeFreqResponse);
     void libelAddNodeResponseHandler(LibelAddNodeResponse * libelAddNodeResponse);
+    void transmitStatusHandler(TransmitStatusPacket *transmitStatusPacket);
 
-    void webserviceHandler(Packet * packet);
     void requestDataHandler(WSRequestDataPacket *  wsRequestDataPacket);
     void changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFrequencyPacket);
     void addNodeHandler(WSAddNodePacket * wsAddNodePacket);
@@ -103,11 +106,13 @@ class MainClass
 
     void checkExpiredPackets();
     std::string ucharVectToString(const std::vector<unsigned char> &ucharVect);
+    unsigned char getNextFrameID();
 
 	public:
-    MainClass(int argc, char * argv[], int packetExpirationTime) throw (StartupError);
+    MainClass(int argc, char * argv[], int packetExpirationTime, unsigned char numberOfRetries) throw (StartupError);
 	~MainClass();
 	void operator () ();
+
 
 };
 
