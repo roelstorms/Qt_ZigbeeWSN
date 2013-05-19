@@ -4,12 +4,14 @@
 Sql::Sql(std::string dbName)
 {
 	int rc;
+    std::cout << "Opening DB" << std::endl;
 	rc = sqlite3_open(dbName.c_str(), &db);
 	if( rc )
 	{
 		std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;
 		sqlite3_close(db);
 	}
+    std::cout << "DB opened" << std::endl;
 }
 
 Sql::~Sql()

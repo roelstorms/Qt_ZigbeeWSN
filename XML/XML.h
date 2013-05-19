@@ -30,10 +30,6 @@ class XML
 	private:
 	xercesc::DOMImplementation *impl; 
 
-	/*
-   	 *	Give the top node of the DOM tree you want to serialize and XML code will be returned.
-	 */	 
-
 	public:
 	XML();
 	~XML();
@@ -45,9 +41,9 @@ class XML
 
 	xercesc::DOMDocument * parseToDom(std::string data);
 
-	std::string createNewInstallation(const std::string& nameValue, const std::string& descriptionValue, const std::string& inuseValue);
-	std::string createNewSensorGroup(const std::string& installationIDValue, const std::string& nameValue, const std::string& descriptionValue, const std::string& inuseValue); 
-	std::string createNewSensor(const std::string& sensorGroupIDValue, const std::string& nameValue, const std::string& dataNameValue, const std::string& descriptionValue, const std::string& inuseValue);
+    //std::string createNewInstallation(const std::string& nameValue, const std::string& descriptionValue, const std::string& inuseValue);
+    //std::string createNewSensorGroup(const std::string& installationIDValue, const std::string& nameValue, const std::string& descriptionValue, const std::string& inuseValue);
+    //std::string createNewSensor(const std::string& sensorGroupIDValue, const std::string& nameValue, const std::string& dataNameValue, const std::string& descriptionValue, const std::string& inuseValue);
 
 	/*
 	 *	Creates XML that generates a new type on the ipsum server. 
@@ -55,12 +51,8 @@ class XML
 	 *	Each field has a name and a type (for instance float_n or int_ or text (see ipsum documentation for the different types possible)
 	 *
 	 */
-	std::string createNewType(const std::string& aName, const std::vector<std::pair<std::string, std::string>>& aListOfFields) throw (UnknownDataType);
+    //std::string createNewType(const std::string& aName, const std::vector<std::pair<std::string, std::string>>& aListOfFields) throw (UnknownDataType);
 
-	/*
-	 *	NOT IMPLEMENTED YET
-	 */
-	std::string createNewUser();
 
 	std::string login(const std::string& username, const std::string& password);
 

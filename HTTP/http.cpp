@@ -485,6 +485,7 @@ std::string Http::ipsumInfo() throw (HttpError)
 	return sendGet(url, &Http::standardReplyWrapper);
 }
 
+/*
 std::string Http::createNewSensor(std::string sensorGroupIDValue, std::string nameValue, std::string dataNameValue, std::string descriptionValue, std::string inuseValue) throw (HttpError)
 {
 	XML XMLParser;
@@ -506,9 +507,9 @@ std::string Http::createNewSensor(std::string sensorGroupIDValue, std::string na
 
     return sendPost(url, XMLParser.createNewSensor(sensorGroupIDValue, nameValue, dataNameValue, descriptionValue, inuseValue), &Http::standardReplyWrapper);
 }
+*/
 
-
-
+/*
 std::string Http::createNewType(std::string aName, std::vector<std::pair<std::string, std::string>> aListOfFields) throw (HttpError)
 
 {
@@ -532,6 +533,7 @@ std::string Http::createNewType(std::string aName, std::vector<std::pair<std::st
 
 	return sendPost(url, XMLParser.createNewType(aName, aListOfFields), &Http::standardReplyWrapper);
 }
+*/
 
 std::string Http::changeSensorGroup(std::string newXML)
 {

@@ -79,7 +79,7 @@ class MainClass
 	Webservice * webService;
 	Ipsum * ipsum;
 
-    bool * exit;
+    bool exit;
     /*
      * A function that converts std::string to std::vector<unsigned char>, mainly used to translate the string retrieved from
      * the sqlite DB to a vector of unsigned chars that is needed by the libelium packets.
