@@ -567,6 +567,14 @@ void MainClass::libelAddNodeResponseHandler(LibelAddNodeResponse * libelAddNodeR
         sensorFound = false;
     }
 
+    #ifdef DEBUG
+    std::cout << "\033[1;31m sensors to change in use. \033[0m" << std::endl;
+    for(auto it = sensorIDs.begin(); it != sensorIDs.end(); ++it)
+    {
+        std::cout << "sensor found: " << (int) it->first << " bool " << it->second << std::endl;
+    }
+    #endif
+
     IpsumChangeInUsePacket * ipsumChangeInUsePacket = new IpsumChangeInUsePacket(installationID, sensorGroupID, sensorIDs, true);
     std::cout << "adding ipsumpacket" << std::endl;
     ipsumSendQueue->addPacket(ipsumChangeInUsePacket);

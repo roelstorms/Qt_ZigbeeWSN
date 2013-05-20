@@ -659,11 +659,17 @@ void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
                 if(sensorsIt->second)
                 {
                     inUse = xercesc::XMLString::transcode("True");
+                    #ifdef IPSUM_DEBUG
+                    std::cout << "inuse of sensor changed to true" << std::endl;
+                    #endif
                 }
                 else
                 {
 
                     inUse = xercesc::XMLString::transcode("False");
+                    #ifdef IPSUM_DEBUG
+                    std::cout << "inuse of sensor changed to false" << std::endl;
+                    #endif
                 }
                 nextElement->setTextContent(inUse);
                 xercesc::XMLString::release(&inUse);

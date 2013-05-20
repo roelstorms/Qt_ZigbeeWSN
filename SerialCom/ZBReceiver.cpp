@@ -15,9 +15,10 @@ ZBReceiver::~ZBReceiver()
 unsigned char ZBReceiver::readByte()
 {
 	int input = 0x0;
-    if(read(connectionDescriptor, &input, 1) != 1)
+    int bytesRead = read(connectionDescriptor, &input, 1);
+    if(bytesRead != 1)
     {
-        std::cerr << "reading a byte didn't return 1 byte" << std::endl;
+        std::cerr << "reading a byte didn't return 1 byte, bytes read: " << bytesRead << std::endl;
     }
             /*
     while(read(fd, &input, 1) <= 0)

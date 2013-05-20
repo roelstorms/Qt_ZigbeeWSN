@@ -27,7 +27,7 @@ LibelIOPacket::LibelIOPacket(std::vector<unsigned char> input) : ReceivePacket(i
 
 
         std::cout << "mask: " << std::endl;
-    #ifdef DEBUG
+    #ifdef PACKET_DEBUG
         for(auto it = mask.begin(); it < mask.end(); ++it)
         {
             std::cout << (*it) << std::endl;
