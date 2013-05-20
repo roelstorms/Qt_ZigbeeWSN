@@ -326,7 +326,7 @@ void Http::uploadData(std::string aSensorType, std::string destinationBase64, st
     temp.append(PersonalKey);
 	url.append(generateCode(temp));
 	
-	XML XMLParser;
+    XML XMLParser;
 	sendPost(url, XMLParser.uploadData(aSensorType, input), &Http::standardReplyWrapper);
 }
 

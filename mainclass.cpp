@@ -73,8 +73,8 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
 
     sentZBPackets = new std::queue<Packet *>;
 
-    //ipsum = new Ipsum("http://ipsum.groept.be", "a31dd4f1-9169-4475-b316-764e1e737653", ipsumSendQueue, ipsumReceiveQueue, conditionVariableMutex, mainConditionVariable, ipsumConditionVariableMutex, ipsumConditionVariable);
-    //ipsumThread = new boost::thread(boost::ref(*ipsum));
+    ipsum = new Ipsum("http://193.190.255.27", "a31dd4f1-9169-4475-b316-764e1e737653", ipsumSendQueue, ipsumReceiveQueue, conditionVariableMutex, mainConditionVariable, ipsumConditionVariableMutex, ipsumConditionVariable);
+    ipsumThread = new boost::thread(boost::ref(*ipsum));
 
     localZBSenderQueue = new std::vector<Packet *>;
 }
@@ -518,6 +518,8 @@ void MainClass::libelChangeNodeFreqResponseHandler(LibelChangeNodeFreqResponse *
 
 void MainClass::libelAddNodeResponseHandler(LibelAddNodeResponse * libelAddNodeResponse)
 {
+    std::cout << "MainClass::libelAddNodeResponseHandler(LibelAddNodeResponse * libelAddNodeResponse)" << std::endl;
+
     if(libelAddNodeResponse == nullptr)
     {
         std::cerr << "dynamic cast failed on LibelAddNodeResponse in main" << std::endl;
@@ -596,23 +598,23 @@ void MainClass::transmitStatusHandler(TransmitStatusPacket * transmitStatusPacke
             if(addNodePacket.second > changeFreqPacket.second)
             {
                 std::cout << "resending addNodePacket" << std::endl;
-                localZBSenderQueue->push_back(addNodePacket.first);
+                //localZBSenderQueue->push_back(addNodePacket.first);
             }
             else
             {
                 std::cout << "resending changeFreqPacket" << std::endl;
-                localZBSenderQueue->push_back(changeFreqPacket.first);
+                //localZBSenderQueue->push_back(changeFreqPacket.first);
             }
         }
         else if(addNodePacket.first  != nullptr)
         {
             std::cout << "resending addNodePacket" << std::endl;
-            localZBSenderQueue->push_back(addNodePacket.first);
+            //localZBSenderQueue->push_back(addNodePacket.first);
         }
         else if(changeFreqPacket.first  != nullptr)
         {
             std::cout << "resending changeFreqPacket" << std::endl;
-            localZBSenderQueue->push_back(changeFreqPacket.first);
+            //localZBSenderQueue->push_back(changeFreqPacket.first);
         }
     }
     delete transmitStatusPacket;

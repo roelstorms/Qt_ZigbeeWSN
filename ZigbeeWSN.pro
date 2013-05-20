@@ -3,6 +3,7 @@ CONFIG += console
 CONFIG -= qt
 
 QMAKE_CXXFLAGS += -std=c++11   -g
+DEFINES += DEBUG IPSUM_DEBUG HTTP_DEBUG
 
 SOURCES += \
     packetqueue.cpp \
