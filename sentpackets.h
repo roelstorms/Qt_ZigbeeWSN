@@ -98,7 +98,8 @@ std::vector<P> SentPackets<P, R>::findExpiredPacket(std::vector<Packet *> * queu
         }
         else if ((std::get<1>(it) > expirationTime) && (std::get<2>(it) <= numberOfRetries))    // True when packet expired and number of retries not reached -> resend
         {
-            queue->push_back(std::get<0>(it));
+            std::cout << "expired packet found and resend done" << std::endl;
+            //queue->push_back(std::get<0>(it));
             return false;
         }
         else

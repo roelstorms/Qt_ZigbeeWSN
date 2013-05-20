@@ -1,6 +1,10 @@
 #ifndef MAINCLASS_H
 #define MAINCLASS_H
 
+#define DEBUG
+#define IPSUM_DEBUG
+#define HTTP_DEBUG
+
 #include <stdio.h>   /* Standard input/output definitions */
 #include <string.h>  /* String function definitions */
 #include <unistd.h>  /* UNIX standard function definitions */

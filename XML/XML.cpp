@@ -6,7 +6,7 @@ XML::XML()
 		xercesc::XMLPlatformUtils::Initialize();
 	}
 	catch (const xercesc::XMLException& toCatch) {
-		std::cout << "xercesc::XMLPlatformUtils::Initialize() failed" << std::endl << std::endl;// Do your failure processing here
+        std::cerr << "xercesc::XMLPlatformUtils::Initialize() failed" << std::endl << std::endl;// Do your failure processing here
 	}
 
 	XMLCh tempStr[100];

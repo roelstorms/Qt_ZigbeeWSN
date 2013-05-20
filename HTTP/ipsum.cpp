@@ -77,7 +77,10 @@ void Ipsum::operator()()
 
 void Ipsum::uploadDataHandler(IpsumUploadPacket * packet)
 {
+    #ifdef IPSUM_DEBUG
     std::cout << "Ipsum::uploadDataHandler(IpsumUploadPacket * packet)" << std::endl;
+    #endif
+
     try
     {
         http->uploadData(packet);
@@ -99,7 +102,9 @@ void Ipsum::uploadDataHandler(IpsumUploadPacket * packet)
 
 void Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)
 {
+    #ifdef IPSUM_DEBUG
     std::cout << "Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)" << std::endl;
+    #endif
     try
     {
         http->changeInUse(packet);
@@ -121,7 +126,9 @@ void Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)
 
 void Ipsum::changeFrequencyHandler(IpsumChangeFreqPacket * packet)
 {
+    #ifdef IPSUM_DEBUG
     std::cout << "Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)" << std::endl;
+    #endif
     try
     {
         http->changeFreq(packet);

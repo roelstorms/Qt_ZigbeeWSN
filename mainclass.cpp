@@ -10,11 +10,11 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
     dup2 (fd, STDERR_FILENO);
 
 
-    //socket = new Http("http://ipsum.groept.be", "a31dd4f1-9169-4475-b316-764e1e737653");
+    socket = new Http("http://193.190.255.27", "a31dd4f1-9169-4475-b316-764e1e737653");
 
     try
     {
-       // socket->ipsumInfo();
+        socket->ipsumInfo();
     }
     catch(HttpError)
     {
@@ -132,9 +132,10 @@ void MainClass::operator() ()
     localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelAddNodePacket));
     addNodeSentPackets->addPacket(libelAddNodePacket);
     */
+
     while(true)
     {
-
+    /*
         std::string input;
         getline(std::cin, input);
 
@@ -144,7 +145,7 @@ void MainClass::operator() ()
             exit = true;
             break;
         }
-
+    */
 
         checkExpiredPackets();
 
@@ -578,6 +579,7 @@ void MainClass::libelAddNodeResponseHandler(LibelAddNodeResponse * libelAddNodeR
 
 void MainClass::transmitStatusHandler(TransmitStatusPacket * transmitStatusPacket)
 {
+    std::cout << "MainClass::transmitStatusHandler(TransmitStatusPacket * transmitStatusPacket) " << std::endl;
     if(transmitStatusPacket == nullptr)
     {
         std::cerr << "dynamic cast failed on TransmitStatusPacket in main" << std::endl;
@@ -593,19 +595,23 @@ void MainClass::transmitStatusHandler(TransmitStatusPacket * transmitStatusPacke
         {
             if(addNodePacket.second > changeFreqPacket.second)
             {
+                std::cout << "resending addNodePacket" << std::endl;
                 localZBSenderQueue->push_back(addNodePacket.first);
             }
             else
             {
+                std::cout << "resending changeFreqPacket" << std::endl;
                 localZBSenderQueue->push_back(changeFreqPacket.first);
             }
         }
         else if(addNodePacket.first  != nullptr)
         {
+            std::cout << "resending addNodePacket" << std::endl;
             localZBSenderQueue->push_back(addNodePacket.first);
         }
         else if(changeFreqPacket.first  != nullptr)
         {
+            std::cout << "resending changeFreqPacket" << std::endl;
             localZBSenderQueue->push_back(changeFreqPacket.first);
         }
     }
@@ -614,6 +620,7 @@ void MainClass::transmitStatusHandler(TransmitStatusPacket * transmitStatusPacke
 
 void MainClass::requestDataHandler(WSRequestDataPacket * wsRequestDataPacket)
 {
+    std::cout << "MainClass::requestDataHandler(WSRequestDataPacket * wsRequestDataPacket)" << std::endl;
     if(wsRequestDataPacket == nullptr)
     {
         std::cerr << "dynamic cast failed on WSRequestDataPacket in main" << std::endl;
@@ -648,6 +655,7 @@ void MainClass::requestDataHandler(WSRequestDataPacket * wsRequestDataPacket)
 
 void MainClass::changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFrequencyPacket)
 {
+    std::cout << "MainClass::changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFrequencyPacket)" << std::endl;
     if(wsChangeFrequencyPacket == nullptr)
     {
         std::cerr << "dynamic cast failed on WSChangeFrequencyPacket in main" << std::endl;
@@ -698,11 +706,14 @@ void MainClass::addNodeHandler(WSAddNodePacket *wsAddNodePacket)
     }
 
     db->makeNewNode(wsAddNodePacket->getInstallationID(),wsAddNodePacket->getSensorGroupID(), wsAddNodePacket->getZigbeeAddress64Bit());
+
     delete wsAddNodePacket;
 }
 
 void MainClass::addSensorHandler(WSAddSensorsPacket *wsAddSensorsPacket)
 {
+    std::cout << "MainClass::addSensorHandler(WSAddSensorsPacket *wsAddSensorsPacket)" << std::endl;
+
     if(wsAddSensorsPacket == nullptr)
     {
         std::cerr << "dynamic cast failed on WSAddSensorsPacket in main" << std::endl;
@@ -742,8 +753,8 @@ void MainClass::addSensorHandler(WSAddSensorsPacket *wsAddSensorsPacket)
 
     //zbSenderQueue->addPacket(dynamic_cast<Packet *> (packet));
     localZBSenderQueue->push_back(dynamic_cast<Packet *> (packet));
-
     addNodeSentPackets->addPacket(packet);
+    std::cout << "LocalZBSenderQueue size: " << localZBSenderQueue->size() << std::endl << std::endl;
 
     //std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
     //zbSenderConditionVariable->notify_azigbeeAddressll();
