@@ -10,7 +10,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
     dup2 (fd, STDERR_FILENO);
 
 
-    socket = new Http("http://ipsum.groept.be", "a31dd4f1-9169-4475-b316-764e1e737653");
+    socket = new Http("http://193.190.255.27", "a31dd4f1-9169-4475-b316-764e1e737653");
 
     try
     {
@@ -29,9 +29,11 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
         std::cerr << "also provide the port number" << std::endl;
         throw StartupError();
     }
+    std::cout << "Passed startup checks" << std::endl;
 
-    *exit = false;
+    exit = false;
     db = new Sql("../zigbee.dbs");
+        std::cout << "Passed startup checks" << std::endl;
     con = new Connection();
     int connectionDescriptor = con->openPort(atoi(argv[1]), 9600);
 
@@ -57,7 +59,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
     wsConditionVariable = new std::condition_variable;
     wsConditionVariableMutex = new std::mutex;
 
-    zbReceiver = new ZBReceiver(connectionDescriptor, conditionVariableMutex, mainConditionVariable, zbReceiveQueue, exit);
+    zbReceiver = new ZBReceiver(connectionDescriptor, conditionVariableMutex, mainConditionVariable, zbReceiveQueue, &exit);
     zbReceiverThread = new boost::thread(boost::ref(*zbReceiver));
 
     webService = new Webservice (wsReceiveQueue, wsSendQueue, mainConditionVariable, conditionVariableMutex, wsConditionVariable, wsConditionVariableMutex);
@@ -71,8 +73,8 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
 
     sentZBPackets = new std::queue<Packet *>;
 
-    ipsum = new Ipsum("http://ipsum.groept.be", "a31dd4f1-9169-4475-b316-764e1e737653", ipsumSendQueue, ipsumReceiveQueue, conditionVariableMutex, mainConditionVariable, ipsumConditionVariableMutex, ipsumConditionVariable);
-    ipsumThread = new boost::thread(boost::ref(*ipsum));
+    //ipsum = new Ipsum("http://ipsum.groept.be", "a31dd4f1-9169-4475-b316-764e1e737653", ipsumSendQueue, ipsumReceiveQueue, conditionVariableMutex, mainConditionVariable, ipsumConditionVariableMutex, ipsumConditionVariable);
+    //ipsumThread = new boost::thread(boost::ref(*ipsum));
 
     localZBSenderQueue = new std::vector<Packet *>;
 }
@@ -108,6 +110,7 @@ MainClass::~MainClass()
     delete ipsumReceiveQueue;
     delete ipsumConditionVariable;
     delete ipsumConditionVariableMutex;
+    delete ipsumThread;
     delete localIpsumSendQueue;
     delete localIpsumReceiveQueue;
     delete sentZBPackets;
@@ -129,8 +132,21 @@ void MainClass::operator() ()
     localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelAddNodePacket));
     addNodeSentPackets->addPacket(libelAddNodePacket);
     */
+
     while(true)
     {
+    /*
+        std::string input;
+        getline(std::cin, input);
+
+        if (input.length() > 0)
+        {
+            std::cout << "input: " << input << std::endl;
+            exit = true;
+            break;
+        }
+    */
+
         checkExpiredPackets();
 
         {	// Scope of unique_lock
@@ -277,6 +293,9 @@ void MainClass::operator() ()
     }
 
     zbReceiverThread->join();
+    zbSenderThread->join();
+    ipsumThread->join();
+
 }
 
 void MainClass::checkExpiredPackets()
@@ -307,7 +326,7 @@ std::string MainClass::ucharVectToString(const std::vector<unsigned char>& uchar
 unsigned char MainClass::getNextFrameID()
 {
     nextFrameID++;
-    if(nextFrameID == 0) // If nextFrameID overflows it can not be 0, because 0 means : do not send an ack to this packet. And we always want an ack.
+    if(nextFrameID == 0) // If nextFrameID overflows it can not be 0, because 0 means : do not send an ack to this packet. We always want an ack.
         nextFrameID++;
     return nextFrameID;
 }
@@ -560,6 +579,7 @@ void MainClass::libelAddNodeResponseHandler(LibelAddNodeResponse * libelAddNodeR
 
 void MainClass::transmitStatusHandler(TransmitStatusPacket * transmitStatusPacket)
 {
+    std::cout << "MainClass::transmitStatusHandler(TransmitStatusPacket * transmitStatusPacket) " << std::endl;
     if(transmitStatusPacket == nullptr)
     {
         std::cerr << "dynamic cast failed on TransmitStatusPacket in main" << std::endl;
@@ -575,19 +595,23 @@ void MainClass::transmitStatusHandler(TransmitStatusPacket * transmitStatusPacke
         {
             if(addNodePacket.second > changeFreqPacket.second)
             {
+                std::cout << "resending addNodePacket" << std::endl;
                 localZBSenderQueue->push_back(addNodePacket.first);
             }
             else
             {
+                std::cout << "resending changeFreqPacket" << std::endl;
                 localZBSenderQueue->push_back(changeFreqPacket.first);
             }
         }
         else if(addNodePacket.first  != nullptr)
         {
+            std::cout << "resending addNodePacket" << std::endl;
             localZBSenderQueue->push_back(addNodePacket.first);
         }
         else if(changeFreqPacket.first  != nullptr)
         {
+            std::cout << "resending changeFreqPacket" << std::endl;
             localZBSenderQueue->push_back(changeFreqPacket.first);
         }
     }
@@ -596,6 +620,7 @@ void MainClass::transmitStatusHandler(TransmitStatusPacket * transmitStatusPacke
 
 void MainClass::requestDataHandler(WSRequestDataPacket * wsRequestDataPacket)
 {
+    std::cout << "MainClass::requestDataHandler(WSRequestDataPacket * wsRequestDataPacket)" << std::endl;
     if(wsRequestDataPacket == nullptr)
     {
         std::cerr << "dynamic cast failed on WSRequestDataPacket in main" << std::endl;
@@ -630,6 +655,7 @@ void MainClass::requestDataHandler(WSRequestDataPacket * wsRequestDataPacket)
 
 void MainClass::changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFrequencyPacket)
 {
+    std::cout << "MainClass::changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFrequencyPacket)" << std::endl;
     if(wsChangeFrequencyPacket == nullptr)
     {
         std::cerr << "dynamic cast failed on WSChangeFrequencyPacket in main" << std::endl;
@@ -680,11 +706,14 @@ void MainClass::addNodeHandler(WSAddNodePacket *wsAddNodePacket)
     }
 
     db->makeNewNode(wsAddNodePacket->getInstallationID(),wsAddNodePacket->getSensorGroupID(), wsAddNodePacket->getZigbeeAddress64Bit());
+
     delete wsAddNodePacket;
 }
 
 void MainClass::addSensorHandler(WSAddSensorsPacket *wsAddSensorsPacket)
 {
+    std::cout << "MainClass::addSensorHandler(WSAddSensorsPacket *wsAddSensorsPacket)" << std::endl;
+
     if(wsAddSensorsPacket == nullptr)
     {
         std::cerr << "dynamic cast failed on WSAddSensorsPacket in main" << std::endl;
@@ -724,8 +753,8 @@ void MainClass::addSensorHandler(WSAddSensorsPacket *wsAddSensorsPacket)
 
     //zbSenderQueue->addPacket(dynamic_cast<Packet *> (packet));
     localZBSenderQueue->push_back(dynamic_cast<Packet *> (packet));
-
     addNodeSentPackets->addPacket(packet);
+    std::cout << "LocalZBSenderQueue size: " << localZBSenderQueue->size() << std::endl << std::endl;
 
     //std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
     //zbSenderConditionVariable->notify_azigbeeAddressll();

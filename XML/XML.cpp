@@ -6,7 +6,7 @@ XML::XML()
 		xercesc::XMLPlatformUtils::Initialize();
 	}
 	catch (const xercesc::XMLException& toCatch) {
-		std::cout << "xercesc::XMLPlatformUtils::Initialize() failed" << std::endl << std::endl;// Do your failure processing here
+        std::cerr << "xercesc::XMLPlatformUtils::Initialize() failed" << std::endl << std::endl;// Do your failure processing here
 	}
 
 	XMLCh tempStr[100];
@@ -221,6 +221,7 @@ std::string XML::uploadData(const std::string& type, const std::string& fieldNam
 }	
 
 
+/*
 std::string XML::createNewInstallation(const std::string& nameValue, const std::string& descriptionValue, const std::string& inuseValue)
 {
 	XMLCh tempStr[100];
@@ -293,6 +294,9 @@ std::string XML::createNewInstallation(const std::string& nameValue, const std::
 	doc->release();
 	return XMLOutput;
 }
+*/
+
+/*
 
 std::string XML::createNewSensorGroup(const std::string& installationIDValue, const std::string& nameValue, const std::string& descriptionValue, const std::string& inuseValue)
 {
@@ -377,7 +381,9 @@ std::string XML::createNewSensorGroup(const std::string& installationIDValue, co
 	doc->release();
 	return XMLOutput;
 }
+*/
 
+/*
 std::string XML::createNewSensor(const std::string& sensorGroupIDValue, const std::string& nameValue, const std::string& dataNameValue, const std::string& descriptionValue, const std::string& inuseValue)
 {
 
@@ -468,7 +474,9 @@ std::string XML::createNewSensor(const std::string& sensorGroupIDValue, const st
 	doc->release();
 	return XMLOutput;
 }
+*/
 
+/*
 std::string XML::createNewType(const std::string& aName, const std::vector<std::pair<std::string, std::string>>& aListOfFields) throw (UnknownDataType)
 {
 	std::string XMLOutput;
@@ -598,12 +606,7 @@ std::string XML::createNewType(const std::string& aName, const std::vector<std::
 
 	return XMLOutput;
 }
-
-std::string XML::createNewUser()
-{
-	std::string XMLOutput;
-	return XMLOutput;
-}
+*/
 
 std::string XML::login(const std::string& username, const std::string& password)
 {

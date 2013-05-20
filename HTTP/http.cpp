@@ -3,7 +3,10 @@
 
 Http::Http(std::string urlBase, std::string PersonalKey): urlBase(urlBase), PersonalKey(PersonalKey)
 {
+    #ifdef HTTP_DEBUG
 	std::cout << "Http constructor" << std::endl;
+    #endif
+
 	curl_global_init(CURL_GLOBAL_ALL);
 	token = std::string();
 	httpError = -1;
@@ -12,7 +15,10 @@ Http::Http(std::string urlBase, std::string PersonalKey): urlBase(urlBase), Pers
 Http::~Http()
 {
 	curl_global_cleanup();
+
+    #ifdef HTTP_DEBUG
 	std::cout << "Http destructor" << std::endl;
+    #endif
 }
 
 size_t Http::standardReplyWrapper(void *buffer, size_t size, size_t nmemb, void *obj)
@@ -49,9 +55,9 @@ size_t Http::headerHandler(void *buffer, size_t size, size_t nmemb)
 std::string Http::sendGet(std::string urlAddition, size_t (*callback) (void*, size_t, size_t, void*)) throw (HttpError)
 {
 	curl = curl_easy_init();
-
+    #ifdef HTTP_DEBUG
 	std::cout << "sendGet" << std::endl;
-
+    #endif
 	CURLcode result;
 	std::string url(urlBase);
 	url.append(urlAddition);	
@@ -71,7 +77,7 @@ std::string Http::sendGet(std::string urlAddition, size_t (*callback) (void*, si
 		/* Check for errors */
 		if(result != CURLE_OK)
 		{
-			fprintf(stderr, "curl_easy_perform() failed: %s\n", curl_easy_strerror(result));
+            std::cout << "curl_easy_perform() failed: " <<  curl_easy_strerror(result) << std::endl;
 			throw HttpError();
 		}		
 		/* always cleanup */
@@ -83,14 +89,17 @@ std::string Http::sendGet(std::string urlAddition, size_t (*callback) (void*, si
 std::string Http::sendPost(std::string urlAddition, std::string data, size_t (*callback) (void *, size_t, size_t, void *)) throw (HttpError)
 {
 	curl = curl_easy_init();
-
+    #ifdef HTTP_DEBUG
 	std::cout << "sendPost" << std::endl;
+    #endif
 	CURLcode result;
 	std::string url(urlBase);
 	url.append(urlAddition);	
+    #ifdef HTTP_DEBUG
 	std::cout << "string used:" << std::endl << url << std::endl << std::endl;
 	std::cout << "data sent: " << std::endl << data << std::endl << std::endl;
-	if(curl) {
+    #endif
+    if(curl) {
 		curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
 		curl_easy_setopt(curl, CURLOPT_POSTFIELDS, data.c_str());
 
@@ -115,8 +124,10 @@ std::string Http::sendPost(std::string urlAddition, std::string data, size_t (*c
 		}
 		/* always cleanup */
 	}
+    #ifdef HTTP_DEBUG
 	std::cout << "end of sendpost" << std::endl;
-	curl_easy_cleanup(curl);
+    #endif
+    curl_easy_cleanup(curl);
 	if(httpError != 200)
 	{
         throw HttpError();
@@ -126,8 +137,9 @@ std::string Http::sendPost(std::string urlAddition, std::string data, size_t (*c
 }
 std::string Http::generateCode(std::string url)
 {
+    #ifdef HTTP_DEBUG
 	std::cout << std::endl << "generating code from url: " << std::endl << url << std::endl << std::endl;
-
+    #endif
 	const unsigned char * input = (const unsigned char*) url.c_str();
 	unsigned char * output =  (unsigned char *) malloc(sizeof(unsigned char) * 20);
 	SHA1(input, url.size(), output);
@@ -135,12 +147,13 @@ std::string Http::generateCode(std::string url)
 	char temp[20];
 	for (int i = 0; i < 20; i++) 
 	{
-		//printf("%02x ", output[i]);
 		sprintf(temp, "%02x", output[i]);
 		code.append(temp);	
 
 	}
+    #ifdef HTTP_DEBUG
 	std::cout << std::endl << "code: " << code << std::endl;
+    #endif
 	delete output;
 	return code;
 }
@@ -182,9 +195,13 @@ std::string Http::calculateDestination(int userID, int installationID, int senso
 	output.append(":");
 
 	std::string stringChecksum(std::to_string(checksum));
+    #ifdef HTTP_DEBUG_2
 	std::cout << "long checksum:" << std::endl << stringChecksum << std::endl;
+    #endif
 	std::string shortChecksum(stringChecksum.end()-6, stringChecksum.end());
+    #ifdef HTTP_DEBUG_2
 	std::cout << "short checksum" << std::endl << shortChecksum << std::endl;
+    #endif
 	output.append(shortChecksum);
 
 	std::string output2 = toBase64(output);
@@ -195,19 +212,23 @@ std::string Http::calculateDestination(int userID, int installationID, int senso
 std::string Http::toBase64(std::string input)
 {
 	using namespace boost::archive::iterators;
-	using namespace std;
 
-	typedef transform_width< binary_from_base64<remove_whitespace<string::const_iterator> >, 8, 6 > it_binary_t;
-	typedef insert_linebreaks<base64_from_binary<transform_width<string::const_iterator,6,8> >, 72 > it_base64_t;
-	cout << "Your string is: '"<<input<<"'"<<endl;
+
+    typedef transform_width< binary_from_base64<remove_whitespace<std::string::const_iterator> >, 8, 6 > it_binary_t;
+    typedef insert_linebreaks<base64_from_binary<transform_width<std::string::const_iterator,6,8> >, 72 > it_base64_t;
+
+    #ifdef HTTP_DEBUG_2
+    std::cout << "Base 64 string is: '" << input << "'" << std::endl;
+    #endif
 
 	// Encode
 	unsigned int writePaddChars = (3-input.length()%3)%3;
-	string base64(it_base64_t(input.begin()),it_base64_t(input.end()));
+    std::string base64(it_base64_t(input.begin()),it_base64_t(input.end()));
 	base64.append(writePaddChars,'=');
 
-	cout << "Base64 representation: " << base64 << endl;
-
+    #ifdef HTTP_DEBUG_2
+    std::cout << "Base64 representation: " << std::base64 << std::endl;
+    #endif
 	return base64;
 }
 
@@ -216,7 +237,10 @@ void Http::uploadData(IpsumUploadPacket * packet) throw (HttpError)
 {
 	std::string url;
 	std::string temp;
+
+    #ifdef HTTP_DEBUG
 	std::cout << "Http::uploadData" << std::endl;
+    #endif
 
 	login();
 	std::string timeStamp = xmlParser.getTimeInSeconds();
@@ -234,8 +258,10 @@ void Http::uploadData(IpsumUploadPacket * packet) throw (HttpError)
 		url.append(generateCode(temp));
 		std::string sensorType;
 		std::string fieldName;	
+        #ifdef HTTP_DEBUG_2
         std::cout << "sensor Type to be uploaded: " << std::get<0>(*it) << std::endl;
-		switch(std::get<0>(*it))
+        #endif
+        switch(std::get<0>(*it))
 		{
 			case TEMP:
 				sensorType = "zigbeeTemp";
@@ -272,7 +298,9 @@ void Http::uploadData(IpsumUploadPacket * packet) throw (HttpError)
 		}
 
         sendPost(url, xmlParser.uploadData(sensorType, "value", std::get<2>(*it), timeStamp), &Http::standardReplyWrapper);
+        #ifdef HTTP_DEBUG
         std::cout << fieldName << " data uploaded to ipsum" << std::endl;
+        #endif
     }
 	
 }
@@ -281,7 +309,10 @@ void Http::uploadData(std::string aSensorType, std::string destinationBase64, st
 {
 	std::string url;
 	std::string temp;
+
+    #ifdef HTTP_DEBUG
 	std::cout << "Http::uploadData" << std::endl;
+    #endif
 
 	login();
 
@@ -319,8 +350,9 @@ bool Http::login() throw (HttpError, InvalidLogin)
 		}
 
 		token = XMLParser.analyzeLoginReply(loginReply);
+        #ifdef HTTP_DEBUG_2
 		std::cout << "token calculated from login reply:  " << token << std::endl;
-
+        #endif
 		if (token.empty())
 		{
 			std::cerr << "Login failed, reply contained error = true" << std::endl;
@@ -330,15 +362,19 @@ bool Http::login() throw (HttpError, InvalidLogin)
 		else
 		{
 			tokenExpireTime = boost::posix_time::ptime (boost::posix_time::second_clock::universal_time() + boost::posix_time::minutes(30));
+            #ifdef HTTP_DEBUG
 			std::cout << "tokenExpireTime: " << boost::posix_time::to_simple_string(tokenExpireTime) << std::endl;
-		}
+            #endif
+        }
 	}
 	return true;
 }
 void Http::setUserRights(std::string entity, int userID, int rights) throw (HttpError)
 {
+    #ifdef HTTP_DEBUG
 	std::cout << "Http::setUserRights" << std::endl;
-	
+    #endif
+
 	login();
 	
 	std::string url;
@@ -390,8 +426,9 @@ std::string Http::getEntity(std::string destinationBase64) throw (HttpError)
 
 std::string Http::getChildren(std::string destinationBase64) throw (HttpError)
 {
-
+    #ifdef HTTP_DEBUG
 	std::cout << "Http::getEntity" << std::endl;
+    #endif
 	XML XMLParser;
 
 	login();
@@ -419,10 +456,11 @@ void Http::setToken(std::string token)
 }
 
 std::string Http::selectData(std::string destinationBase64, std::vector<std::string> fields) throw (HttpError)
-
 {
-
+    #ifdef HTTP_DEBUG
 	std::cout << std::endl << "Http::selectData" << std::endl << std::endl;
+    #endif
+
 	XML XMLParser;
 
 	login();
@@ -447,35 +485,9 @@ std::string Http::selectData(std::string destinationBase64, std::vector<std::str
 
     return sendPost(url, XMLParser.selectData(fields,  XMLParser.getTimestamp(1, 0, 0, 1, 3, 2013), XMLParser.getCurrentTimestamp()), &Http::standardReplyWrapper);
 	//sendPost(url, "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<get>\n<start>2012-01-01T00:00:00</start>\n<end>9999-12-31T23:59:59</end>\n<select>\n<field>\n<name>intensity</name>\n</field>\n</select>\n</get>", &Http::standardReplyWrapper);
-
-
-
 }
 
 
-std::string Http::testQuery() throw (HttpError)
-
-{
-	std::string url, temp;
-	// url format for entity: entity/{token}/{destination}/{code}
-	url.append("/SecureEcho/");
-	url.append(calculateDestination(21, 31));//, 320, 2041));
-	url.append("/");
-	temp.clear();
-	temp.append(url);
-    temp.append(PersonalKey);
-	url.append(generateCode(temp));
-
-	
-	//sendPost(url, XMLParser.selectData(fields), &Http::standardReplyWrapper);
-	sendPost(url, "<get><start>2012-01-01T00:00:00</start><end>9999-12-31T23:59:59</end><select><field><function></function><name>intensity</name></field><operation></operation><as></as></select></get>", &Http::standardReplyWrapper);
-
-
-
-
-	std::string output;
-	return output;
-}
 
 std::string Http::ipsumInfo() throw (HttpError)
 {
@@ -485,6 +497,7 @@ std::string Http::ipsumInfo() throw (HttpError)
 	return sendGet(url, &Http::standardReplyWrapper);
 }
 
+/*
 std::string Http::createNewSensor(std::string sensorGroupIDValue, std::string nameValue, std::string dataNameValue, std::string descriptionValue, std::string inuseValue) throw (HttpError)
 {
 	XML XMLParser;
@@ -506,9 +519,9 @@ std::string Http::createNewSensor(std::string sensorGroupIDValue, std::string na
 
     return sendPost(url, XMLParser.createNewSensor(sensorGroupIDValue, nameValue, dataNameValue, descriptionValue, inuseValue), &Http::standardReplyWrapper);
 }
+*/
 
-
-
+/*
 std::string Http::createNewType(std::string aName, std::vector<std::pair<std::string, std::string>> aListOfFields) throw (HttpError)
 
 {
@@ -532,6 +545,7 @@ std::string Http::createNewType(std::string aName, std::vector<std::pair<std::st
 
 	return sendPost(url, XMLParser.createNewType(aName, aListOfFields), &Http::standardReplyWrapper);
 }
+*/
 
 std::string Http::changeSensorGroup(std::string newXML)
 {
@@ -584,7 +598,9 @@ void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
     /*
      *  Changing in use of the sensorGroup
      */
-
+    #ifdef HTTP_DEBUG
+    std::cout << "Http::changeInUse()" << std::endl;
+    #endif
 	std::string entity = getEntity(calculateDestination(21 ,packet->getInstallationID(), packet->getSensorGroupID()));
 	XML XMLParser;
 	xercesc::DOMDocument * doc= XMLParser.parseToDom(entity);
@@ -664,6 +680,10 @@ void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
 
 void Http::changeFreq(IpsumChangeFreqPacket *packet)  throw (HttpError)
 {
+    #ifdef HTTP_DEBUG
+    std::cout << "Http::changeFreq()" << std::endl;
+    #endif
+
     int installationID = packet->getInstallationID();
     int sensorGroupID = packet->getSensorGroupID();
     std::vector<std::pair<int, int> > frequencies = packet->getFrequencies();

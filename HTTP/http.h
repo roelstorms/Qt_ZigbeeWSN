@@ -63,10 +63,9 @@ class Http
 		std::string getChildren(std::string destinationBase64) throw (HttpError);	     
         void setToken(std::string token);
 		std::string selectData(std::string destinationBase64, std::vector<std::string> fields) throw (HttpError);
-		std::string testQuery() throw (HttpError);
 		std::string ipsumInfo() throw (HttpError);
-		std::string createNewSensor(std::string sensorGroupIDValue, std::string nameValue, std::string dataNameValue, std::string descriptionValue, std::string inuseValue) throw (HttpError);
-        std::string createNewType(std::string aName, std::vector<std::pair<std::string, std::string> > aListOfFields) throw (HttpError);
+        //std::string createNewSensor(std::string sensorGroupIDValue, std::string nameValue, std::string dataNameValue, std::string descriptionValue, std::string inuseValue) throw (HttpError);
+        //std::string createNewType(std::string aName, std::vector<std::pair<std::string, std::string> > aListOfFields) throw (HttpError);
         std::string changeSensorGroup(std::string newXML);
         std::string changeSensor(std::string newXML);
 

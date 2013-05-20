@@ -22,7 +22,7 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
     std::string url(request_info->uri);
     std::cout << "data: " << std::endl << post_data << std::endl;
 
-    if(url.find("9e7e3dccf2bfb4d927eec92d7a896655") != std::string::npos)
+    if(url.find("9e7e3dccf2bfb4d927eec92d7a896655") == std::string::npos)
     {
         int content_length = snprintf(content, sizeof(content),	"<error>invalid key</error>");
         mg_printf(conn,"HTTP/1.1 401 Unauthorized\r\n"

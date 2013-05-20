@@ -39,6 +39,8 @@ public:
      *  Since it is probably the last sent packet that received an acknoledgement. Also the time of sending this packet is returned to compare it with other packets from other sent queues.
      */
     std::pair<P, int> findResendablePacket(unsigned char frameID);
+
+    //std::pair<P, int> findResendablePacket(P packet);
 };
 
 template <class P, class R>
@@ -96,7 +98,8 @@ std::vector<P> SentPackets<P, R>::findExpiredPacket(std::vector<Packet *> * queu
         }
         else if ((std::get<1>(it) > expirationTime) && (std::get<2>(it) <= numberOfRetries))    // True when packet expired and number of retries not reached -> resend
         {
-            queue->push_back(std::get<0>(it));
+            std::cout << "expired packet found and resend done" << std::endl;
+            //queue->push_back(std::get<0>(it));
             return false;
         }
         else
@@ -127,4 +130,22 @@ std::pair<P, int> SentPackets<P, R>::findResendablePacket(unsigned char frameID)
     return resendablePacket;
 }
 
+/*
+template <class P, class R>
+std::pair<P, int> SentPackets<P, R>::findResendablePacket(P packet)
+{
+    std::pair <P, int> resendablePacket(nullptr, 0);
+    int lastTime = 0;
+    for(auto it = sentPackets.begin(); it < sentPackets.end(); ++it)
+    {
+        if((std::get<0>(*it) == packet) && (std::get<2>(*it) <= numberOfRetries) && (std::get<1>(*it) > lastTime))
+        {
+            lastTime = std::get<1>(*it);
+            resendablePacket = std::pair<P, int> (std::get<0>(*it), std::get<1>(*it));
+            ++std::get<2>(*it);
+        }
+    }
+    return resendablePacket;
+}
+*/
 #endif // SENTZBPACKETS_H
