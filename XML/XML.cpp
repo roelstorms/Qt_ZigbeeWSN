@@ -14,7 +14,7 @@ XML::XML()
 	impl = xercesc::DOMImplementationRegistry::getDOMImplementation(tempStr);
 	if(impl == NULL)
 	{
-		std::cout << "no implementation found" << std::endl;
+        std::cerr << "no implementation found" << std::endl;
 	}
 
 }
@@ -69,18 +69,17 @@ std::string XML::serializeDOM(xercesc::DOMNode* node) {
 	}
 	catch (const xercesc::XMLException& toCatch) {
 		char* message = xercesc::XMLString::transcode(toCatch.getMessage());
-		std::cout << "Exception message is: \n"
+        std::cerr << "Exception message is: \n"
 			<< message << "\n";
 		xercesc::XMLString::release(&message);
 	}
 	catch (const xercesc::DOMException& toCatch) {
 		char* message = xercesc::XMLString::transcode(toCatch.msg);
-		std::cout << "Exception message is: \n"
-			<< message << "\n";
+        std::cerr << "Exception message is: \n" << message << "\n";
 		xercesc::XMLString::release(&message);
 	}
 	catch (...) {
-		std::cout << "Unexpected Exception \n" ;
+        std::cerr << "Unexpected Exception \n" ;
 	}
 	delete myFormTarget;
 	theOutput->release();
@@ -94,7 +93,9 @@ std::string XML::uploadData(const std::string& type, const std::vector<std::pair
 
 	std::string XMLOutput;
 
-	std::cout << "begin of upload" << std::endl;
+    #ifdef XML_DEBUG
+        std::cout << "begin of upload" << std::endl;
+    #endif
 
 	xercesc::XMLString::transcode("upload", tempStr, 99);
 	xercesc::DOMDocument* doc = impl->createDocument(0, tempStr, 0);
@@ -147,7 +148,11 @@ std::string XML::uploadData(const std::string& type, const std::vector<std::pair
 	XMLOutput = serializeDOM(upload);
 
 	doc->release();
-	std::cout << "XMLouput:" << std::endl << XMLOutput << std::endl;	
+
+    #ifdef XML_DEBUG
+        std::cout << "XMLouput:" << std::endl << XMLOutput << std::endl;
+    #endif
+
 	// Other terminations and cleanup.
 	return XMLOutput;
 }
@@ -158,7 +163,9 @@ std::string XML::uploadData(const std::string& type, const std::string& fieldNam
 
 	std::string XMLOutput;
 
-	std::cout << "begin of upload" << std::endl;
+    #ifdef XML_DEBUG
+        std::cout << "begin of upload" << std::endl;
+    #endif
 
 	xercesc::XMLString::transcode("upload", tempStr, 99);
 	xercesc::DOMDocument* doc = impl->createDocument(0, tempStr, 0);
@@ -171,8 +178,10 @@ std::string XML::uploadData(const std::string& type, const std::string& fieldNam
 
 
 	unsigned long int sec = time(NULL);
-	std::cout << "time: " << std::endl << std::string(std::to_string(sec)) << std::endl;
 
+    #ifdef XML_DEBUG
+        std::cout << "time: " << std::endl << std::string(std::to_string(sec)) << std::endl;
+    #endif
 	xercesc::XMLString::transcode(timeStamp.c_str(), tempStr, 99);
 	xercesc::DOMText* timestampValue = doc->createTextNode(tempStr);
 	utimestamp->appendChild(timestampValue);
@@ -187,21 +196,17 @@ std::string XML::uploadData(const std::string& type, const std::string& fieldNam
 	xercesc::DOMElement* myType = doc->createElement(tempStr);
 	items->appendChild(myType);
 
-	
+    xercesc::XMLString::transcode(fieldName.c_str(), tempStr, 99);
+    xercesc::DOMNode* field = doc->createElement(tempStr);
+    myType->appendChild(field);
 
-		xercesc::XMLString::transcode(fieldName.c_str(), tempStr, 99);
-		xercesc::DOMNode* field = doc->createElement(tempStr);
-		myType->appendChild(field);
+    std::ostringstream stream;		// Can use boost to convert double to string more elegantly
+    stream << data;
+    std::string fieldValue = stream.str();
 
-		std::ostringstream stream;		// Can use boost to convert double to string more elegantly
-		stream << data;
-		std::string fieldValue = stream.str();
-
-		xercesc::XMLString::transcode(fieldValue.c_str(), tempStr, 99);
-		xercesc::DOMText* fieldvalue = doc->createTextNode(tempStr);
-		field->appendChild(fieldvalue);
-
-		
+    xercesc::XMLString::transcode(fieldValue.c_str(), tempStr, 99);
+    xercesc::DOMText* fieldvalue = doc->createTextNode(tempStr);
+    field->appendChild(fieldvalue);
 
 	xercesc::XMLString::transcode("utimestamp", tempStr, 99);
 	xercesc::DOMNode* fieldTimestamp = doc->createElement(tempStr);
@@ -214,7 +219,10 @@ std::string XML::uploadData(const std::string& type, const std::string& fieldNam
     XMLOutput = serializeDOM(doc);
 
 	doc->release();
-	std::cout << "XMLouput:" << std::endl << XMLOutput << std::endl;	
+
+    #ifdef XML_DEBUG
+        std::cout << "XMLouput:" << std::endl << XMLOutput << std::endl;
+    #endif
 	// Other terminations and cleanup.
 	return XMLOutput;
 
@@ -610,11 +618,12 @@ std::string XML::createNewType(const std::string& aName, const std::vector<std::
 
 std::string XML::login(const std::string& username, const std::string& password)
 {
-	std::cout << "XML::login begin" << std::endl;
-	std::string XMLOutput;
-	XMLCh tempStr[100];
+    #ifdef XML_DEBUG
+        std::cout << "XML::login begin" << std::endl;
+    #endif
 
-	std::cout << "XML::login mid" << std::endl;
+    std::string XMLOutput;
+	XMLCh tempStr[100];
 
 	xercesc::XMLString::transcode("doc", tempStr, 99);
 	impl->createDocument(0, tempStr, 0);
@@ -661,9 +670,6 @@ xercesc::DOMDocument * XML::parseToDom(std::string data)
 	{
 		throw InvalidXMLError(); 
 	}
-	
-	
-//	parser->release();
 
 	return doc;
 
@@ -671,9 +677,11 @@ xercesc::DOMDocument * XML::parseToDom(std::string data)
 
 std::string XML::analyzeLoginReply(const std::string& reply)
 {
-	std::cout << "XML::analyzeLoginReply() begin" << std::endl;
+    #ifdef XML_DEBUG
+        std::cout << "XML::analyzeLoginReply() begin" << std::endl;
+    #endif
 
-	std::string token;
+    std::string token;
 
     char * temp;
 
@@ -686,19 +694,16 @@ std::string XML::analyzeLoginReply(const std::string& reply)
 	}
 	
 	xercesc::DOMElement * docElement = doc->getDocumentElement();	
-	std::cout << "docElement count: " << docElement->getChildElementCount () << std::endl;
-	//for(int i = 0; i < docElement->getChildElementCount(); ++i)
+
 	xercesc::DOMElement * nextElement;
 	nextElement = docElement->getFirstElementChild();
 	while(nextElement != NULL)
 	{
-		//std::cout << "element name: " <<  xercesc::XMLString::transcode(nextElement->getTagName()) << std::endl;
 		XMLCh * tokentemp = xercesc::XMLString::transcode("token");
 		XMLCh * errortemp = xercesc::XMLString::transcode("error");
 
 		if(xercesc::XMLString::compareIString(nextElement->getTagName(), tokentemp) == 0)
 		{
-			//std::cout << "nextelement has children" << std::endl << xercesc::XMLString::transcode(nextElement->getTextContent()) << std::endl;
 			temp = xercesc::XMLString::transcode(nextElement->getTextContent());
 			token = std::string(temp);
 			xercesc::XMLString::release(&temp);
@@ -709,7 +714,6 @@ std::string XML::analyzeLoginReply(const std::string& reply)
 			temp = xercesc::XMLString::transcode(nextElement->getTextContent());
 			if(std::string(temp) == std::string("True"))
 			{
-				std::cout << "Error occured in receiving the token" << std::endl;
 				token = nullptr;
 				throw IpsumError();	
 			}
@@ -721,14 +725,16 @@ std::string XML::analyzeLoginReply(const std::string& reply)
 		nextElement = nextElement->getNextElementSibling();
 	}	
 
-
-	std::cout << "token: " << token << std::endl;
-
+    #ifdef XML_DEBUG
+        std::cout << "token: " << token << std::endl;
+    #endif
 
 	doc->release();
-//	parser->release();
 
+    #ifdef XML_DEBUG
 	std::cout << "XML::analyzeLoginReply() end token: "  <<std::endl;
+    #endif
+
 	return token;
 
 }
@@ -819,7 +825,10 @@ std::string XML::getCurrentTimestamp()
 {
 	// formate: 2013-03-03T18:28:02
 	boost::posix_time::ptime t(boost::posix_time::second_clock::universal_time());
-	std::cout << "boost time" << boost::posix_time::to_iso_extended_string(t) << std::endl;	
+
+    #ifdef XML_DEBUG
+        std::cout << "boost time" << boost::posix_time::to_iso_extended_string(t) << std::endl;
+    #endif
 
 	return boost::posix_time::to_iso_extended_string(t);
 }

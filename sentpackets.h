@@ -13,7 +13,7 @@ template <class P, class R> // P for packet, R for response
 class SentPackets
 {
 private:
-    std::vector<std::tuple<P, int, int> > sentPackets;     // Packet + timestamp + number of retries
+    std::vector<P> sentPackets;     // Packet + timestamp
     unsigned char numberOfRetries;
     int expirationTime;
 public:
@@ -38,7 +38,7 @@ public:
      *  Finds packets with matching frameID. If more packets have the same frameID this means the frameID has overflowed and the newest sent packet is returned.
      *  Since it is probably the last sent packet that received an acknoledgement. Also the time of sending this packet is returned to compare it with other packets from other sent queues.
      */
-    std::pair<P, int> findResendablePacket(unsigned char frameID);
+    P findResendablePacket(unsigned char frameID);
 
     //std::pair<P, int> findResendablePacket(P packet);
 };
@@ -53,7 +53,12 @@ template <class P, class R>
 void SentPackets<P, R>::addPacket(P packet)
 {
     int currentTime = time(NULL);
-    sentPackets.push_back(std::tuple<P, int, int> (packet, currentTime, 0));
+
+    #ifdef SENTPACKETS_DEBUG
+    std::cout << "currentTime of packet added to sentpacketsqueue: " << (unsigned int) currentTime << std::endl;
+    #endif
+
+    sentPackets.push_back(packet);
 
     std::cout << "Packet added to sentZBPacket with time: " << std::to_string(currentTime) << std::endl;
 }
@@ -63,9 +68,9 @@ P SentPackets<P, R>::retrieveCorrespondingPacket(R packet)
 {
     for(auto it = sentPackets.begin(); it < sentPackets.end(); ++it)
     {
-        if(packet->correspondsTo(std::get<0>(*it)))
+        if(packet->correspondsTo((*it)))
         {
-            return (std::get<0>(*it));
+            return (*it);
         }
     }
     return nullptr;
@@ -76,7 +81,7 @@ void SentPackets<P, R>::removePacket(P packet)
 {
     for(auto it = sentPackets.begin(); it < sentPackets.end(); ++it)
     {
-        if(std::get<0>(*it) == packet)
+        if((*it) == packet)
         {
              sentPackets.erase(it);     // This is safe since we stop iterating after the erase. Else you can't erase it because then ++it becomes invalid.
              delete packet;
@@ -90,13 +95,15 @@ template <class P, class R>
 std::vector<P> SentPackets<P, R>::findExpiredPacket(std::vector<Packet *> * queue)
 {
     std::vector<P> expiredPackets;
-    sentPackets.erase(std::remove_if (sentPackets.begin(), sentPackets.end(), [this, &expiredPackets, queue](std::tuple<P, int,int> it){
-        if((std::get<1>(it) > expirationTime) && (std::get<2>(it) > numberOfRetries))       // True when packet expired and number of retries reached
+
+    int currentTime = time(NULL);
+    sentPackets.erase(std::remove_if (sentPackets.begin(), sentPackets.end(), [this, &currentTime, &expiredPackets, queue](P it){
+        if(((currentTime-it->getTimeOfLastSending()) > expirationTime) && ((it->getNumberOfResends()) > numberOfRetries))       // True when packet expired and number of retries reached
         {
-            expiredPackets.push_back(std::get<0>(it));
+            expiredPackets.push_back(it);
             return true;
         }
-        else if ((std::get<1>(it) > expirationTime) && (std::get<2>(it) <= numberOfRetries))    // True when packet expired and number of retries not reached -> resend
+        else if (((currentTime - it->getTimeOfLastSending())  > expirationTime) && ((it->getNumberOfResends()) <= numberOfRetries))    // True when packet expired and number of retries not reached -> resend
         {
             std::cout << "expired packet found and resend done" << std::endl;
             //queue->push_back(std::get<0>(it));
@@ -114,17 +121,17 @@ std::vector<P> SentPackets<P, R>::findExpiredPacket(std::vector<Packet *> * queu
 
 
 template <class P, class R>
-std::pair<P, int> SentPackets<P, R>::findResendablePacket(unsigned char frameID)
+P SentPackets<P, R>::findResendablePacket(unsigned char frameID)
 {
-    std::pair <P, int> resendablePacket(nullptr, 0);
+    P resendablePacket = nullptr;
     int lastTime = 0;
     for(auto it = sentPackets.begin(); it < sentPackets.end(); ++it)
     {
-        if((std::get<0>(*it)->getFrameID() == frameID) && (std::get<2>(*it) <= numberOfRetries) && (std::get<1>(*it) > lastTime))
+        if(((*it)->getFrameID() == frameID) && ((*it)->getNumberOfResends() <= numberOfRetries) && ((*it)->getTimeOfLastSending() > lastTime))
         {
-            lastTime = std::get<1>(*it);
-            resendablePacket = std::pair<P, int> (std::get<0>(*it), std::get<1>(*it));
-            ++std::get<2>(*it);
+            lastTime = (*it)->getTimeOfLastSending() ;
+            resendablePacket = (*it);
+            (*it)->incrementNumberOfResends();
         }
     }
     return resendablePacket;

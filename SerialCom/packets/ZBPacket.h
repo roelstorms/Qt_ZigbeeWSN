@@ -16,6 +16,8 @@ class ZBPacket : public Packet
 	//Packet(const Packet& aPacket){}
 	protected:
 	bool validPacket;
+
+
 	ZBPacket();
 	std::vector<unsigned char> encodedPacket;
 	public:
@@ -36,16 +38,19 @@ class ZBPacket : public Packet
 	
 	friend std::ostream &operator<<(std::ostream &out, ZBPacket &packet)     //output
 	{
-		
+
+        std::cout << "to_string function" << std::endl;
 		std::vector<unsigned char> encodedPacket = packet.getEncodedPacket();
 		for(auto it = encodedPacket.begin(); it < encodedPacket.end(); ++it)
 		{
-			std::cout << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it) << " ";
-	
+            //std::cout << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it) << " ";
+            out << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it) << " ";
 		}
 
-		return out;
+        return out;
 	}
+
+
 };
 
 #endif

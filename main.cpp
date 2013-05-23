@@ -7,7 +7,8 @@
  *  This can give an indication if you will have trouble running it on an embedded device. For now the memory used just after startup is less then 1MB.
  *  Has to be rechecked when program is running for a few houres and recieves some traffic.
  */
-
+#include <boost/date_time.hpp>
+#include <boost/date_time/gregorian/gregorian.hpp>
 
 #include "mainclass.h"
 #include "testclass.h"
@@ -16,6 +17,8 @@ int main(int argc, char* argv[])
 {
     TestClass test;
     test.testTransmitStatusPacket();
+
+
 
     std::map<int, bool> sensors;
     sensors.insert(std::pair<int, bool> (0, true));

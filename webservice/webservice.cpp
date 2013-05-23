@@ -17,11 +17,14 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
     int post_data_len = mg_read(conn, post_data, sizeof(post_data));    // warning since post_data_len is never used, maybe used in the future.
 
 	// Prepare the message we're going to send
-	std::cout << std::endl << "url: "<< request_info->uri << std::endl;
+    #ifdef WS_DEBUG
+        std::cout << std::endl << "url: "<< request_info->uri << std::endl;
+    #endif
 	Packet * packet; 
     std::string url(request_info->uri);
-    std::cout << "data: " << std::endl << post_data << std::endl;
-
+    #ifdef WS_DEBUG
+        std::cout << "data: " << std::endl << post_data << std::endl;
+    #endif
     if(url.find("9e7e3dccf2bfb4d927eec92d7a896655") == std::string::npos)
     {
         int content_length = snprintf(content, sizeof(content),	"<error>invalid key</error>");
@@ -37,22 +40,30 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
     try{
         if(url.find("changeFrequency") != std::string::npos)
         {
-            std::cout << "request type set to CHANGE_FREQUENCY" << std::endl;
+            #ifdef WS_DEBUG
+                std::cout << "request type set to CHANGE_FREQUENCY" << std::endl;
+            #endif
             packet = dynamic_cast<Packet *> (new WSChangeFrequencyPacket(std::string(post_data)));
         }
         else if(url.find("addNode") != std::string::npos)
         {
-            std::cout << "request type set to ADD_NODE" << std::endl;
+            #ifdef WS_DEBUG
+                std::cout << "request type set to ADD_NODE" << std::endl;
+            #endif
             packet = dynamic_cast<Packet *> (new WSAddNodePacket(std::string(post_data)));
         }
         else if(url.find("addSensor") != std::string::npos)
         {
-            std::cout << "request type set to ADD_SENSOR" << std::endl;
+            #ifdef WS_DEBUG
+                std::cout << "request type set to ADD_SENSOR" << std::endl;
+            #endif
             packet = dynamic_cast<Packet *> (new WSAddSensorsPacket(std::string(post_data)));
         }
         else if(url.find("requestData") != std::string::npos)
         {
-            std::cout << "request type set to ADD_SENSOR" << std::endl;
+            #ifdef WS_DEBUG
+                std::cout << "request type set to ADD_SENSOR" << std::endl;
+            #endif
             packet = dynamic_cast<Packet *> (new WSRequestDataPacket(std::string(post_data)));
         }
         else
@@ -81,7 +92,9 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
     }
 	
     wsReceiveQueue->addPacket(packet);
-	std::cout << "adding ws packet to wsqueue" << std::endl;
+    #ifdef WS_DEBUG
+        std::cout << "adding ws packet to wsqueue" << std::endl;
+    #endif
 	std::lock_guard<std::mutex> lg(*mainConditionVariableMutex);
 	mainConditionVariable->notify_all();
 
@@ -108,7 +121,9 @@ Webservice::Webservice(PacketQueue * wsReceiveQueue, PacketQueue * wsSendQueue, 
 {
     //const char *options[] = {"listening_ports", "8080s", "ssl_certificate",  "../server.pem","error_log_file", "./webservice_error.txt", NULL};
     const char *options[] = {"listening_ports", "8080", "error_log_file", "./webservice_error.txt", NULL};
-    std::cout << "begin of Webservice constructor" << std::endl;
+    #ifdef WS_DEBUG
+        std::cout << "begin of Webservice constructor" << std::endl;
+    #endif
     struct mg_callbacks callbacks;
 
 	// Prepare callbacks structure. We have only one callback, the rest are NULL.
@@ -117,7 +132,9 @@ Webservice::Webservice(PacketQueue * wsReceiveQueue, PacketQueue * wsSendQueue, 
 
 	// Start the web server.
 	ctx = mg_start(&callbacks, (void*) this, options);
-	std::cout << "end of Webservice constructor" << std::endl;
+    #ifdef WS_DEBUG
+        std::cout << "end of Webservice constructor" << std::endl;
+    #endif
 }
 
 Webservice::~Webservice()
@@ -125,9 +142,4 @@ Webservice::~Webservice()
 	// Stop the server.
 	mg_stop(ctx);
 
-}
-
-void Webservice::operator() ()
-{
-	
 }

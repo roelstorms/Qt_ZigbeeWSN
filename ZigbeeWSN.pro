@@ -3,7 +3,7 @@ CONFIG += console
 CONFIG -= qt
 
 QMAKE_CXXFLAGS += -std=c++11   -g
-DEFINES += DEBUG IPSUM_DEBUG HTTP_DEBUG PACKET_DEBUG
+DEFINES += DEBUG IPSUM_DEBUG HTTP_DEBUG PACKET_DEBUG SENTPACKETS_DEBUG WS_DEBUG PACKET_LOGGING #XML_DEBUG
 
 SOURCES += \
     packetqueue.cpp \
@@ -100,5 +100,4 @@ HEADERS += \
 unix:!macx:!symbian: LIBS += -lcrypto -lcurl -lxerces-c -lboost_thread -lpthread -lboost_date_time -ldl
 
 OTHER_FILES += \
-    sqlite/zigbee.dbs \
     sqlite/sqlite3.o

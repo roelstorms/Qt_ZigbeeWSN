@@ -4,12 +4,14 @@
 ZBReceiver::ZBReceiver(int connectionDescriptor, std::mutex * conditionVariableMutex, std::condition_variable * mainConditionVariable, PacketQueue * zbReceiveQueue, bool * exit) : connectionDescriptor(connectionDescriptor), conditionVariableMutex(conditionVariableMutex), mainConditionVariable(mainConditionVariable), zbReceiveQueue(zbReceiveQueue), exit(exit)
 {	
 	std::cout << "ZBReceiver constructor" << std::endl;
+    logFile.open("packetlog.txt");
 }
 
 
 ZBReceiver::~ZBReceiver()
 {
 	std::cout << "ZBReceiver destructor" << std::endl;
+    logFile.close();
 }
 
 unsigned char ZBReceiver::readByte()
@@ -74,7 +76,9 @@ void ZBReceiver::operator() ()
 			}
 			unsigned char packetType = packetVector.at(3);	
 			std::cout << "packet type: " << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) packetType << std::endl;
-			
+
+            boost::posix_time::ptime now = boost::posix_time::second_clock::local_time(); //use the clock
+
 			Packet * packet;
 			switch(packetType)
 			{
@@ -83,6 +87,7 @@ void ZBReceiver::operator() ()
 					{
 						case 0x2:
                             std::cout << "found LibelAddNodeResponse" << std::endl;
+
                             try
                             {
                                 packet = dynamic_cast<Packet*> (new LibelAddNodeResponse(packetVector));
@@ -92,6 +97,10 @@ void ZBReceiver::operator() ()
                                 std::cerr << e.what() << std::endl;
                                 break;
                             }
+
+                            #ifdef PACKET_LOGGING
+                                logFile << boost::posix_time::to_simple_string(now) << " : found LibelAddNodeResponse: " << dynamic_cast<ZBPacket*> (packet) << std::endl;
+                            #endif
 
 							zbReceiveQueue->addPacket(packet);
 							{
@@ -112,6 +121,10 @@ void ZBReceiver::operator() ()
                                 break;
                             }
 
+                            #ifdef PACKET_LOGGING
+                                logFile << boost::posix_time::to_simple_string(now) << " : found LibelMaskResponse: " <<  dynamic_cast<ZBPacket*> (packet)  << std::endl;
+                            #endif
+
 							zbReceiveQueue->addPacket(packet);
 							{
 								std::lock_guard<std::mutex> lg(*conditionVariableMutex);
@@ -131,6 +144,11 @@ void ZBReceiver::operator() ()
                                 std::cerr << e.what() << std::endl;
                                 break;
                             }
+
+                            #ifdef PACKET_LOGGING
+                                logFile << boost::posix_time::to_simple_string(now) << " :  found LibelChangeNodeFreqResponse: " <<  dynamic_cast<ZBPacket*> (packet)  << std::endl;
+                            #endif
+
 							zbReceiveQueue->addPacket(packet);
 							{
 								std::lock_guard<std::mutex> lg(*conditionVariableMutex);
@@ -149,6 +167,11 @@ void ZBReceiver::operator() ()
                                 std::cerr << e.what() << std::endl;
                                 break;
                             }
+
+                            #ifdef PACKET_LOGGING
+                                logFile << boost::posix_time::to_simple_string(now) << " : found LibelChangeFreqResponse: " <<  dynamic_cast<ZBPacket*> (packet)  << std::endl;
+                            #endif
+
 							zbReceiveQueue->addPacket(packet);
 							{
 								std::lock_guard<std::mutex> lg(*conditionVariableMutex);
@@ -167,6 +190,10 @@ void ZBReceiver::operator() ()
                                 std::cerr << e.what() << std::endl;
                                 break;
                             }
+                            #ifdef PACKET_LOGGING
+                                logFile << boost::posix_time::to_simple_string(now) << " : found LibelIOpacket: " <<  dynamic_cast<ZBPacket*> (packet)  << std::endl;
+                            #endif
+
 							zbReceiveQueue->addPacket(packet);
 							{
 								std::lock_guard<std::mutex> lg(*conditionVariableMutex);
@@ -178,15 +205,31 @@ void ZBReceiver::operator() ()
 						
 						default:
                         std::cerr << "unknown packet type received in ZBReceiver" << std::endl;
+
+                        #ifdef PACKET_LOGGING
+                            logFile << boost::posix_time::to_simple_string(now) << " : unknown libel packet logged: ";
+
+                            for(auto it = packetVector.begin(); it < packetVector.end(); ++it)
+                            {
+                                logFile << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it) << " ";
+                            }
+                            logFile << std::endl;
+                        #endif
 					}
 					break;
 
 				case 0x92:
                     std::cerr << "DataIOPacket received, and thrown away (we use normal data packets to receive IO, not the ones defines by zigbee" << std::endl;
+                    #ifdef PACKET_LOGGING
+                        logFile << boost::posix_time::to_simple_string(now) << " : DataIOPacket received and thrown away (should not be used in the network)" << std::endl;
+                    #endif
 					break;
 
 				case 0x88:
                     std::cerr << "ATCommandResponsePacket received, and thrown away" << std::endl;
+                    #ifdef PACKET_LOGGING
+                        logFile << boost::posix_time::to_simple_string(now) << " : ATCommandResponsePacket received and thrown away (should not be used in the network)" << std::endl;
+                    #endif
 						//Processing needed here
                 break;
 
@@ -201,6 +244,9 @@ void ZBReceiver::operator() ()
                     std::cerr << e.what() << std::endl;
                     break;
                 }
+                #ifdef PACKET_LOGGING
+                    logFile << boost::posix_time::to_simple_string(now) << " : found TransmitStatusPacket: " <<  dynamic_cast<ZBPacket*> (packet)  << std::endl;
+                #endif
                 zbReceiveQueue->addPacket(packet);
                 {
                     std::lock_guard<std::mutex> lg(*conditionVariableMutex);
@@ -211,6 +257,16 @@ void ZBReceiver::operator() ()
 
 				default :
                 std::cerr << "unknown packet type received in ZBReceiver" << std::endl;
+
+                #ifdef PACKET_LOGGING
+                    logFile << boost::posix_time::to_simple_string(now) << " : unknown zigbee packet logged: ";
+
+                    for(auto it = packetVector.begin(); it < packetVector.end(); ++it)
+                    {
+                        logFile << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it) << " ";
+                    }
+                    logFile << std::endl;
+                #endif
 
 			}
 

@@ -1,4 +1,3 @@
-#define DEBUG
 #include "libeliopacket.h"
 
 LibelIOPacket::LibelIOPacket(std::vector<unsigned char> input) : ReceivePacket(input)

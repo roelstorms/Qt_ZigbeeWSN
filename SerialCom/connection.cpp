@@ -14,8 +14,6 @@ std::vector <int> Connection::listPortNumbers()
 {
 	std::vector<int> list;
 
-
-
 	return list;
 }
 
@@ -33,6 +31,7 @@ int Connection::openPort(int portNumber, int baudrate)
 		/*
 		 * Could not open the port.
 		 */
+
 		std::cerr << "open_port: Unable to open " << address << std::endl;
 		throw SerialError();
 	}
@@ -42,9 +41,7 @@ int Connection::openPort(int portNumber, int baudrate)
         //fcntl(connectionDescriptor, F_SETFL, FNDELAY);		// Set the port to unblocking
         fcntl(connectionDescriptor, F_SETFL, 0);		// Set the port to blocking
     	}
-	
-	// 9600 baud, NO parity, 1 stop bit
-		
+
     	struct termios options;
     	tcgetattr(connectionDescriptor, &options);
 
@@ -75,10 +72,6 @@ int Connection::openPort(int portNumber, int baudrate)
 		case 115200:
 		options.c_cflag = B115200;		//Set baudrate to 9600 baud
 		break;
-
-
-
-
 	}
 
 	options.c_cflag = B9600;		//Set baudrate to 9600 baud

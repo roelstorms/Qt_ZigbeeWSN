@@ -10,7 +10,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
     dup2 (fd, STDERR_FILENO);
 
 
-    socket = new Http("http://193.190.255.27", "a31dd4f1-9169-4475-b316-764e1e737653");
+    socket = new Http("http://ipsum.groept.be", "a31dd4f1-9169-4475-b316-764e1e737653");
 
     try
     {
@@ -73,7 +73,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
 
     sentZBPackets = new std::queue<Packet *>;
 
-    ipsum = new Ipsum("http://193.190.255.27", "a31dd4f1-9169-4475-b316-764e1e737653", ipsumSendQueue, ipsumReceiveQueue, conditionVariableMutex, mainConditionVariable, ipsumConditionVariableMutex, ipsumConditionVariable);
+    ipsum = new Ipsum("http://ipsum.groept.be", "a31dd4f1-9169-4475-b316-764e1e737653", ipsumSendQueue, ipsumReceiveQueue, conditionVariableMutex, mainConditionVariable, ipsumConditionVariableMutex, ipsumConditionVariable);
     ipsumThread = new boost::thread(boost::ref(*ipsum));
 
     localZBSenderQueue = new std::vector<Packet *>;
@@ -125,13 +125,23 @@ void MainClass::operator() ()
 {
     std::cout << "going into main while loop" << std::endl;
 
-    /*
+
     std::vector<unsigned char> zigbee64BitAddress {0X00, 0X13, 0XA2, 0X00, 0X40, 0X69, 0X73, 0X76}; //0013A20040697376
-    std::vector<SensorType> sensors {TEMP, HUM, BAT, VANE, PLUVIO, ANEMO, PRES};
+    std::vector<SensorType> sensors {BAT, TEMP, HUM};//, BAT, VANE, PLUVIO, ANEMO, PRES};
     LibelAddNodePacket * libelAddNodePacket = new LibelAddNodePacket(zigbee64BitAddress, sensors);
     localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelAddNodePacket));
     addNodeSentPackets->addPacket(libelAddNodePacket);
-    */
+
+    //std::vector<std::pair<SensorType, int> > newFrequencies;
+    //newFrequencies.push_back(std::pair<SensorType, int > (TEMP, 3));
+
+    //LibelChangeFreqPacket * libelChangeFreqPacket = new LibelChangeFreqPacket(zigbee64BitAddress, newFrequencies, 1);
+    //localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelChangeFreqPacket));
+    //changeFreqSentPackets->addPacket(libelChangeFreqPacket);
+
+    LibelMaskRequest  * libelMaskRequest = new LibelMaskRequest(zigbee64BitAddress, 1);
+    localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelMaskRequest));
+
 
     while(true)
     {
@@ -245,7 +255,7 @@ void MainClass::operator() ()
             }
             else if (packet->getPacketType() == ZB_TRANSMIT_STATUS)
             {
-                std::cout << "ZB_LIBEL_ADD_NODE_RESPONSE received in main" << std::endl;
+                std::cout << "ZB_TRANSMIT_STATUS received in main" << std::endl;
                 if(dynamic_cast<TransmitStatusPacket *> (packet) != NULL)
                 {
                     transmitStatusHandler(dynamic_cast<TransmitStatusPacket *> (packet));
@@ -599,29 +609,33 @@ void MainClass::transmitStatusHandler(TransmitStatusPacket * transmitStatusPacke
     {
         // Find a packet in one of the sent packet queues that has a corresponding frame ID and if so check if sending failed.
         // If sending failed then send it again.
-        std::pair <LibelAddNodePacket *, int> addNodePacket = addNodeSentPackets->findResendablePacket(transmitStatusPacket->getFrameID());
-        std::pair <LibelChangeFreqPacket *, int> changeFreqPacket = changeFreqSentPackets->findResendablePacket(transmitStatusPacket->getFrameID());
-        if(addNodePacket.first != nullptr && changeFreqPacket.first  != nullptr)
+        LibelAddNodePacket * addNodePacket = addNodeSentPackets->findResendablePacket(transmitStatusPacket->getFrameID());
+        LibelChangeFreqPacket * changeFreqPacket = changeFreqSentPackets->findResendablePacket(transmitStatusPacket->getFrameID());
+        if(addNodePacket != nullptr && changeFreqPacket  != nullptr)
         {
-            if(addNodePacket.second > changeFreqPacket.second)
+            if(addNodePacket->getTimeOfLastSending() > changeFreqPacket->getTimeOfLastSending())
             {
                 std::cout << "resending addNodePacket" << std::endl;
+                addNodePacket->setTimeOfLastSending(0);
                 //localZBSenderQueue->push_back(addNodePacket.first);
             }
             else
             {
                 std::cout << "resending changeFreqPacket" << std::endl;
+                changeFreqPacket->setTimeOfLastSending(0);
                 //localZBSenderQueue->push_back(changeFreqPacket.first);
             }
         }
-        else if(addNodePacket.first  != nullptr)
+        else if(addNodePacket  != nullptr)
         {
+            addNodePacket->setTimeOfLastSending(0);
             std::cout << "resending addNodePacket" << std::endl;
             //localZBSenderQueue->push_back(addNodePacket.first);
         }
-        else if(changeFreqPacket.first  != nullptr)
+        else if(changeFreqPacket  != nullptr)
         {
             std::cout << "resending changeFreqPacket" << std::endl;
+            changeFreqPacket->setTimeOfLastSending(0);
             //localZBSenderQueue->push_back(changeFreqPacket.first);
         }
     }
