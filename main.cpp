@@ -16,10 +16,10 @@
 int main(int argc, char* argv[])
 {
     TestClass test;
-    test.testTransmitStatusPacket();
+    test.runAll();
 
 
-
+/*
     std::map<int, bool> sensors;
     sensors.insert(std::pair<int, bool> (0, true));
     sensors.insert(std::pair<int, bool> (0, true));
@@ -50,7 +50,7 @@ int main(int argc, char* argv[])
     }
 
 
-
+*/
 	return 0;
 }
 

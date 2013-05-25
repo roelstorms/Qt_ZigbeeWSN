@@ -626,7 +626,6 @@ std::string XML::login(const std::string& username, const std::string& password)
 	XMLCh tempStr[100];
 
 	xercesc::XMLString::transcode("doc", tempStr, 99);
-	impl->createDocument(0, tempStr, 0);
 	xercesc::DOMDocument* doc = impl->createDocument();
 
 	xercesc::XMLString::transcode("UserLogin", tempStr, 99);
@@ -659,6 +658,9 @@ std::string XML::login(const std::string& username, const std::string& password)
 
 xercesc::DOMDocument * XML::parseToDom(std::string data)
 {
+#ifdef XML_DEBUG
+    std::cout << "XML::parseToDom(std::string data) begin" << std::endl;
+#endif
 	xercesc::DOMImplementation* impl = xercesc::DOMImplementation::getImplementation();
 	xercesc::DOMLSParser *parser = ((xercesc::DOMImplementationLS*)impl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, 0);
 	xercesc::DOMDocument *doc;
@@ -670,12 +672,17 @@ xercesc::DOMDocument * XML::parseToDom(std::string data)
 	{
 		throw InvalidXMLError(); 
 	}
+    parser->release();
+
+#ifdef XML_DEBUG
+    std::cout << "XML::parseToDom(std::string data) end" << std::endl;
+#endif
 
 	return doc;
 
 }
 
-std::string XML::analyzeLoginReply(const std::string& reply)
+std::string XML::analyzeLoginReply(const std::string& reply) throw (InvalidXMLError)
 {
     #ifdef XML_DEBUG
         std::cout << "XML::analyzeLoginReply() begin" << std::endl;
@@ -687,13 +694,23 @@ std::string XML::analyzeLoginReply(const std::string& reply)
 
 	xercesc::DOMDocument *doc;
 
+    xercesc::DOMElement * docElement;
+    std::cout << "doc *: " << doc << std::endl;
+
 	doc = parseToDom(reply/*sting to parse to DOM*/); 
-	if (doc == NULL)
-	{
-		throw InvalidXMLError(); 
-	}
-	
-	xercesc::DOMElement * docElement = doc->getDocumentElement();	
+        doc->getDoctype();
+    std::cout << "doc *: " << doc << std::endl;
+
+    try{
+        docElement = doc->getDocumentElement();
+    }
+        catch(...)
+    {
+        std::cerr << "catched" << std::endl;
+    }
+#ifdef XML_DEBUG
+    std::cout << "XML::analyzeLoginReply() 2nd" << std::endl;
+#endif
 
 	xercesc::DOMElement * nextElement;
 	nextElement = docElement->getFirstElementChild();
@@ -730,7 +747,7 @@ std::string XML::analyzeLoginReply(const std::string& reply)
     #endif
 
 	doc->release();
-
+    docElement->release();
     #ifdef XML_DEBUG
 	std::cout << "XML::analyzeLoginReply() end token: "  <<std::endl;
     #endif

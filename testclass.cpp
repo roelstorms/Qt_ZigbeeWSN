@@ -24,7 +24,24 @@ void TestClass::runAll()
 
 void TestClass::testXML()
 {
+    XML xml;
 
+    std::string expected = "<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\" ?>\n<UserLogin>\n\n  <username>username</username>\n\n  <password>password</password>\n\n</UserLogin>\n";
+    assertTest(expected.compare(xml.login("username", "password")) == 0 , "XML login check");
+
+
+
+    /*
+    try
+    {
+        xml.analyzeLoginReply("<Credentials><token>3694b670-d3d5-4505-99a2-e27e22b1afe0</token><error>false</error><expire>2012-07-02T08:16:38.5415621Z</expire><user>20</user></Credentials>");
+    }
+    catch(...)
+    {
+        std::cout << "invalid xml error" << std::endl;
+    }
+    std::cout << "end of XML test" << std::endl;
+    */
 }
 
 void TestClass::testTransmitStatusPacket()

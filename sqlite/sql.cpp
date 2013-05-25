@@ -87,8 +87,16 @@ void  Sql::removeIpsumPacket(int id)
 	executeQuery(query);
 }
 
-std::string Sql::makeNewNode(int installationID, int nodeID, std::string zigbee64BitAddress)
+std::string Sql::makeNewNode(int installationID, int nodeID, std::string zigbee64BitAddress) throw (SqlError)
 {
+    try
+    {
+        getNodeID(zigbee64BitAddress);      // Check if zigbee64BitAddress already exists in DB. If so, this node has already been added.
+    }
+    catch(SqlError)
+    {
+        return 0;
+    }
 
 	std::string query("INSERT INTO nodes (installationID, nodeID, zigbee64bitaddress) VALUES(");
     query.append(std::to_string(installationID) + ", " + std::to_string(nodeID) + ", '" + zigbee64BitAddress);

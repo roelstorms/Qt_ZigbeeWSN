@@ -60,7 +60,7 @@ class XML
 	 *	Reply is filename where the XML returned from ipsum on a login request is stored.
 	 *	Function returns token needed by ipsum for requests which required to be logged in.
 	 */
-	std::string analyzeLoginReply(const std::string& reply);
+    std::string analyzeLoginReply(const std::string& reply)  throw (InvalidXMLError);
 
 	/*
 	 *	Generates XML needed by the ipsum POST request to do a select.
