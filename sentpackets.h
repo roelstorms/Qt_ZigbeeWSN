@@ -57,7 +57,7 @@ void SentPackets<P, R>::addPacket(P packet)
     #ifdef SENTPACKETS_DEBUG
     std::cout << "currentTime of packet added to sentpacketsqueue: " << (unsigned int) currentTime << std::endl;
     #endif
-
+    packet->setTimeOfLastSending(time(NULL));
     sentPackets.push_back(packet);
 
     std::cout << "Packet added to sentZBPacket with time: " << std::to_string(currentTime) << std::endl;

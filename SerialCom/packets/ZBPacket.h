@@ -38,8 +38,6 @@ class ZBPacket : public Packet
 	
 	friend std::ostream &operator<<(std::ostream &out, ZBPacket &packet)     //output
 	{
-
-        std::cout << "to_string function" << std::endl;
 		std::vector<unsigned char> encodedPacket = packet.getEncodedPacket();
 		for(auto it = encodedPacket.begin(); it < encodedPacket.end(); ++it)
 		{
@@ -52,8 +50,6 @@ class ZBPacket : public Packet
 
     friend std::ostream &operator<<(std::ostream &out, ZBPacket * packet)     //output
     {
-
-        std::cout << "to_string function" << std::endl;
         std::vector<unsigned char> encodedPacket = packet->getEncodedPacket();
         for(auto it = encodedPacket.begin(); it < encodedPacket.end(); ++it)
         {

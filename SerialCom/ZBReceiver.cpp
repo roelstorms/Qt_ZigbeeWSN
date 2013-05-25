@@ -191,8 +191,7 @@ void ZBReceiver::operator() ()
                                 break;
                             }
                             #ifdef PACKET_LOGGING
-                                std::cout << boost::posix_time::to_simple_string(now) << " : found LibelIOpacket: " <<  *(dynamic_cast<ZBPacket*> (packet))  << std::endl;
-                                logFile << boost::posix_time::to_simple_string(now) << " : found LibelIOpacket: " <<  *(dynamic_cast<ZBPacket*> (packet))  << std::endl;
+                                logFile << boost::posix_time::to_simple_string(now) << " : found LibelIOpacket: " <<  dynamic_cast<ZBPacket*> (packet)  << std::endl;
                             #endif
 
 							zbReceiveQueue->addPacket(packet);
