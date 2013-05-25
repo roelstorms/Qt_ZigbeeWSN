@@ -127,21 +127,26 @@ void MainClass::operator() ()
 
 
     std::vector<unsigned char> zigbee64BitAddress {0X00, 0X13, 0XA2, 0X00, 0X40, 0X69, 0X73, 0X76}; //0013A20040697376
-    std::vector<SensorType> sensors {BAT, TEMP, HUM};//, BAT, VANE, PLUVIO, ANEMO, PRES};
+    std::vector<SensorType> sensors {BAT, TEMP};//, BAT, VANE, PLUVIO, ANEMO, PRES};
     LibelAddNodePacket * libelAddNodePacket = new LibelAddNodePacket(zigbee64BitAddress, sensors);
     localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelAddNodePacket));
     addNodeSentPackets->addPacket(libelAddNodePacket);
 
-    //std::vector<std::pair<SensorType, int> > newFrequencies;
-    //newFrequencies.push_back(std::pair<SensorType, int > (TEMP, 3));
+    std::vector<std::pair<SensorType, int> > newFrequencies;
+    newFrequencies.push_back(std::pair<SensorType, int > (TEMP, 3));
+    //newFrequencies.push_back(std::pair<SensorType, int > (HUM, 2));
 
-    //LibelChangeFreqPacket * libelChangeFreqPacket = new LibelChangeFreqPacket(zigbee64BitAddress, newFrequencies, 1);
+    LibelChangeFreqPacket * libelChangeFreqPacket = new LibelChangeFreqPacket(zigbee64BitAddress, newFrequencies, 1);
     //localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelChangeFreqPacket));
     //changeFreqSentPackets->addPacket(libelChangeFreqPacket);
 
-    LibelMaskRequest  * libelMaskRequest = new LibelMaskRequest(zigbee64BitAddress, 1);
-    localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelMaskRequest));
+    LibelChangeNodeFreqPacket * libelChangeNodeFreqPacket = new LibelChangeNodeFreqPacket(zigbee64BitAddress, 3, 1);
+    //localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelChangeNodeFreqPacket));
 
+    LibelMaskRequest  * libelMaskRequest = new LibelMaskRequest(zigbee64BitAddress, 1);
+    //localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelMaskRequest));
+
+    LibelRequestIOPacket * libelRequestIOPacket = new LibelRequestIOPacket(zigbee64BitAddress, sensors, 1);
 
     while(true)
     {

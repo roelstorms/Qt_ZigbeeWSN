@@ -40,7 +40,7 @@ int main(int argc, char* argv[])
 
     try
     {
-        MainClass mainClass(argc, argv, 6000, 3);
+        MainClass mainClass(argc, argv, 100, 3);
         mainClass();
     }
     catch(StartupError)
