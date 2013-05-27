@@ -132,9 +132,9 @@ void MainClass::operator() ()
 {
     std::cout << "going into main while loop" << std::endl;
 
-/*
-    std::vector<unsigned char> zigbee64BitAddress {0X00, 0X13, 0XA2, 0X00, 0X40, 0X69, 0X73, 0X76}; //0013A20040697376
-    std::vector<SensorType> sensors {BAT, TEMP};//, BAT, VANE, PLUVIO, ANEMO, PRES};
+
+    std::vector<unsigned char> zigbee64BitAddress {0X00, 0X13, 0XA2, 0X00, 0X40, 0X69, 0X73, 0X7c}; //0013A20040697376
+    std::vector<SensorType> sensors {BAT, TEMP, HUM};//, PRES, VANE, PLUVIO, ANEMO, LUMINOSITY, SOLAR_RAD};
     LibelAddNodePacket * libelAddNodePacket = new LibelAddNodePacket(zigbee64BitAddress, sensors);
     localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelAddNodePacket));
     addNodeSentPackets->addPacket(libelAddNodePacket);
@@ -154,7 +154,7 @@ void MainClass::operator() ()
     //localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelMaskRequest));
 
     LibelRequestIOPacket * libelRequestIOPacket = new LibelRequestIOPacket(zigbee64BitAddress, sensors, 1);
-*/
+
 
     while(true)
     {

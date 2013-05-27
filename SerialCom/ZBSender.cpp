@@ -59,6 +59,7 @@ void ZBSender::operator() ()
 
                 //delete packet;    // Packet gets deleted when the corresponding reply is recieved in the main thread. A second pointer to packet is kept in the corresponding sentPacket queue in main.
             }
+            std::cout << "packet succesfully sent" << std::endl;
 		}
 	}
 }

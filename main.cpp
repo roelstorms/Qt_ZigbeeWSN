@@ -21,10 +21,10 @@ int main(int argc, char* argv[])
     static int teststaticvariable = 0;
     init();
     TestClass test;
-    test.runAll();
+    //test.runAll();
 
 
-/*
+
     std::map<int, bool> sensors;
     sensors.insert(std::pair<int, bool> (0, true));
     sensors.insert(std::pair<int, bool> (0, true));
@@ -53,7 +53,7 @@ int main(int argc, char* argv[])
         std::cerr << "error at startup" << std::endl;
         return 1;
     }
-*/
+
 
 
 	return 0;
