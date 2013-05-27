@@ -19,6 +19,8 @@ ERROR(StartupError, "Failed to start gateway")
 
 ERROR(HttpError, "HTTP error using libcurl")
 ERROR(InvalidLogin, "Login to ipsum database failed, check password and username")
+
+ERROR(XercesError, "An error in xerces occured")
 ERROR(InvalidXMLError, "XML passed was invalid")
 ERROR(IpsumError, "error occured in connection with ipsum")
 

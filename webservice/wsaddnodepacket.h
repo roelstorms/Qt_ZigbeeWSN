@@ -11,7 +11,7 @@ private:
     std::string zigbeeAddress64Bit;
 
 public:
-    WSAddNodePacket(std::string data);
+    WSAddNodePacket(std::string data) throw(InvalidXMLError);
 
 
     PacketType getPacketType(){ return WS_ADD_NODE_COMMAND; };

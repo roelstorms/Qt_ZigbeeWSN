@@ -29,9 +29,9 @@ class XML
 {
 	private:
 	xercesc::DOMImplementation *impl; 
-
+    xercesc::DOMLSParser *parser;
 	public:
-	XML();
+    XML() throw (XercesError);
 	~XML();
     std::string serializeDOM(xercesc::DOMNode * node);
 
@@ -39,7 +39,7 @@ class XML
 	std::string uploadData(const std::string& type, const std::string& fieldName, float data, std::string timeStamp); 
 	
 
-	xercesc::DOMDocument * parseToDom(std::string data);
+    xercesc::DOMDocument * parseToDom(std::string data) throw(InvalidXMLError);
 
     //std::string createNewInstallation(const std::string& nameValue, const std::string& descriptionValue, const std::string& inuseValue);
     //std::string createNewSensorGroup(const std::string& installationIDValue, const std::string& nameValue, const std::string& descriptionValue, const std::string& inuseValue);

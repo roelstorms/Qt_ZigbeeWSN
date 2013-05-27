@@ -18,9 +18,19 @@ void TestClass::assertTest(bool condition, std::string message)
 
 void TestClass::runAll()
 {
+    testWSPackets();
     testXML();
     testTransmitStatusPacket();
     testSQL();
+}
+
+void TestClass::testWSPackets()
+{
+    std::string input("<addNode>\n<installationID>32</installationID>\n<sensorGroupID>546</sensorGroupID>\n<zigbeeAddress>0013A2004069737C</zigbeeAddress>\n</addNode>");
+    WSAddNodePacket p(input);
+    assertTest(p.getInstallationID() == 32 , "Installation ID of WSAddNodePacket");
+    assertTest(p.getSensorGroupID() == 546 , "SensorGroupID ID of WSAddNodePacket");
+    assertTest(p.getZigbeeAddress64Bit() == "0013A2004069737C" , "ZigbeeAddress of WSAddNodePacket");
 }
 
 void TestClass::testXML()

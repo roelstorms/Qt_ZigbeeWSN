@@ -1,5 +1,5 @@
 #include "XML.h"
-XML::XML()
+XML::XML() throw (XercesError)
 {
 	std::cout << "XML constructor" << std::endl << std::endl;
 	try {
@@ -15,12 +15,18 @@ XML::XML()
 	if(impl == NULL)
 	{
         std::cerr << "no implementation found" << std::endl;
+        throw XercesError();
 	}
+
+
+    parser = ((xercesc::DOMImplementationLS*)impl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, 0);
 
 }
 
 XML::~XML()
 {
+    parser->release();
+
 	xercesc::XMLPlatformUtils::Terminate();
 }
 
@@ -656,13 +662,12 @@ std::string XML::login(const std::string& username, const std::string& password)
 	return XMLOutput;
 }
 
-xercesc::DOMDocument * XML::parseToDom(std::string data)
+xercesc::DOMDocument * XML::parseToDom(std::string data) throw(InvalidXMLError)
 {
 #ifdef XML_DEBUG
     std::cout << "XML::parseToDom(std::string data) begin" << std::endl;
 #endif
-	xercesc::DOMImplementation* impl = xercesc::DOMImplementation::getImplementation();
-	xercesc::DOMLSParser *parser = ((xercesc::DOMImplementationLS*)impl)->createLSParser(xercesc::DOMImplementationLS::MODE_SYNCHRONOUS, 0);
+
 	xercesc::DOMDocument *doc;
 
 	xercesc::Wrapper4InputSource source(new xercesc::MemBufInputSource((const XMLByte*) (data.c_str()), data.size(), "100"));
@@ -672,7 +677,7 @@ xercesc::DOMDocument * XML::parseToDom(std::string data)
 	{
 		throw InvalidXMLError(); 
 	}
-    parser->release();
+
 
 #ifdef XML_DEBUG
     std::cout << "XML::parseToDom(std::string data) end" << std::endl;

@@ -50,7 +50,15 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
             #ifdef WS_DEBUG
                 std::cout << "request type set to ADD_NODE" << std::endl;
             #endif
-            packet = dynamic_cast<Packet *> (new WSAddNodePacket(std::string(post_data)));
+            try
+            {
+                packet = dynamic_cast<Packet *> (new WSAddNodePacket(std::string(post_data)));
+
+            }
+                catch (InvalidXMLError)
+                {
+                    std::cerr << "Tried to create a WSAddNodePacket in a WS Thread but XML was invalid" << std::endl;
+                }
         }
         else if(url.find("addSensor") != std::string::npos)
         {

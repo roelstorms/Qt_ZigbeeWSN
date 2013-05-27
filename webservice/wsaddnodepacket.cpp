@@ -1,8 +1,9 @@
 #include "wsaddnodepacket.h"
 
-WSAddNodePacket::WSAddNodePacket(std::string data) : WSPacket()
+WSAddNodePacket::WSAddNodePacket(std::string data) throw(InvalidXMLError) : WSPacket()
 {
     XML XMLParser;
+
     xercesc::DOMDocument * doc = XMLParser.parseToDom(data);
 
     char * temp;
@@ -46,6 +47,10 @@ WSAddNodePacket::WSAddNodePacket(std::string data) : WSPacket()
 
         nextElement = nextElement->getNextElementSibling();
     }
+
+    xercesc::XMLString::release( &installationIDString );
+    xercesc::XMLString::release( &sensorGroupIDString );
+    xercesc::XMLString::release( &zigbeeAddressString );
 }
 
 const int &WSAddNodePacket::getInstallationID() const
