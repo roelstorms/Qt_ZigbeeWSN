@@ -3,8 +3,7 @@
 #include <iostream>
 #include <string>
 
-#include "SerialCom/packets/transmitstatuspacket.h"
-#include "XML/XML.h"
+#include "mainclass.h"
 
 class TestClass
 {
@@ -17,6 +16,7 @@ class TestClass
     void runAll();
     void testXML();
     void testTransmitStatusPacket();
+    void testSQL();
 };
 
 

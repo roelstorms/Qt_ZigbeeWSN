@@ -262,7 +262,8 @@ void Http::uploadData(IpsumUploadPacket * packet) throw (HttpError)
         std::cout << "sensor Type to be uploaded: " << std::get<0>(*it) << std::endl;
         #endif
         switch(std::get<0>(*it))
-		{
+        {
+            // Fieldname is not used anymore, fieldname is "value" for all sensor types.
 			case TEMP:
 				sensorType = "zigbeeTemp";
 				fieldName = "temperature";
@@ -295,6 +296,14 @@ void Http::uploadData(IpsumUploadPacket * packet) throw (HttpError)
 				sensorType = "zigbeePluvio";
 				fieldName = "pluvio";
 			break;
+            case LUMINOSITY:
+                sensorType = "zigbeeLuminosity";
+                fieldName = "luminosity";
+            break;
+            case SOLAR_RAD:
+                sensorType = "zigbeeSolarRad";
+                fieldName = "solarrad";
+            break;
 		}
 
         sendPost(url, xmlParser.uploadData(sensorType, "value", std::get<2>(*it), timeStamp), &Http::standardReplyWrapper);

@@ -1,18 +1,6 @@
 #ifndef LIBELIOPACKET_H
 #define LIBELIOPACKET_H
 
-#define CREATESENSORGETTER(name, sensortype) float name() const throw(DataNotAvailable)\
-{\
-	auto it = sensorData.find(sensortype); \
-	if(it == sensorData.end())\
-	{\
-		std::cout << "sensortype of unfound data: " << sensortype << std::endl;\
-		throw DataNotAvailable(); \
-	}\
-	return it->second;\
-}
-
-
 
 
 #include <string>
@@ -31,18 +19,16 @@ class LibelIOPacket : public ReceivePacket
 	private:
 		std::map<SensorType, float> sensorData;
 	public:
+        /*
+         *  Sample input for this constuctor: 0x7E, 0x00, 0x20, 0x90, 0x00, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0xFF, 0xFE, 0X01, 0x01, 0x0A, 0x01, 0x23, 0x02, 0xFF, 0xFE, 0xFF, 0xFE, 0x07, 0xFF, 0xFE, 0xFF, 0xFE, 0xFF, 0xFE, 0xFF, 0xFE, 0xFF, 0xFE, 0x8E
+         *  This is a package with TEMP, HUM, PRES from 0040404040404040
+         */
 		LibelIOPacket(std::vector<unsigned char> input);
 		PacketType getPacketType(){ return ZB_LIBEL_IO; };
 		const std::map<SensorType, float>& getSensorData() const;
 
-		CREATESENSORGETTER(getTemperature, TEMP)		//Macro to generate setters for all the sensor types	
-		CREATESENSORGETTER(getHumidity, HUM)	
-		CREATESENSORGETTER(getPressure, PRES)	
-		CREATESENSORGETTER(getBattery, BAT)	
-		CREATESENSORGETTER(getCO2, CO2)	
-		CREATESENSORGETTER(getAnemo, ANEMO)	
-		CREATESENSORGETTER(getVane, VANE)
-		CREATESENSORGETTER(getPluvio, PLUVIO)
+        float getSensorData(SensorType sensorType);
+
 
 
 

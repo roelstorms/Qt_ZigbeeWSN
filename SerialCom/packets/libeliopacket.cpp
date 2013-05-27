@@ -114,7 +114,18 @@ LibelIOPacket::LibelIOPacket(std::vector<unsigned char> input) : ReceivePacket(i
 }
 
 
-const std::map<SensorType, float>& LibelIOPacket::getSensorData() const
+const std::map<SensorType, float>& LibelIOPacket::  getSensorData() const
 {
-	return sensorData;
+    return sensorData;
+}
+
+float LibelIOPacket::getSensorData(SensorType sensorType)
+{
+    auto it = sensorData.find(sensorType);
+    if(it == sensorData.end())
+    {
+        std::cout << "sensortype of unfound data: " << sensorType << std::endl;
+        throw DataNotAvailable();
+    }
+    return it->second;
 }

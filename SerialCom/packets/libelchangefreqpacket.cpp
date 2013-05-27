@@ -33,6 +33,12 @@ LibelChangeFreqPacket::LibelChangeFreqPacket(std::vector<unsigned char> zigbeeAd
 			case PLUVIO:
 				mask += 0X80;
 			break;	
+            case LUMINOSITY:
+                mask += 0X100;
+            break;
+            case SOLAR_RAD:
+                mask += 0X200;
+            break;
 		}
 	}
 	std::cout << "calculated mask in libelchangefreqpacket constructor: " << mask << std::endl;	

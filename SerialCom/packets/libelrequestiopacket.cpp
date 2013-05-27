@@ -32,7 +32,13 @@ LibelRequestIOPacket::LibelRequestIOPacket(std::vector<unsigned char> zigbeeAddr
 			break;	
 			case PLUVIO:
 				mask += 0X80;
-			break;	
+            break;
+            case LUMINOSITY:
+                mask += 0X100;
+            break;
+            case SOLAR_RAD:
+                mask += 0X200;
+            break;
 		}
 	}
     data.push_back(mask / 256);

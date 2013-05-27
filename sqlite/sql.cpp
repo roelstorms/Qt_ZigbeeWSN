@@ -1,6 +1,5 @@
 #include "sql.h"
 
-
 Sql::Sql(std::string dbName)
 {
 	int rc;
@@ -14,6 +13,7 @@ Sql::Sql(std::string dbName)
     std::cout << "DB opened" << std::endl;
 }
 
+
 Sql::~Sql()
 {
 	sqlite3_close(db);
@@ -25,6 +25,7 @@ int Sql::callbackWrapper(void *thisPointer, int argc, char **argv, char **azColN
 	return static_cast<Sql *>(thisPointer)->callback( argc,  argv, azColName);
 }
 
+
 int Sql::callback(int argc, char **argv, char **azColName)
 {
 	int i;
@@ -33,17 +34,17 @@ int Sql::callback(int argc, char **argv, char **azColName)
 	for(i=0; i<argc; i++)
 	{
 		map.insert(std::pair<std::string, std::string>(std::string(azColName[i]), std::string(argv[i] ? argv[i] : "NULL")));
-		
-		printf("%s = %s\n", azColName[i], argv[i] ? argv[i] : "NULL");
+        std::cout << azColName[i] << "=" << std::string(argv[i] ? argv[i] : "NULL") << std::endl;
 	}
 	selectReturn.push_back(map);
-	printf("\n");
+    std::cout << std::endl;
 
 	return 0;
 }
 
 
-std::vector<std::map<std::string, std::string>> Sql::executeQuery(std::string aQuery)
+
+std::vector<std::map<std::string, std::string> > Sql::executeQuery(std::string aQuery)
 {
 	char *zErrMsg = 0;
 
@@ -59,6 +60,46 @@ std::vector<std::map<std::string, std::string>> Sql::executeQuery(std::string aQ
     selectReturn.clear();
 
 	return returnValue;
+}
+
+void Sql::addMeasurement(LibelIOPacket& packet)
+{
+    std::string sensorNames;
+    std::string sensorDataStrings;
+    std::map<SensorType, float> sensorData = packet.getSensorData();
+    std::vector<unsigned char> zigbeeAddress = packet.getZigbee64BitAddress();
+
+    for(auto it = sensorData.begin(); it != sensorData.end(); ++it)
+    {
+
+        auto foundSensorType = sensorMap.find(it->first);
+        if(foundSensorType != sensorMap.end())
+        {
+            sensorNames.append("," + foundSensorType->second);
+            sensorDataStrings.append(", '" + std::to_string(it->second) + "'");
+        }
+        else
+        {
+            std::cerr << "SEVERE CODE ERROR: SensorType was not found in sensormap" << std::endl;
+        }
+
+    }
+
+    boost::posix_time::ptime now = boost::posix_time::second_clock::local_time(); //use the clock
+
+    std::stringstream stream;
+    for(auto it = zigbeeAddress.begin(); it < zigbeeAddress.end(); ++it)
+    {
+        stream << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it);
+    }
+
+
+    std::string query("INSERT INTO sensordata (timestamp, zigbeeaddress" + sensorNames + ")" );
+    query.append("VALUES('" + boost::posix_time::to_simple_string(now) + "', '" + stream.str() + "' " + sensorDataStrings + ")");
+#ifdef SQL_DEBUG
+    std::cout << "Add sensor data query: " << std::endl << query << std::endl << std::endl;
+#endif
+    executeQuery(query);
 
 }
 
@@ -127,37 +168,21 @@ std::string Sql::makeNewNode(int installationID, int nodeID, std::string zigbee6
 std::string Sql::updateSensorsInNode(int nodeID, SensorType sensorType, int sensorID)
 {
 	std::string sensorName;
-    switch(sensorType)
-	{
-		case TEMP:
-			sensorName = "temperatureID";
-		break;	
-		case HUM:
-			sensorName = "humidityID";
-		break;	
-		case PRES:
-			sensorName = "pressureID";
-		break;	
-		case BAT:
-			sensorName = "batteryID";
-		break;	
-		case CO2:
-			sensorName = "co2ID";
-		break;	
-		case ANEMO:
-			sensorName = "anemoID";
-		break;	
-		case VANE:
-			sensorName = "vaneID";
-		break;	
-		case PLUVIO:
-			sensorName = "pluvioID";
-		break;	
 
-	}
-	std::string query("UPDATE nodes SET " + sensorName + "=" + std::to_string(sensorID) + " WHERE nodeID=" + std::to_string(nodeID));
-	executeQuery(query);
-	return query;	
+
+    auto foundSensorType = sensorMap.find(sensorType);
+    if(foundSensorType != sensorMap.end())
+    {
+        std::string query("UPDATE nodes SET " + sensorName + "ID =" + std::to_string(sensorID) + " WHERE nodeID=" + std::to_string(nodeID));
+        executeQuery(query);
+        return query;
+    }
+    else
+    {
+        std::cerr << "SEVERE CODE ERROR: SensorType was not found in sensormap" << std::endl;
+        return "Error in Sql::updateSensorsInNode";
+    }
+
 }
 
 
@@ -180,7 +205,6 @@ std::string Sql::getNodeAddress(int nodeID) throw (SqlError)
 		
 	}
 	return "Null";
-
 }
 
 int Sql::getNodeID(std::string zigbeeAddress64Bit) throw (SqlError)
@@ -198,10 +222,8 @@ int Sql::getNodeID(std::string zigbeeAddress64Bit) throw (SqlError)
 		{
 			return boost::lexical_cast<int>(field->second);		
 		}
-		
 	}
 	return -1;
-
 }
 
 int Sql::getInstallationID(std::string zigbeeAddress64Bit) throw (SqlError)
@@ -226,7 +248,7 @@ int Sql::getInstallationID(std::string zigbeeAddress64Bit) throw (SqlError)
 }
 
 #define CHECKSENSOR(name, sensortype)\
-	 field = it->find(#name);\
+    field = it->find(#name);\
 	if(field != it->end())\
 	{\
 		if(field->second != std::string("-1"))\
@@ -262,6 +284,34 @@ std::map<SensorType, int> Sql::getSensorsFromNode(int nodeID) throw (SqlError)
 	std::map<SensorType, int> sensors;
 	auto it = data.begin();
 	std::map<std::string, std::string>::iterator  field;
+
+    for(auto sensorIt = sensorMap.begin(); sensorIt != sensorMap.end(); ++sensorIt)
+    {
+        field = it->find(sensorIt->second + "ID");
+        if(field != it->end())
+        {
+            if(field->second != std::string("-1"))
+            {
+                bool badCast = false;
+                int sensorID;
+                try
+                {
+                    sensorID = boost::lexical_cast<int>(field->second);
+                }
+                catch(boost::bad_lexical_cast)
+                {
+                    badCast = true;
+                    std::cerr << "Nodes table contained a non number as SensorID, this sensor has been ignored" << std::endl;
+                }
+                if(!badCast)
+                {
+                    sensors.insert(std::pair<SensorType,int>(sensorIt->first, sensorID));
+                }
+            }
+        }
+    }
+
+    /*
 	CHECKSENSOR(temperatureID, TEMP)
 	CHECKSENSOR(humidityID, HUM)
 	CHECKSENSOR(pressureID, PRES)
@@ -270,7 +320,8 @@ std::map<SensorType, int> Sql::getSensorsFromNode(int nodeID) throw (SqlError)
 	CHECKSENSOR(anemoID, ANEMO)
 	CHECKSENSOR(vaneID, VANE)
 	CHECKSENSOR(pluvioID, PLUVIO)
-	/*	
+    */
+    /*
 	field = it->find("temperatureID");
 	if(field != it->end())
 	{

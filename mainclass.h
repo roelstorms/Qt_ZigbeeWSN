@@ -53,6 +53,10 @@
 
 //#include "config.h"
 
+class Sql;
+
+extern std::map<SensorType, std::string> sensorMap;
+
 class MainClass
 {
 	private:
@@ -81,6 +85,10 @@ class MainClass
 	Ipsum * ipsum;
 
     bool exit;
+
+    //static std::map<SensorType, std::string> sensorMap;
+
+
     /*
      * A function that converts std::string to std::vector<unsigned char>, mainly used to translate the string retrieved from
      * the sqlite DB to a vector of unsigned chars that is needed by the libelium packets.
@@ -109,12 +117,22 @@ class MainClass
     std::string ucharVectToString(const std::vector<unsigned char> &ucharVect);
     unsigned char getNextFrameID();
 
-	public:
+
+
+    public:
+
+
     MainClass(int argc, char * argv[], int packetExpirationTime, unsigned char numberOfRetries) throw (StartupError);
 	~MainClass();
 	void operator () ();
 
-
+    /*
+    static std::map<SensorType, std::string> getSensorMap()
+    {
+        return MainClass::sensorMap;
+    }
+*/
 };
+
 
 #endif

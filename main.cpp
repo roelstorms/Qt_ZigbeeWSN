@@ -6,6 +6,7 @@
  *  To know how much memory this proces is consuming use : sudo cat /proc/<PID>/smaps
  *  This can give an indication if you will have trouble running it on an embedded device. For now the memory used just after startup is less then 1MB.
  *  Has to be rechecked when program is running for a few houres and recieves some traffic.
+ *
  */
 #include <boost/date_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
@@ -13,8 +14,12 @@
 #include "mainclass.h"
 #include "testclass.h"
 
+void init();
+
 int main(int argc, char* argv[])
 {
+    static int teststaticvariable = 0;
+    init();
     TestClass test;
     test.runAll();
 
@@ -48,9 +53,35 @@ int main(int argc, char* argv[])
         std::cerr << "error at startup" << std::endl;
         return 1;
     }
-
-
 */
+
+
 	return 0;
+}
+
+void init()
+{
+
+    {
+        sensorMap.insert(std::pair<SensorType, std::string> (TEMP, "temperature"));
+        sensorMap.insert(std::pair<SensorType, std::string> (HUM, "humidity"));
+        sensorMap.insert(std::pair<SensorType, std::string> (PRES, "pressure"));
+        sensorMap.insert(std::pair<SensorType, std::string> (BAT, "battery"));
+        sensorMap.insert(std::pair<SensorType, std::string> (CO2, "CO2"));
+        sensorMap.insert(std::pair<SensorType, std::string> (ANEMO, "anemo"));
+        sensorMap.insert(std::pair<SensorType, std::string> (VANE, "vane"));
+        sensorMap.insert(std::pair<SensorType, std::string> (PLUVIO, "pluvio"));
+        sensorMap.insert(std::pair<SensorType, std::string> (LUMINOSITY, "luminosity"));
+        sensorMap.insert(std::pair<SensorType, std::string> (SOLAR_RAD, "solar_rad"));
+    }
+
+
+    {
+        //std::cout << "sensormap" << std::endl;
+    }
+
+
+
+
 }
 

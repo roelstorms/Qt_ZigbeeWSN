@@ -20,6 +20,7 @@ void TestClass::runAll()
 {
     testXML();
     testTransmitStatusPacket();
+    testSQL();
 }
 
 void TestClass::testXML()
@@ -28,8 +29,6 @@ void TestClass::testXML()
 
     std::string expected = "<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\" ?>\n<UserLogin>\n\n  <username>username</username>\n\n  <password>password</password>\n\n</UserLogin>\n";
     assertTest(expected.compare(xml.login("username", "password")) == 0 , "XML login check");
-
-
 
     /*
     try
@@ -42,6 +41,14 @@ void TestClass::testXML()
     }
     std::cout << "end of XML test" << std::endl;
     */
+}
+
+void TestClass::testSQL()
+{
+    Sql sql("../zigbee.dbs");
+    std::vector<unsigned char> input{0x7E, 0x00, 0x20, 0x90, 0x00, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0xFF, 0xFE, 0X01, 0x01, 0x0A, 0x01, 0x23, 0x02, 0xFF, 0xFE, 0xFF, 0xFE, 0x07, 0xFF, 0xFE, 0xFF, 0xFE, 0xFF, 0xFE, 0xFF, 0xFE, 0xFF, 0xFE, 0x8E};
+    LibelIOPacket libelIOPacket(input);
+    sql.addMeasurement(libelIOPacket);
 }
 
 void TestClass::testTransmitStatusPacket()

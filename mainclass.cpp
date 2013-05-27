@@ -1,6 +1,7 @@
 #include "mainclass.h"
 
 
+std::map<SensorType, std::string> sensorMap;
 
 MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned char numberOfRetries) throw (StartupError): packetExpirationTime(packetExpirationTime)
 {
@@ -21,8 +22,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
         std::cerr << "Could not connect to Ipsum" << std::endl;
         throw StartupError();
     }
-
-
+/*
     std::cout << "argc: " << argc << std::endl;
     if(argc != 2)
     {
@@ -31,9 +31,15 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
     }
     std::cout << "Passed startup checks" << std::endl;
 
+*/
+
+
+
+
+
     exit = false;
     db = new Sql("../zigbee.dbs");
-        std::cout << "Passed startup checks" << std::endl;
+
     con = new Connection();
     int connectionDescriptor = con->openPort(atoi(argv[1]), 9600);
 
@@ -77,6 +83,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
     ipsumThread = new boost::thread(boost::ref(*ipsum));
 
     localZBSenderQueue = new std::vector<Packet *>;
+
 }
 
 MainClass::~MainClass()
@@ -125,7 +132,7 @@ void MainClass::operator() ()
 {
     std::cout << "going into main while loop" << std::endl;
 
-
+/*
     std::vector<unsigned char> zigbee64BitAddress {0X00, 0X13, 0XA2, 0X00, 0X40, 0X69, 0X73, 0X76}; //0013A20040697376
     std::vector<SensorType> sensors {BAT, TEMP};//, BAT, VANE, PLUVIO, ANEMO, PRES};
     LibelAddNodePacket * libelAddNodePacket = new LibelAddNodePacket(zigbee64BitAddress, sensors);
@@ -147,6 +154,7 @@ void MainClass::operator() ()
     //localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelMaskRequest));
 
     LibelRequestIOPacket * libelRequestIOPacket = new LibelRequestIOPacket(zigbee64BitAddress, sensors, 1);
+*/
 
     while(true)
     {
@@ -345,6 +353,7 @@ unsigned char MainClass::getNextFrameID()
         nextFrameID++;
     return nextFrameID;
 }
+
 
 void MainClass::libelIOHandler(LibelIOPacket * libelIOPacket)
 {

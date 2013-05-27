@@ -10,9 +10,15 @@
 #include <vector>
 #include "../enums.h"
 #include "../errors.h"
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include "mainclass.h"
+
 #define BOOST_DISABLE_ASSERTS 	// If you do not define this then the boost assert macro will be included and its name collides with my TestClass::assert function 
 #include <boost/lexical_cast.hpp>
 #include <typeinfo>
+#include "../SerialCom/packets/libeliopacket.h"
+
+
 
 class Sql
 {
@@ -26,7 +32,7 @@ class Sql
 	int callback(int argc, char **argv, char **azColName);
 	std::vector<std::map<std::string, std::string>> executeQuery(std::string aQuery);
 
-	
+    void addMeasurement(LibelIOPacket &packet);
 
 	void addIpsumPacket(const std::string& url, const std::string& XML);
 	std::vector<std::map<std::string, std::string>> retrieveIpsumPacket();
@@ -41,6 +47,7 @@ class Sql
     int getNodeID(std::string zigbeeAddress64Bit) throw (SqlError);
     int getInstallationID(std::string zigbeeAddress64Bit) throw (SqlError);
     std::map<SensorType, int> getSensorsFromNode(int nodeID) throw (SqlError);
+
 };
 
 #endif
