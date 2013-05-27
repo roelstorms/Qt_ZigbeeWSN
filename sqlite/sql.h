@@ -32,7 +32,7 @@ class Sql
 	int callback(int argc, char **argv, char **azColName);
 	std::vector<std::map<std::string, std::string>> executeQuery(std::string aQuery);
 
-    void addMeasurement(LibelIOPacket &packet);
+    void addMeasurement(LibelIOPacket * packet);
 
 	void addIpsumPacket(const std::string& url, const std::string& XML);
 	std::vector<std::map<std::string, std::string>> retrieveIpsumPacket();

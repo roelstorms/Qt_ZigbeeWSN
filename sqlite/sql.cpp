@@ -62,12 +62,12 @@ std::vector<std::map<std::string, std::string> > Sql::executeQuery(std::string a
 	return returnValue;
 }
 
-void Sql::addMeasurement(LibelIOPacket& packet)
+void Sql::addMeasurement(LibelIOPacket * packet)
 {
     std::string sensorNames;
     std::string sensorDataStrings;
-    std::map<SensorType, float> sensorData = packet.getSensorData();
-    std::vector<unsigned char> zigbeeAddress = packet.getZigbee64BitAddress();
+    std::map<SensorType, float> sensorData = packet->getSensorData();
+    std::vector<unsigned char> zigbeeAddress = packet->getZigbee64BitAddress();
 
     for(auto it = sensorData.begin(); it != sensorData.end(); ++it)
     {
