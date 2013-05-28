@@ -34,7 +34,7 @@ unsigned char ZBReceiver::readByte()
 	{
         if(read(connectionDescriptor, &input, 1) <= 0)
 		{
-            std::cerr << "reading a byte didn't return 1 byte" << std::endl;
+            //std::cerr << "reading a byte didn't return 1 byte" << std::endl;
 		}
 		std::cout << "input: " << std::hex << input << std::endl;	
 		input = input ^ 0x20;
