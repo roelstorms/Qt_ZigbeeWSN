@@ -113,7 +113,7 @@ void Sql::addIpsumPacket(const std::string& url, const std::string& XML)
 	executeQuery(query);
 }	
 
-std::vector<std::map<std::string, std::string>> Sql::retrieveIpsumPacket()
+std::vector<std::map<std::string, std::string> > Sql::retrieveIpsumPacket()
 {
 	std::string query("SELECT *  FROM ipsum_packets");
 	std::vector<std::map<std::string, std::string>> ipsumPacket = executeQuery(query);
@@ -130,6 +130,8 @@ void  Sql::removeIpsumPacket(int id)
 
 std::string Sql::makeNewNode(int installationID, int nodeID, std::string zigbee64BitAddress) throw (SqlError)
 {
+    std::cout << "makeNewNode begin" << std::endl;
+
     try
     {
         getNodeID(zigbee64BitAddress);      // Check if zigbee64BitAddress already exists in DB. If so, this node has already been added.
