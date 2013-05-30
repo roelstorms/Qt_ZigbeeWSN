@@ -671,7 +671,7 @@ xercesc::DOMDocument * XML::parseToDom(std::string data) throw(InvalidXMLError)
 	xercesc::DOMDocument *doc;
 
 	xercesc::Wrapper4InputSource source(new xercesc::MemBufInputSource((const XMLByte*) (data.c_str()), data.size(), "100"));
-    doc = parser->parse(&source);
+	doc = parser->parse(&source);
 	
 	if (doc == NULL)
 	{
@@ -700,6 +700,7 @@ std::string XML::analyzeLoginReply(const std::string& reply) throw (InvalidXMLEr
 	xercesc::DOMDocument *doc;
 
     xercesc::DOMElement * docElement;
+    //std::cout << "doc *: " << doc << std::endl;
 
 	doc = parseToDom(reply/*sting to parse to DOM*/); 
         doc->getDoctype();
