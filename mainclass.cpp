@@ -134,7 +134,7 @@ void MainClass::operator() ()
 
 
     std::vector<unsigned char> zigbee64BitAddress {0X00, 0X13, 0XA2, 0X00, 0X40, 0X69, 0X73, 0X7c}; //0013A20040697376
-    std::vector<SensorType> sensors {BAT, TEMP, HUM, PRES, VANE, PLUVIO, ANEMO, SOLAR_RAD}; //LUMINOSITY};//, SOLAR_RAD};
+    std::vector<SensorType> sensors {BAT, TEMP, HUM, PRES, VANE, PLUVIO, ANEMO}; //LUMINOSITY};//, SOLAR_RAD};
     LibelAddNodePacket * libelAddNodePacket = new LibelAddNodePacket(zigbee64BitAddress, sensors);
     localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelAddNodePacket));
     addNodeSentPackets->addPacket(libelAddNodePacket);
