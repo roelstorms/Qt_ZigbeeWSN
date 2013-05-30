@@ -30,7 +30,7 @@ int main(int argc, char* argv[])
     static int teststaticvariable = 0;
     init();
     TestClass test;
-    //test.runAll();
+    test.runAll();
 
 
 
@@ -45,12 +45,15 @@ int main(int argc, char* argv[])
 
     std::cout << "Main" << std::endl;
 
+
     int user = getuid();
+    /*
     if (user != 0)
     {
         std::cerr << "root privileges needed" << std::endl;
         return 1;
     }
+    */
 
     try
     {

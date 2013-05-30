@@ -35,23 +35,25 @@ void TestClass::testXML()
 {
     XML xml;
 
-    std::string expected = "<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\" ?>\n<UserLogin>\n\n  <username>username</username>\n\n  <password>password</password>\n\n</UserLogin>\n";
-    assertTest(expected.compare(xml.login("username", "password")) == 0 , "XML login check");
-
-<<<<<<< HEAD
-    xml.analyzeLoginReply("<Credentials><token>3694b670-d3d5-4505-99a2-e27e22b1afe0</token><error>false</error><expire>2012-07-02T08:16:38.5415621Z</expire><user>20</user></Credentials>");
-
-=======
-
-    try
-    {
-        xml.analyzeLoginReply("<Credentials><token>3694b670-d3d5-4505-99a2-e27e22b1afe0</token><error>false</error><expire>2012-07-02T08:16:38.5415621Z</expire><user>20</user></Credentials>");
+    {   // XML login test scope
+        std::string expected = "<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\" ?>\n<UserLogin>\n\n  <username>username</username>\n\n  <password>password</password>\n\n</UserLogin>\n";
+        assertTest(expected.compare(xml.login("username", "password")) == 0 , "XML login check");
     }
-    catch(...)
-    {
-        std::cout << "invalid xml error" << std::endl;
+
+    {   // XML analyze login test scope
+        bool exception = false;
+        try
+        {
+            xml.analyzeLoginReply("<Credentials><token>3694b670-d3d5-4505-99a2-e27e22b1afe0</token><error>false</error><expire>2012-07-02T08:16:38.5415621Z</expire><user>20</user></Credentials>");
+        }
+        catch(...)
+        {
+            std::cout << "invalid xml error" << std::endl;
+            exception = true;
+        }
+        assertTest(!exception , "XML analyseLoginReply throws exception");
     }
->>>>>>> d1900c2f8468dc8877c290c831eaaac44dc07c8a
+
     std::cout << "end of XML test" << std::endl;
 
 }
@@ -65,6 +67,8 @@ void TestClass::testSQL()
 
 
     // IMPORTANT: If one of the tests below fails, check if the DB doesn't contain a node with 126543 as address
+    sql.deleteNode("126543");
+
     assertTest(sql.getNodeID("126543") == -1  , "Check if sql.getNodeID returns -1 when node doesn't exist in DB");
     assertTest(sql.makeNewNode(15,15, "126543"), "Should return true since this node shouldn't exist yet");   // Should be false since this node doesn't exist and this one was added.
     assertTest(sql.makeNewNode(15,15, "126543") == false, "Should return false since this node should exist yet");   // Should be false since this node doesn't exist and this one was added.

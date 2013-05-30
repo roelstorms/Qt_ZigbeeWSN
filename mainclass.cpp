@@ -40,8 +40,8 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
     exit = false;
     db = new Sql("../zigbee.dbs");
 
-    con = new Connection();
-    int connectionDescriptor = con->openPort(atoi(argv[1]), 9600);
+    //con = new Connection();
+    //int connectionDescriptor = con->openPort(atoi(argv[1]), 9600);
 
     addNodeSentPackets = new SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>(numberOfRetries, numberOfRetries);
     changeFreqSentPackets = new SentPackets<LibelChangeFreqPacket *, LibelChangeFreqResponse *>(numberOfRetries, numberOfRetries);
@@ -59,14 +59,14 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
     zbSenderConditionVariableMutex = new std::mutex;
     zbSenderConditionVariable = new std::condition_variable;
 
-    zbSender = new ZBSender(connectionDescriptor, zbSenderConditionVariableMutex, zbSenderConditionVariable, zbSenderQueue);
-    zbSenderThread = new boost::thread(boost::ref(*zbSender));
+    //zbSender = new ZBSender(connectionDescriptor, zbSenderConditionVariableMutex, zbSenderConditionVariable, zbSenderQueue);
+    //zbSenderThread = new boost::thread(boost::ref(*zbSender));
 
     wsConditionVariable = new std::condition_variable;
     wsConditionVariableMutex = new std::mutex;
 
-    zbReceiver = new ZBReceiver(connectionDescriptor, conditionVariableMutex, mainConditionVariable, zbReceiveQueue, &exit);
-    zbReceiverThread = new boost::thread(boost::ref(*zbReceiver));
+    //zbReceiver = new ZBReceiver(connectionDescriptor, conditionVariableMutex, mainConditionVariable, zbReceiveQueue, &exit);
+    //zbReceiverThread = new boost::thread(boost::ref(*zbReceiver));
 
     webService = new Webservice (wsReceiveQueue, wsSendQueue, mainConditionVariable, conditionVariableMutex, wsConditionVariable, wsConditionVariableMutex);
 
@@ -133,16 +133,12 @@ void MainClass::operator() ()
     std::cout << "going into main while loop" << std::endl;
 
 
-<<<<<<< HEAD
-    std::vector<unsigned char> zigbee64BitAddress {0X00, 0X13, 0XA2, 0X00, 0X40, 0X69, 0X73, 0X77}; //0013A20040697376
-    std::vector<SensorType> sensors {BAT, TEMP, HUM, CO2}; //, TEMP, HUM, PRES, VANE, PLUVIO, ANEMO, SOLAR_RAD}; //LUMINOSITY};//, SOLAR_RAD};
-=======
+
     std::vector<unsigned char> zigbee64BitAddress {0X00, 0X13, 0XA2, 0X00, 0X40, 0X69, 0X73, 0X7c}; //0013A20040697376
     std::vector<SensorType> sensors {BAT, TEMP, HUM, PRES, VANE, PLUVIO, ANEMO}; //LUMINOSITY};//, SOLAR_RAD};
->>>>>>> d1900c2f8468dc8877c290c831eaaac44dc07c8a
     LibelAddNodePacket * libelAddNodePacket = new LibelAddNodePacket(zigbee64BitAddress, sensors);
     localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelAddNodePacket));
-    addNodeSentPackets->addPacket(libelAddNodePacket);
+    //addNodeSentPackets->addPacket(libelAddNodePacket);
 
     std::vector<std::pair<SensorType, int> > newFrequencies;
     newFrequencies.push_back(std::pair<SensorType, int > (TEMP, 3));

@@ -670,8 +670,8 @@ xercesc::DOMDocument * XML::parseToDom(std::string data) throw(InvalidXMLError)
 
 	xercesc::DOMDocument *doc;
 
-	xercesc::Wrapper4InputSource source(new xercesc::MemBufInputSource((const XMLByte*) (data.c_str()), data.size(), "100"));
-	doc = parser->parse(&source);
+    xercesc::Wrapper4InputSource source(new xercesc::MemBufInputSource((const XMLByte*) (data.c_str()), data.size(), "100"));
+    doc = parser->parse(&source);
 	
 	if (doc == NULL)
 	{

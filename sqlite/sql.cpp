@@ -132,18 +132,24 @@ bool Sql::makeNewNode(int installationID, int nodeID, std::string zigbee64BitAdd
 {
     std::cout << "makeNewNode begin" << std::endl;
 
-
+    std::string query;
 
     if(getNodeID(zigbee64BitAddress) != -1)      // Check if zigbee64BitAddress already exists in DB. If so, this node has already been added.
     {
-        return false;
+        query = "UPDATE Nodes SET installationID='" + std::to_string(installationID) + "', nodeID ='" + std::to_string(nodeID) + "' WHERE zigbee64bitaddress='" + zigbee64BitAddress + "'";
+        //return false;
     }
+    else
+    {
+        query = "INSERT INTO nodes (installationID, nodeID, zigbee64bitaddress) VALUES(";
+        query.append(std::to_string(installationID) + ", " + std::to_string(nodeID) + ", '" + zigbee64BitAddress);
+        query.append("')");
 
-	std::string query("INSERT INTO nodes (installationID, nodeID, zigbee64bitaddress) VALUES(");
-    query.append(std::to_string(installationID) + ", " + std::to_string(nodeID) + ", '" + zigbee64BitAddress);
-	query.append("')");
-	std::cout << "query :" << query << std::endl;
+    }
+    std::cout << "query : " << query << std::endl;
 	executeQuery(query);
+
+    /*
 	query.clear();
 	query.append("SELECT * FROM nodes");
 	auto vector = executeQuery(query);
@@ -160,22 +166,20 @@ bool Sql::makeNewNode(int installationID, int nodeID, std::string zigbee64BitAdd
 			std::cout << "fieldname: " << field->first << "fieldvalue: " << field->second << std::endl;
 		}
 	}
+    */
     return true;
 
 }
 
 bool Sql::deleteNode(std::string zigbee64BitAddress)
 {
-    try
-    {
-        getNodeID(zigbee64BitAddress);      // Check if zigbee64BitAddress already exists in DB. If so, this node has already been added.
-    }
-    catch(SqlError)
-    {
-        // The node with address = zigbee64BitAddress doens't exist so can't be deleted
+
+    if(getNodeID(zigbee64BitAddress) == -1)      // Check if zigbee64BitAddress already exists in DB. If so, this node has already been added.
         return false;
-    }
+
     std::string query("DELETE FROM nodes WHERE zigbee64bitaddress = '" + zigbee64BitAddress + "'");
+    executeQuery(query);
+
     return true;
 }
 
