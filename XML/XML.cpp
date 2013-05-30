@@ -700,7 +700,7 @@ std::string XML::analyzeLoginReply(const std::string& reply) throw (InvalidXMLEr
 	xercesc::DOMDocument *doc;
 
     xercesc::DOMElement * docElement;
-    std::cout << "doc *: " << doc << std::endl;
+    //std::cout << "doc *: " << doc << std::endl;
 
 	doc = parseToDom(reply/*sting to parse to DOM*/); 
         doc->getDoctype();
@@ -751,8 +751,8 @@ std::string XML::analyzeLoginReply(const std::string& reply) throw (InvalidXMLEr
         std::cout << "token: " << token << std::endl;
     #endif
 
-	doc->release();
-    docElement->release();
+    //doc->release();
+    //docElement->release();
     #ifdef XML_DEBUG
 	std::cout << "XML::analyzeLoginReply() end token: "  <<std::endl;
     #endif
