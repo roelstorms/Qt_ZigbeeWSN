@@ -128,17 +128,15 @@ void  Sql::removeIpsumPacket(int id)
 	executeQuery(query);
 }
 
-std::string Sql::makeNewNode(int installationID, int nodeID, std::string zigbee64BitAddress) throw (SqlError)
+bool Sql::makeNewNode(int installationID, int nodeID, std::string zigbee64BitAddress)
 {
     std::cout << "makeNewNode begin" << std::endl;
 
-    try
+
+
+    if(getNodeID(zigbee64BitAddress) != -1)      // Check if zigbee64BitAddress already exists in DB. If so, this node has already been added.
     {
-        getNodeID(zigbee64BitAddress);      // Check if zigbee64BitAddress already exists in DB. If so, this node has already been added.
-    }
-    catch(SqlError)
-    {
-        return 0;
+        return false;
     }
 
 	std::string query("INSERT INTO nodes (installationID, nodeID, zigbee64bitaddress) VALUES(");
@@ -162,8 +160,23 @@ std::string Sql::makeNewNode(int installationID, int nodeID, std::string zigbee6
 			std::cout << "fieldname: " << field->first << "fieldvalue: " << field->second << std::endl;
 		}
 	}
-	return vector.begin()->find("nodeID")->second;
+    return true;
 
+}
+
+bool Sql::deleteNode(std::string zigbee64BitAddress)
+{
+    try
+    {
+        getNodeID(zigbee64BitAddress);      // Check if zigbee64BitAddress already exists in DB. If so, this node has already been added.
+    }
+    catch(SqlError)
+    {
+        // The node with address = zigbee64BitAddress doens't exist so can't be deleted
+        return false;
+    }
+    std::string query("DELETE FROM nodes WHERE zigbee64bitaddress = '" + zigbee64BitAddress + "'");
+    return true;
 }
 
 	
@@ -213,10 +226,15 @@ int Sql::getNodeID(std::string zigbeeAddress64Bit) throw (SqlError)
 {
     std::string query("SELECT nodeID from nodes WHERE zigbee64bitaddress = '" + zigbeeAddress64Bit + "'");
 	auto data = executeQuery(query);
-    if(data.size() != 1)
+    if(data.size() == 0)
     {
-        throw SqlError();
+        return -1;
     }
+    else if(data.size() != 1)
+    {
+        throw SqlError();   // To many entries with the same address
+    }
+
 	for(auto it = data.begin(); it < data.end(); ++it)
 	{
 		auto field = it->find("nodeID");

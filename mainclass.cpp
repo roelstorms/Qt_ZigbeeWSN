@@ -133,8 +133,8 @@ void MainClass::operator() ()
     std::cout << "going into main while loop" << std::endl;
 
 
-    std::vector<unsigned char> zigbee64BitAddress {0X00, 0X13, 0XA2, 0X00, 0X40, 0X69, 0X73, 0X7c}; //0013A20040697376
-    std::vector<SensorType> sensors {BAT, TEMP, HUM, PRES, VANE, PLUVIO, ANEMO, SOLAR_RAD}; //LUMINOSITY};//, SOLAR_RAD};
+    std::vector<unsigned char> zigbee64BitAddress {0X00, 0X13, 0XA2, 0X00, 0X40, 0X69, 0X73, 0X77}; //0013A20040697376
+    std::vector<SensorType> sensors {BAT, TEMP, HUM, CO2}; //, TEMP, HUM, PRES, VANE, PLUVIO, ANEMO, SOLAR_RAD}; //LUMINOSITY};//, SOLAR_RAD};
     LibelAddNodePacket * libelAddNodePacket = new LibelAddNodePacket(zigbee64BitAddress, sensors);
     localZBSenderQueue->push_back(dynamic_cast<Packet *> (libelAddNodePacket));
     addNodeSentPackets->addPacket(libelAddNodePacket);
@@ -413,6 +413,11 @@ void MainClass::libelIOHandler(LibelIOPacket * libelIOPacket)
     {
         std::cout << "before getNodeID" << std::endl;
         nodeID = db->getNodeID(zigbee64BitAddressString);
+        if(nodeID == -1)
+        {
+            std::cerr << "Could not upload data since this sensor was not known to the sql db" << std::endl;
+            return;
+        }
         std::cout << "before getInstallationID" << std::endl;
         installationID = db->getInstallationID(zigbee64BitAddressString);
         std::cout << "before getSensorsFromNode" << std::endl;
@@ -494,9 +499,14 @@ void MainClass::libelChangeFreqResponseHandler(LibelChangeFreqResponse * libelCh
 
     try
     {
-    db->getInstallationID(ucharVectToString(libelChangeFreqResponse->getZigbee64BitAddress()));
-    db->getNodeID(ucharVectToString(libelChangeFreqResponse->getZigbee64BitAddress()));
-    sensors = db->getSensorsFromNode(sensorGroupID); // sensors is a vector of sensorType + ipsum ID
+        db->getInstallationID(ucharVectToString(libelChangeFreqResponse->getZigbee64BitAddress()));
+        int nodeID = db->getNodeID(ucharVectToString(libelChangeFreqResponse->getZigbee64BitAddress()));
+        if(nodeID == -1)
+        {
+            std::cerr << "Could change frequency since this sensor was not known to the sql db" << std::endl;
+            return;
+        }
+        sensors = db->getSensorsFromNode(sensorGroupID); // sensors is a vector of sensorType + ipsum ID
     }
     catch(SqlError e)
     {
@@ -570,6 +580,11 @@ void MainClass::libelAddNodeResponseHandler(LibelAddNodeResponse * libelAddNodeR
     {
         installationID = db->getInstallationID(ucharVectToString(libelAddNodeResponse->getZigbee64BitAddress()));
         sensorGroupID = db->getNodeID(ucharVectToString(libelAddNodeResponse->getZigbee64BitAddress()));
+        if(sensorGroupID == -1)
+        {
+            std::cerr << "Could not handle add node response since this sensor was not known to the sql db" << std::endl;
+            return;
+        }
         sensorsFromDB = db->getSensorsFromNode(sensorGroupID);
     }
     catch (SqlError)

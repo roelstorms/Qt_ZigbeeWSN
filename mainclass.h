@@ -25,6 +25,7 @@
 #include "./SerialCom/packets/libelchangefreqresponse.h"
 #include "./SerialCom/packets/libelchangenodefreqpacket.h"
 #include "./SerialCom/packets/libelchangenodefreqresponse.h"
+#include "./SerialCom/packets/libelerrorpacket.h"
 
 #include "webservice/wsaddsensorspacket.h"
 #include "webservice/wsaddnodepacket.h"

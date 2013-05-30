@@ -16,9 +16,9 @@ class TestClass
     void runAll();
     void testWSPackets();
     void testXML();
-    void testTransmitStatusPacket();
     void testSQL();
-
+    void testTransmitStatusPacket();
+    void testErrorPacket();
 };
 
 

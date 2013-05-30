@@ -30,8 +30,8 @@ int main(int argc, char* argv[])
     static int teststaticvariable = 0;
     init();
     TestClass test;
-    test.runAll();
-/*
+    //test.runAll();
+
 
 
     std::map<int, bool> sensors;
@@ -61,7 +61,7 @@ int main(int argc, char* argv[])
     {
         std::cerr << "error at startup" << std::endl;
         return 1;
-    }*/
+    }
 
 
 

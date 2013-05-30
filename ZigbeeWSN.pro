@@ -47,7 +47,8 @@ SOURCES += \
     sqlite/sqlite3.c \
     #SerialCom/packet_test.cpp \
     testclass.cpp \
-    SerialCom/packets/transmitstatuspacket.cpp
+    SerialCom/packets/transmitstatuspacket.cpp \
+    SerialCom/packets/libelerrorpacket.cpp
     #config.cpp
 
 HEADERS += \
@@ -95,7 +96,8 @@ HEADERS += \
     webservice/wschangefrequencypacket.h \
     sqlite/sqlite3.h \
     SerialCom/packets/transmitstatuspacket.h \
-    user.h
+    user.h \
+    SerialCom/packets/libelerrorpacket.h
     #config.h
 
 unix:!macx:!symbian: LIBS += -lcrypto -lcurl -lxerces-c -lboost_thread -lpthread -lboost_date_time -ldl
