@@ -133,11 +133,11 @@ bool Sql::makeNewNode(int installationID, int nodeID, std::string zigbee64BitAdd
     std::cout << "makeNewNode begin" << std::endl;
 
     std::string query;
-
-    if(getNodeID(zigbee64BitAddress) != -1)      // Check if zigbee64BitAddress already exists in DB. If so, this node has already been added.
+    bool exists = getNodeID(zigbee64BitAddress) != -1;
+    if(exists)      // Check if zigbee64BitAddress already exists in DB. If so, this node has already been added.
     {
         query = "UPDATE Nodes SET installationID='" + std::to_string(installationID) + "', nodeID ='" + std::to_string(nodeID) + "' WHERE zigbee64bitaddress='" + zigbee64BitAddress + "'";
-        //return false;
+
     }
     else
     {
@@ -167,7 +167,7 @@ bool Sql::makeNewNode(int installationID, int nodeID, std::string zigbee64BitAdd
 		}
 	}
     */
-    return true;
+    return !exists;
 
 }
 

@@ -3,6 +3,7 @@
 ZBSender::ZBSender(int connectionDescriptor, std::mutex * zbSenderConditionVariableMutex, std::condition_variable * zbSenderConditionVariable, PacketQueue * zbSendQueue) : connectionDescriptor(connectionDescriptor), zbSenderConditionVariableMutex(zbSenderConditionVariableMutex), zbSenderConditionVariable(zbSenderConditionVariable), zbSendQueue(zbSendQueue)
 {
 	std::cout << "ZBSender constructor" << std::endl;
+    logFile.open("packetlog.txt");
 }
 
 std::vector<unsigned char> ZBSender::escape(std::vector<unsigned char> data)
@@ -41,6 +42,8 @@ void ZBSender::operator() ()
         std::cout << "zb sender out of wait" << std::endl;
         OutgoingPacket * packet;
 
+        boost::posix_time::ptime now = boost::posix_time::second_clock::local_time(); //use the clock
+
 		while(!zbSendQueue->empty())
 		{
             std::cout << "Sendable packet received in ZBSender" << std::endl;
@@ -56,6 +59,11 @@ void ZBSender::operator() ()
                 fsync(connectionDescriptor);
                 packet->incrementNumberOfResends();
                 packet->setTimeOfLastSending(time(NULL));
+
+
+                #ifdef PACKET_LOGGING
+                logFile << boost::posix_time::to_simple_string(now) << " : sent packet of type " << packet->getPacketType() << ": " << dynamic_cast<ZBPacket*> (packet) << std::endl;
+                #endif
 
                 //delete packet;    // Packet gets deleted when the corresponding reply is recieved in the main thread. A second pointer to packet is kept in the corresponding sentPacket queue in main.
             }

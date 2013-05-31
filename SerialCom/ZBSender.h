@@ -12,10 +12,14 @@
 #include "packets/libelrequestiopacket.h"
 #include "packets/libelmaskrequest.h"
 #include <typeinfo>
+#include <fstream>
+#include <boost/thread.hpp>
+#include <boost/date_time.hpp>
 
 class ZBSender
 {
 	private:
+    std::ofstream logFile;
     int connectionDescriptor;
     std::mutex  * zbSenderConditionVariableMutex;
 	std::condition_variable * zbSenderConditionVariable;
