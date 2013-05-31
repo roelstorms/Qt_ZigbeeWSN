@@ -10,3 +10,4 @@ $ cat .gitignore
 *.*out
 *.*o
 *.*txt
+*.user

@@ -47,13 +47,13 @@ int main(int argc, char* argv[])
 
 
     int user = getuid();
-    /*
+
     if (user != 0)
     {
         std::cerr << "root privileges needed" << std::endl;
         return 1;
     }
-    */
+
 
     try
     {

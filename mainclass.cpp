@@ -1,3 +1,4 @@
+
 #include "mainclass.h"
 
 
@@ -22,7 +23,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
         std::cerr << "Could not connect to Ipsum" << std::endl;
         throw StartupError();
     }
-/*
+
     std::cout << "argc: " << argc << std::endl;
     if(argc != 2)
     {
@@ -31,7 +32,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
     }
     std::cout << "Passed startup checks" << std::endl;
 
-*/
+
 
 
 
@@ -40,8 +41,8 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
     exit = false;
     db = new Sql("../zigbee.dbs");
 
-    //con = new Connection();
-    //int connectionDescriptor = con->openPort(atoi(argv[1]), 9600);
+    con = new Connection();
+    int connectionDescriptor = con->openPort(atoi(argv[1]), 9600);
 
     addNodeSentPackets = new SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>(numberOfRetries, numberOfRetries);
     changeFreqSentPackets = new SentPackets<LibelChangeFreqPacket *, LibelChangeFreqResponse *>(numberOfRetries, numberOfRetries);
@@ -59,14 +60,14 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
     zbSenderConditionVariableMutex = new std::mutex;
     zbSenderConditionVariable = new std::condition_variable;
 
-    //zbSender = new ZBSender(connectionDescriptor, zbSenderConditionVariableMutex, zbSenderConditionVariable, zbSenderQueue);
-    //zbSenderThread = new boost::thread(boost::ref(*zbSender));
+    zbSender = new ZBSender(connectionDescriptor, zbSenderConditionVariableMutex, zbSenderConditionVariable, zbSenderQueue);
+    zbSenderThread = new boost::thread(boost::ref(*zbSender));
 
     wsConditionVariable = new std::condition_variable;
     wsConditionVariableMutex = new std::mutex;
 
-    //zbReceiver = new ZBReceiver(connectionDescriptor, conditionVariableMutex, mainConditionVariable, zbReceiveQueue, &exit);
-    //zbReceiverThread = new boost::thread(boost::ref(*zbReceiver));
+    zbReceiver = new ZBReceiver(connectionDescriptor, conditionVariableMutex, mainConditionVariable, zbReceiveQueue, &exit);
+    zbReceiverThread = new boost::thread(boost::ref(*zbReceiver));
 
     webService = new Webservice (wsReceiveQueue, wsSendQueue, mainConditionVariable, conditionVariableMutex, wsConditionVariable, wsConditionVariableMutex);
 
