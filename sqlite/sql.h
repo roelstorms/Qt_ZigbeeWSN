@@ -44,6 +44,7 @@ class Sql
     bool makeNewNode(int installationID, int nodeID, std::string zigbee64BitAddress);
     bool deleteNode(std::string zigbee64BitAddress);
 
+    // void keepSensors(std::vector<SensorType>, int nodeID);
     std::string updateSensorsInNode(int nodeID, SensorType sensorType, int sensorID);
     std::string getNodeAddress(int nodeID) throw (SqlError);
     int getNodeID(std::string zigbeeAddress64Bit) throw (SqlError);

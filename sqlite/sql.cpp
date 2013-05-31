@@ -136,16 +136,17 @@ bool Sql::makeNewNode(int installationID, int nodeID, std::string zigbee64BitAdd
     bool exists = getNodeID(zigbee64BitAddress) != -1;
     if(exists)      // Check if zigbee64BitAddress already exists in DB. If so, this node has already been added.
     {
-        query = "UPDATE Nodes SET installationID='" + std::to_string(installationID) + "', nodeID ='" + std::to_string(nodeID) + "' WHERE zigbee64bitaddress='" + zigbee64BitAddress + "'";
+        deleteNode(zigbee64BitAddress);
+        //query = "UPDATE Nodes SET installationID='" + std::to_string(installationID) + "', nodeID ='" + std::to_string(nodeID) + "' WHERE zigbee64bitaddress='" + zigbee64BitAddress + "'";
 
     }
-    else
-    {
-        query = "INSERT INTO nodes (installationID, nodeID, zigbee64bitaddress) VALUES(";
-        query.append(std::to_string(installationID) + ", " + std::to_string(nodeID) + ", '" + zigbee64BitAddress);
-        query.append("')");
 
-    }
+
+    query = "INSERT INTO nodes (installationID, nodeID, zigbee64bitaddress) VALUES(";
+    query.append(std::to_string(installationID) + ", " + std::to_string(nodeID) + ", '" + zigbee64BitAddress);
+    query.append("')");
+
+
     std::cout << "query : " << query << std::endl;
 	executeQuery(query);
 
@@ -183,16 +184,22 @@ bool Sql::deleteNode(std::string zigbee64BitAddress)
     return true;
 }
 
+/*void Sql::keepSensors(std::vector<SensorType>, int nodeID)
+{
+    sensorMap
+    std::string query("DELETE FROM nodes WHERE zigbee64bitaddress = '" + zigbee64BitAddress + "'");
+    executeQuery(query);
+}*/
+
 	
 std::string Sql::updateSensorsInNode(int nodeID, SensorType sensorType, int sensorID)
 {
-	std::string sensorName;
 
 
     auto foundSensorType = sensorMap.find(sensorType);
     if(foundSensorType != sensorMap.end())
     {
-        std::string query("UPDATE nodes SET " + sensorName + "ID =" + std::to_string(sensorID) + " WHERE nodeID=" + std::to_string(nodeID));
+        std::string query("UPDATE nodes SET " + foundSensorType->second + "ID =" + std::to_string(sensorID) + " WHERE nodeID=" + std::to_string(nodeID));
         executeQuery(query);
         return query;
     }
@@ -204,15 +211,13 @@ std::string Sql::updateSensorsInNode(int nodeID, SensorType sensorType, int sens
 
 }
 
-
-
 std::string Sql::getNodeAddress(int nodeID) throw (SqlError)
 {
-    std::string query("SELECT zigbee64bitaddress from  nodes WHERE nodeID =" + std::to_string(nodeID));
+    std::string query("SELECT zigbee64bitaddress FROM nodes WHERE nodeID = '" + std::to_string(nodeID) + "'");
 	auto data = executeQuery(query);
     if(data.size() != 1)
     {
-        throw SqlError();
+        std::cerr << "node address not found in DB" << std::endl;
     }
 	for(auto it = data.begin(); it < data.end(); ++it)
 	{
@@ -223,7 +228,7 @@ std::string Sql::getNodeAddress(int nodeID) throw (SqlError)
 		}
 		
 	}
-	return "Null";
+    return std::string();
 }
 
 int Sql::getNodeID(std::string zigbeeAddress64Bit) throw (SqlError)
@@ -297,7 +302,7 @@ int Sql::getInstallationID(std::string zigbeeAddress64Bit) throw (SqlError)
 
 std::map<SensorType, int> Sql::getSensorsFromNode(int nodeID) throw (SqlError)
 {
-	std::string query("SELECT temperatureID, humidityID, pressureID, batteryID, co2ID, anemoID, vaneID, pluvioID  from  nodes WHERE nodeID = " + std::to_string(nodeID));
+    std::string query("SELECT temperatureID, humidityID, pressureID, batteryID, co2ID, anemoID, vaneID, pluvioID, luminosityID, solar_radID  from  nodes WHERE nodeID = " + std::to_string(nodeID));
 	auto data = executeQuery(query);
 	std::cout << "data.size() " << data.size() << std::endl;
 	if (data.size() != 1)

@@ -4,9 +4,8 @@
 ZBReceiver::ZBReceiver(int connectionDescriptor, std::mutex * conditionVariableMutex, std::condition_variable * mainConditionVariable, PacketQueue * zbReceiveQueue, bool * exit) : connectionDescriptor(connectionDescriptor), conditionVariableMutex(conditionVariableMutex), mainConditionVariable(mainConditionVariable), zbReceiveQueue(zbReceiveQueue), exit(exit)
 {	
 	std::cout << "ZBReceiver constructor" << std::endl;
-    logFile.open("packetlog.txt");
+    logFile.open("receivedpacketlog.txt", std::ios::in | std::ios::app);
 }
-
 
 ZBReceiver::~ZBReceiver()
 {
@@ -18,11 +17,11 @@ unsigned char ZBReceiver::readByte()
 {
 	int input = 0x0;
     int bytesRead = read(connectionDescriptor, &input, 1);
-    if(bytesRead != 1)
+    if(bytesRead == 1)
     {
         std::cerr << "reading a byte didn't return 1 byte, bytes read: " << bytesRead << std::endl;
     }
-            /*
+    /*
     while(read(fd, &input, 1) <= 0)
 	{
 
@@ -46,7 +45,6 @@ unsigned char ZBReceiver::readByte()
 			// A pointer to a buffer could be passed as argument to store the unsigned char read from fd. 
 			// Need to figure out where I want to put the blocking while loop that waits for input. In this function or somewhere when this function is called.
 }
-
 
 void ZBReceiver::operator() ()
 {

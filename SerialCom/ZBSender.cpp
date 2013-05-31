@@ -3,7 +3,7 @@
 ZBSender::ZBSender(int connectionDescriptor, std::mutex * zbSenderConditionVariableMutex, std::condition_variable * zbSenderConditionVariable, PacketQueue * zbSendQueue) : connectionDescriptor(connectionDescriptor), zbSenderConditionVariableMutex(zbSenderConditionVariableMutex), zbSenderConditionVariable(zbSenderConditionVariable), zbSendQueue(zbSendQueue)
 {
 	std::cout << "ZBSender constructor" << std::endl;
-    logFile.open("packetlog.txt");
+    logFile.open("sentpacketlog.txt", std::ios::in | std::ios::app);
 }
 
 std::vector<unsigned char> ZBSender::escape(std::vector<unsigned char> data)

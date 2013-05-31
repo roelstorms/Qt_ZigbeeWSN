@@ -79,6 +79,21 @@ LibelAddNodeResponse::LibelAddNodeResponse(std::vector<unsigned char> input) : R
                 #endif
                 sensors.push_back(PLUVIO);
             }
+            if(mask.at(8) == 1)
+            {
+                #ifdef PACKET_DEBUG
+                            std::cout << "VANE found in packet" << std::endl;
+                #endif
+                sensors.push_back(LUMINOSITY);
+            }
+            if(mask.at(9) == 1)
+            {
+                #ifdef PACKET_DEBUG
+                        std::cout << "PLUVIO found in packet" << std::endl;
+                #endif
+                sensors.push_back(SOLAR_RAD);
+            }
+
         }
         catch(...)
         {

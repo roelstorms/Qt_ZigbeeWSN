@@ -106,6 +106,23 @@ LibelIOPacket::LibelIOPacket(std::vector<unsigned char> input) : ReceivePacket(i
             std::cout << "Pluvio data found in packet: " << value << std::endl;
             value = 0;
         }
+
+        if(mask.at(8) == 1)
+        {
+            value += data.at(count++);
+            sensorData.insert(std::pair<SensorType, float>(LUMINOSITY, value));
+            std::cout << "LUMINOSITY data found in packet: " << value << std::endl;
+            value = 0;
+        }
+
+        if(mask.at(9) == 1)
+        {
+            value = data.at(count++) * 256 ;
+            value += data.at(count++);
+            sensorData.insert(std::pair<SensorType, float>(SOLAR_RAD, value));
+            std::cout << "SOLAR_RAD data found in packet: " << value << std::endl;
+            value = 0;
+        }
     }
     catch(...)
     {

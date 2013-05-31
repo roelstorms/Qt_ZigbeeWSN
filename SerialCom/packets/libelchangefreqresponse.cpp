@@ -51,6 +51,14 @@ LibelChangeFreqResponse::LibelChangeFreqResponse(std::vector<unsigned char> inpu
         {
             sensorFrequencies.insert(std::pair<SensorType, int>(PLUVIO, data.at(7)));
         }
+        if(mask.at(8) == 1)
+        {
+            sensorFrequencies.insert(std::pair<SensorType, int>(LUMINOSITY, data.at(8)));
+        }
+        if(mask.at(9) == 1)
+        {
+            sensorFrequencies.insert(std::pair<SensorType, int>(SOLAR_RAD, data.at(9)));
+        }
     }
     catch(...)
     {

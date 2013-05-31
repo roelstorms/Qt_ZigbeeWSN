@@ -13,6 +13,7 @@
 #include "packets/libelmaskrequest.h"
 #include <typeinfo>
 #include <fstream>
+#include <iostream>
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>
 

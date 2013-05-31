@@ -55,10 +55,10 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
                 packet = dynamic_cast<Packet *> (new WSAddNodePacket(std::string(post_data)));
 
             }
-                catch (InvalidXMLError)
-                {
-                    std::cerr << "Tried to create a WSAddNodePacket in a WS Thread but XML was invalid" << std::endl;
-                }
+            catch (InvalidXMLError)
+            {
+                std::cerr << "Tried to create a WSAddNodePacket in a WS Thread but XML was invalid" << std::endl;
+            }
         }
         else if(url.find("addSensor") != std::string::npos)
         {
@@ -128,7 +128,7 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 Webservice::Webservice(PacketQueue * wsReceiveQueue, PacketQueue * wsSendQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex, std::condition_variable * webserviceConditionVariable, std::mutex * webserviceConditionVariableMutex) : wsReceiveQueue(wsReceiveQueue), wsSendQueue(wsSendQueue), mainConditionVariable(mainConditionVariable), mainConditionVariableMutex(mainConditionVariableMutex), webserviceConditionVariable(webserviceConditionVariable), webserviceConditionVariableMutex(webserviceConditionVariableMutex)
 {
     //const char *options[] = {"listening_ports", "8080s", "ssl_certificate",  "../server.pem","error_log_file", "./webservice_error.txt", NULL};
-    const char *options[] = {"listening_ports", "8080", "error_log_file", "./webservice_error.txt", NULL};
+    const char *options[] = {"listening_ports", "80", "error_log_file", "./webservice_error.txt", NULL};
     #ifdef WS_DEBUG
         std::cout << "begin of Webservice constructor" << std::endl;
     #endif

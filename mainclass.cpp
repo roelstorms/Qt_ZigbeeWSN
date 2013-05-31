@@ -596,6 +596,13 @@ void MainClass::libelAddNodeResponseHandler(LibelAddNodeResponse * libelAddNodeR
     }
 
     std::vector<SensorType> sensorsFromPacket = libelAddNodeResponse->getSensors();
+
+    /*for(auto it = sensorsFromPacket; it < sensorsFromPacket.end(); ++it)
+    {
+
+        db->updateSensorsInNode(sensorGroupID, (*it), -1);
+    }*/
+
     std::map<int, bool> sensorIDs;       // Sensor IDs needed for the ipsum packet to change the inuse of that sensor to either true or false.
 
     bool sensorFound = false;
@@ -791,32 +798,39 @@ void MainClass::addSensorHandler(WSAddSensorsPacket *wsAddSensorsPacket)
 
     // Send a LibelAddNodePacket
     std::string zigbee64BitAddressString = db->getNodeAddress(sensorGroupID);
-    std::cout << "Zigbee64BitAddress for add node packet (from string)" << std::endl << zigbee64BitAddressString << std::endl;
-    std::vector <unsigned char> zigbee64BitAddress = convertStringToVector(zigbee64BitAddressString);
-
-
-    std::cout << "Zigbee64BitAddress for add node packet (from vector)" << std::endl;
-    for(auto it = zigbee64BitAddress.begin(); it < zigbee64BitAddress.end(); ++it)
+    if(zigbee64BitAddressString != std::string())
     {
-        std::cout << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it) << " ";
-    }
+        std::cout << "Zigbee64BitAddress for add node packet (from string)" << std::endl << zigbee64BitAddressString << std::endl;
+        std::vector <unsigned char> zigbee64BitAddress = convertStringToVector(zigbee64BitAddressString);
 
-    std::map<SensorType,int> sensorsFromDB = db->getSensorsFromNode(sensorGroupID);
-    std::vector<SensorType> sensorTypes;
-    for(auto it = sensorsFromDB.begin(); it != sensorsFromDB.end(); ++it)
+
+        std::cout << "Zigbee64BitAddress for add node packet (from vector)" << std::endl;
+        for(auto it = zigbee64BitAddress.begin(); it < zigbee64BitAddress.end(); ++it)
+        {
+            std::cout << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it) << " ";
+        }
+
+        std::map<SensorType,int> sensorsFromDB = db->getSensorsFromNode(sensorGroupID);
+        std::vector<SensorType> sensorTypes;
+        for(auto it = sensorsFromDB.begin(); it != sensorsFromDB.end(); ++it)
+        {
+            sensorTypes.push_back(it->first);
+        }
+
+        LibelAddNodePacket * packet =  new LibelAddNodePacket(zigbee64BitAddress, sensorTypes, getNextFrameID());
+
+        //zbSenderQueue->addPacket(dynamic_cast<Packet *> (packet));
+        localZBSenderQueue->push_back(dynamic_cast<Packet *> (packet));
+        addNodeSentPackets->addPacket(packet);
+        std::cout << "LocalZBSenderQueue size: " << localZBSenderQueue->size() << std::endl << std::endl;
+
+        //std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
+        //zbSenderConditionVariable->notify_azigbeeAddressll();
+    }
+    else
     {
-        sensorTypes.push_back(it->first);
+        std::cerr << "wsAddSensor could not be handled since the node wasn't found in the DB" << std::endl;
     }
-
-    LibelAddNodePacket * packet =  new LibelAddNodePacket(zigbee64BitAddress, sensorTypes, getNextFrameID());
-
-    //zbSenderQueue->addPacket(dynamic_cast<Packet *> (packet));
-    localZBSenderQueue->push_back(dynamic_cast<Packet *> (packet));
-    addNodeSentPackets->addPacket(packet);
-    std::cout << "LocalZBSenderQueue size: " << localZBSenderQueue->size() << std::endl << std::endl;
-
-    //std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
-    //zbSenderConditionVariable->notify_azigbeeAddressll();
     delete wsAddSensorsPacket;
 }
 

@@ -114,6 +114,14 @@ SensorType WSAddSensorsPacket::stringToSensorType(std::string sensorType) throw 
     {
         return PLUVIO;
     }
+    else if (sensorType == "zigbeeSolarRad")
+    {
+        return SOLAR_RAD;
+    }
+    else if (sensorType == "zigbeeLuminosity")
+    {
+        return LUMINOSITY;
+    }
     else
     {
         throw InvalidWSXML();

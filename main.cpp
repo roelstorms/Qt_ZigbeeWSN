@@ -3,6 +3,7 @@
  *
  *	TODO: Saving url and XML of packet that should be sent to ipsum to the sql database whenever ipsum is down
  *  TODO: If parse to dom returns null program can crash. In add node on line 10 this is the case
+ *  TODO: If XML data is empty in WSAddNode program should not crash
  *
  *  0x0808f1ad in WSAddNodePacket::WSAddNodePacket (this=0xb5c152a0, data=...)
  *  at ../Qt_ZigbeeWSN/webservice/wsaddnodepacket.cpp:10
