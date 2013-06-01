@@ -1,7 +1,7 @@
 #include "http.h"
 
 
-Http::Http(std::string urlBase, std::string PersonalKey): urlBase(urlBase), PersonalKey(PersonalKey)
+Http::Http(): urlBase(Config::getIpsumBaseURL()), PersonalKey(Config::getPersonalKey())
 {
     #ifdef HTTP_DEBUG
 	std::cout << "Http constructor" << std::endl;

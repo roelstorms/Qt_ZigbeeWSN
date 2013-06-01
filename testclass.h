@@ -18,8 +18,10 @@ class TestClass
     void testWSPackets();
     void testXML();
     void testSQL();
+    void testLibelChangeFreqPacket();
     void testTransmitStatusPacket();
     void testErrorPacket();
+
 
 };
 

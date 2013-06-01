@@ -19,15 +19,21 @@ void TestClass::runAll()
     testConfig();
     testWSPackets();
     testXML();
+    testLibelChangeFreqPacket();
     testTransmitStatusPacket();
     testSQL();
 }
 
 void TestClass::testConfig()
 {
-    Config::loadConfig("../config.txt");
-    std::cout << "DBName outside of config" << Config::dbName;
 
+    assertTest(Config::getDbName() == "../zigbee.dbs" , "DB name loading");
+    assertTest(Config::getIpsumBaseURL() == "http://ipsum.groept.be" , "Ipsum url loading");
+    assertTest(Config::getNumberOfRetries() == 1 , "Number of retries loading");
+    assertTest(Config::getExpirationTime() == 60 , "Ipsum personal key loading");
+    assertTest(Config::getPersonalKey() == "a31dd4f1-9169-4475-b316-764e1e737653" , "Ipsum personal key loading");
+    assertTest(Config::getXBeeBaudRate() == 9600 , "XBee baud rate loading");
+    assertTest(Config::getXBeePortNumber() == 0, "XBee port number loading");
 }
 
 void TestClass::testWSPackets()
@@ -70,7 +76,7 @@ void TestClass::testXML()
 
 void TestClass::testSQL()
 {
-    Sql sql("../zigbee.dbs");
+    Sql sql;
     std::vector<unsigned char> input{0x7E, 0x00, 0x20, 0x90, 0x00, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0x40, 0xFF, 0xFE, 0X01, 0x01, 0x0A, 0x01, 0x23, 0x02, 0xFF, 0xFE, 0xFF, 0xFE, 0x07, 0xFF, 0xFE, 0xFF, 0xFE, 0xFF, 0xFE, 0xFF, 0xFE, 0xFF, 0xFE, 0x8E};
     LibelIOPacket libelIOPacket(input);
     sql.addMeasurement(&libelIOPacket);
@@ -85,6 +91,20 @@ void TestClass::testSQL()
     assertTest(sql.getNodeID("126543") == 15  , "Check if sql.getNodeID returns node id when node exists in DB");
     assertTest(sql.deleteNode("126543")  , "Check if a node can be deleted from DB");
 }
+
+void TestClass::testLibelChangeFreqPacket()
+{
+    std::vector<unsigned char> zigbeeAddress64bit{0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77, 0x77};
+    std::vector<std::pair<SensorType, int> > newFrequencies;
+    newFrequencies.push_back(std::pair<SensorType, int>(TEMP, 60));
+    newFrequencies.push_back(std::pair<SensorType, int>(LUMINOSITY, 10));
+    newFrequencies.push_back(std::pair<SensorType, int>(PRES, 20));
+    newFrequencies.push_back(std::pair<SensorType, int>(CO2, 300));
+    LibelChangeFreqPacket libelChangeFreqPacket(zigbeeAddress64bit, newFrequencies, 3);
+    std::vector<unsigned char> expected{0X7E, 0X00, 0X24, 0X10, 0X03, 0X77, 0X77, 0X77, 0X77, 0X77, 0X77, 0X77, 0X77, 0XFF, 0XFE, 0X00, 0X00, 0X07, 0X01, 0X23, 0X01, 0X77, 0X77, 0X77, 0X77, 0X77, 0X77, 0X77, 0X77, 0X01, 0X15, 0X00, 0X06, 0X00, 0X01, 0X00, 0X02, 0X00, 0X1E, 0X16};
+    assertTest(expected == libelChangeFreqPacket.getEncodedPacket(), "Check LibelChangeFreqPacket");
+}
+
 
 void TestClass::testTransmitStatusPacket()
 {

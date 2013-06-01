@@ -84,9 +84,15 @@ int Connection::openPort(int portNumber, int baudrate)
 	options.c_cflag |= CREAD;		
 	options.c_cflag |= CS8;		
 	options.c_oflag = 0;
-	options.c_lflag = 0;
-	options.c_cc[VTIME] = 0;
-	options.c_cc[VMIN] = 1;
+    options.c_lflag = 0;
+
+    /*
+     *  http://www.unixguide.net/unix/programming/3.6.2.shtml (botom of the page)
+     *  explains how VTIME and VMIN should be set in blocking mode
+     *
+     */
+    options.c_cc[VTIME] = 10;    // In 10ths of seconds
+    options.c_cc[VMIN] = 0;
 	tcsetattr(connectionDescriptor , TCSANOW, &options);
 	tcflush(connectionDescriptor, TCIFLUSH);
 	tcflush(connectionDescriptor, TCOFLUSH);  

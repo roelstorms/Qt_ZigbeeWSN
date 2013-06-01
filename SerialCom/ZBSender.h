@@ -25,10 +25,10 @@ class ZBSender
     std::mutex  * zbSenderConditionVariableMutex;
 	std::condition_variable * zbSenderConditionVariable;
 	PacketQueue * zbSendQueue;	
-
+    bool * stop;
 
 	public:
-    ZBSender(int connectionDescriptor, std::mutex * zbSenderConditionVariableMutex, std::condition_variable * zbSenderConditionVariable, PacketQueue * zbSendQueue);
+    ZBSender(bool * stop, int connectionDescriptor, std::mutex * zbSenderConditionVariableMutex, std::condition_variable * zbSenderConditionVariable, PacketQueue * zbSendQueue);
     std::vector<unsigned char> escape(std::vector<unsigned char> data);
 	void operator () ();
 

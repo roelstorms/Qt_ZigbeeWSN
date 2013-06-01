@@ -24,7 +24,7 @@ class Webservice
     std::mutex * mainConditionVariableMutex, * webserviceConditionVariableMutex;
 
     public:
-    Webservice( PacketQueue * wsReceiveQueue, PacketQueue * wsSendQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex, std::condition_variable * webserviceConditionVariable, std::mutex * webserviceConditionVariableMutex);
+    Webservice(PacketQueue * wsReceiveQueue, PacketQueue * wsSendQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex, std::condition_variable * webserviceConditionVariable, std::mutex * webserviceConditionVariableMutex);
 	~Webservice();
 	static int beginRequestHandlerWrapper(struct mg_connection *conn);
 	int beginRequestHandler(struct mg_connection *conn);

@@ -1,6 +1,6 @@
 #include "libelchangefreqpacket.h"
 
-LibelChangeFreqPacket::LibelChangeFreqPacket(std::vector<unsigned char> zigbeeAddress64bit, std::vector<std::pair<SensorType, int>> newFrequencies, unsigned char frameID) : TransmitRequestPacket()
+LibelChangeFreqPacket::LibelChangeFreqPacket(std::vector<unsigned char> zigbeeAddress64bit, std::vector<std::pair<SensorType, int> > newFrequencies, unsigned char frameID) : TransmitRequestPacket()
 {
     std::vector<unsigned char> data;
     int mask = 0;
@@ -47,8 +47,11 @@ LibelChangeFreqPacket::LibelChangeFreqPacket(std::vector<unsigned char> zigbeeAd
 
 	for(auto it = newFrequencies.begin(); it < newFrequencies.end(); ++it)
 	{
-        data.push_back((*it).second / 256);
-        data.push_back((*it).second % 256);
+        int freq = it->second / 10;      // Divide by 10 since the ZigBee network works with 10s as a unit of time and the rest of the software uses 1s.
+                                    // In the ZigBee network nodes have 16 bit processors this means that 2^16 seconds would mean less then a day.
+                                    // On our computers an int is always 32 or 64 bit.
+        data.push_back(freq / 256);
+        data.push_back(freq % 256);
 	}
         setData(0x07, zigbeeAddress64bit, data, frameID);
 }

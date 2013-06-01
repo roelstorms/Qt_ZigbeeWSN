@@ -33,17 +33,17 @@ class ZBReceiver
 	std::mutex  * conditionVariableMutex;
 	std::condition_variable * mainConditionVariable;
     PacketQueue * zbReceiveQueue;
-    bool * exit;
+    bool * stop;
 	// Copy constructor
 	ZBReceiver(const ZBReceiver& source);	 
 
 	public:
-    ZBReceiver(int connectionDescriptor, std::mutex * conditionVariableMutex, std::condition_variable * mainConditionVariable, PacketQueue * zbReceiveQueue, bool * exit);
+    ZBReceiver(bool * stop, int connectionDescriptor, std::mutex * conditionVariableMutex, std::condition_variable * mainConditionVariable, PacketQueue * zbReceiveQueue);
 	~ZBReceiver();
 	
 
 
-    unsigned char readByte( );
+    bool readByte(unsigned char &buf);
 	void operator () ();
 	
 

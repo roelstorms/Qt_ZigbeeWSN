@@ -1,7 +1,7 @@
 #include "ZBReceiver.h"
 
 
-ZBReceiver::ZBReceiver(int connectionDescriptor, std::mutex * conditionVariableMutex, std::condition_variable * mainConditionVariable, PacketQueue * zbReceiveQueue, bool * exit) : connectionDescriptor(connectionDescriptor), conditionVariableMutex(conditionVariableMutex), mainConditionVariable(mainConditionVariable), zbReceiveQueue(zbReceiveQueue), exit(exit)
+ZBReceiver::ZBReceiver(bool * stop, int connectionDescriptor, std::mutex * conditionVariableMutex, std::condition_variable * mainConditionVariable, PacketQueue * zbReceiveQueue) : stop(stop), connectionDescriptor(connectionDescriptor), conditionVariableMutex(conditionVariableMutex), mainConditionVariable(mainConditionVariable), zbReceiveQueue(zbReceiveQueue)
 {	
 	std::cout << "ZBReceiver constructor" << std::endl;
     logFile.open("receivedpacketlog.txt", std::ios::in | std::ios::app);
@@ -13,62 +13,64 @@ ZBReceiver::~ZBReceiver()
     logFile.close();
 }
 
-unsigned char ZBReceiver::readByte()
+bool ZBReceiver::readByte(unsigned char & buf)
 {
-	int input = 0x0;
-    int bytesRead = read(connectionDescriptor, &input, 1);
-    if(bytesRead == 1)
-    {
-        std::cerr << "reading a byte didn't return 1 byte, bytes read: " << bytesRead << std::endl;
+    int bytesRead = read(connectionDescriptor, &buf, 1);
+
+    while(bytesRead <= 0 )
+	{
+        bytesRead = read(connectionDescriptor, &buf, 1);    // Will block for 1s or when input is available
+        if((*stop))
+        {
+            return false;
+        }
     }
-    /*
-    while(read(fd, &input, 1) <= 0)
-	{
 
-	}
-    */
+    printf("%X\n", buf);
 
-	printf("%X\n", input);
-	if(input == 0x7D)
-	{
-        if(read(connectionDescriptor, &input, 1) <= 0)
-		{
+    if(buf == 0x7D) // 7D is escape character
+    {
+        if(read(connectionDescriptor, &buf, 1) <= 0)
+        {
+            // After 7D another byte should always follow, read will wait 1s (see configuration in connection.cpp)
+            // If it takes longer then 1s something is wrong and we return false;
             //std::cerr << "reading a byte didn't return 1 byte" << std::endl;
-		}
-		std::cout << "input: " << std::hex << input << std::endl;	
-		input = input ^ 0x20;
-		std::cout << "XOR'ed input: " << std::hex << input << std::endl;	
-	}
-	return input;
-	
-	//return 0x0;	// Not correct since input could be 0X0 as well. A bool should be returned to let the caller know if a byte was read or not. 
-			// A pointer to a buffer could be passed as argument to store the unsigned char read from fd. 
-			// Need to figure out where I want to put the blocking while loop that waits for input. In this function or somewhere when this function is called.
+            return false;
+        }
+        std::cout << "input: " << std::hex << buf << std::endl;
+        buf = buf ^ 0x20;
+        std::cout << "XOR'ed input: " << std::hex << buf << std::endl;
+    }
+    return true;
 }
 
 void ZBReceiver::operator() ()
 {
 	unsigned char input = 0x0;
 	std::vector<unsigned char> packetVector;	
-    while(!(*exit))
-    	{
-        input = readByte();
+    while(!(*stop))
+    {
+        packetVector.clear();
+        if(!readByte(input)) continue;      // This means that stop has been set to true or that a read took unexpectidly long
+                                            // So we start a new iteration of the while loop. If stop is indeed true, this thread will stop
+                                            // else normal operation will continue and maybe 1 packet has been lost but this should never happen
+
 		if(input == 0x7E)
 		{
 			packetVector.push_back(input);
 			
-            input = readByte();
+            if(!readByte(input)) continue;
 			int packetSize = input * 255;
 			packetVector.push_back(input);
 
-            input = readByte();
+            if(!readByte(input)) continue;
 			packetSize += input;
 			packetVector.push_back(input);
 	
 			printf("pSize: %d\n", packetSize);
 			for(int position = 0; position <= packetSize; ++position)
 			{
-                input = readByte();
+                if(!readByte(input)) continue;
 				packetVector.push_back(input);
 				fflush(stdout);
 			}
@@ -270,7 +272,7 @@ void ZBReceiver::operator() ()
 
 			}
 
-			packetVector.clear();
+
 		}
     }
 

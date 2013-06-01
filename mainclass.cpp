@@ -4,19 +4,22 @@
 
 //std::map<SensorType, std::string> sensorMap;
 
-MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned char numberOfRetries) throw (StartupError): packetExpirationTime(packetExpirationTime)
+MainClass::MainClass() throw (StartupError): packetExpirationTime(packetExpirationTime)
 {
     nextFrameID = 0;
-    //Config::loadConfig("configFile.txt");
+
+    // Couple std::cerr with the errors.txt file for better error logging.
     int fd = open("errors.txt", O_WRONLY | O_APPEND | O_CREAT, S_IRUSR | S_IWUSR);
     dup2 (fd, STDERR_FILENO);
 
 
-    socket = new Http("http://ipsum.groept.be", "a31dd4f1-9169-4475-b316-764e1e737653");
-
+    /*
+     *  Check if Ipsum is reachable, else don't start the gateway
+     */
+    Http socket;
     try
     {
-        socket->ipsumInfo();
+        socket.ipsumInfo();
     }
     catch(HttpError)
     {
@@ -24,28 +27,21 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
         throw StartupError();
     }
 
-    std::cout << "argc: " << argc << std::endl;
-    if(argc != 2)
-    {
-        std::cerr << "also provide the port number" << std::endl;
-        throw StartupError();
-    }
+
     std::cout << "Passed startup checks" << std::endl;
 
-
-
-
-
-
-
+    stopIpsum = false;
+    stopZBSender = false;
+    stopZBReceiver = false;
     exit = false;
-    db = new Sql("../zigbee.dbs");
+
+    db = new Sql();
 
     con = new Connection();
-    int connectionDescriptor = con->openPort(atoi(argv[1]), 9600);
+    int connectionDescriptor = con->openPort(Config::getXBeePortNumber(), Config::getXBeeBaudRate());
 
-    addNodeSentPackets = new SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>(numberOfRetries, numberOfRetries);
-    changeFreqSentPackets = new SentPackets<LibelChangeFreqPacket *, LibelChangeFreqResponse *>(numberOfRetries, numberOfRetries);
+    addNodeSentPackets = new SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>(Config::getNumberOfRetries(), Config::getExpirationTime());
+    changeFreqSentPackets = new SentPackets<LibelChangeFreqPacket *, LibelChangeFreqResponse *>(Config::getNumberOfRetries(), Config::getExpirationTime());
 
     wsReceiveQueue = new PacketQueue();
     wsSendQueue = new PacketQueue();
@@ -60,13 +56,13 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
     zbSenderConditionVariableMutex = new std::mutex;
     zbSenderConditionVariable = new std::condition_variable;
 
-    zbSender = new ZBSender(connectionDescriptor, zbSenderConditionVariableMutex, zbSenderConditionVariable, zbSenderQueue);
+    zbSender = new ZBSender(&stopZBSender, connectionDescriptor, zbSenderConditionVariableMutex, zbSenderConditionVariable, zbSenderQueue);
     zbSenderThread = new boost::thread(boost::ref(*zbSender));
 
     wsConditionVariable = new std::condition_variable;
     wsConditionVariableMutex = new std::mutex;
 
-    zbReceiver = new ZBReceiver(connectionDescriptor, conditionVariableMutex, mainConditionVariable, zbReceiveQueue, &exit);
+    zbReceiver = new ZBReceiver(&stopZBReceiver, connectionDescriptor, conditionVariableMutex, mainConditionVariable, zbReceiveQueue);
     zbReceiverThread = new boost::thread(boost::ref(*zbReceiver));
 
     webService = new Webservice (wsReceiveQueue, wsSendQueue, mainConditionVariable, conditionVariableMutex, wsConditionVariable, wsConditionVariableMutex);
@@ -80,7 +76,7 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
 
     sentZBPackets = new std::queue<Packet *>;
 
-    ipsum = new Ipsum("http://ipsum.groept.be", "a31dd4f1-9169-4475-b316-764e1e737653", ipsumSendQueue, ipsumReceiveQueue, conditionVariableMutex, mainConditionVariable, ipsumConditionVariableMutex, ipsumConditionVariable);
+    ipsum = new Ipsum(&stopIpsum, Config::getIpsumBaseURL(), Config::getPersonalKey(), ipsumSendQueue, ipsumReceiveQueue, conditionVariableMutex, mainConditionVariable, ipsumConditionVariableMutex, ipsumConditionVariable);
     ipsumThread = new boost::thread(boost::ref(*ipsum));
 
     localZBSenderQueue = new std::vector<Packet *>;
@@ -89,7 +85,6 @@ MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned
 
 MainClass::~MainClass()
 {
-    delete socket;
     delete con;
     delete db;
 
@@ -158,20 +153,8 @@ void MainClass::operator() ()
     LibelRequestIOPacket * libelRequestIOPacket = new LibelRequestIOPacket(zigbee64BitAddress, sensors, 1);
 
 
-    while(true)
+    while(!exit)
     {
-    /*
-        std::string input;
-        getline(std::cin, input);
-
-        if (input.length() > 0)
-        {
-            std::cout << "input: " << input << std::endl;
-            exit = true;
-            break;
-        }
-    */
-
         checkExpiredPackets();
 
         {	// Scope of unique_lock
@@ -315,12 +298,56 @@ void MainClass::operator() ()
             packet = localIpsumReceiveQueue->front();
             localIpsumReceiveQueue->pop();
         }
+
+        checkShutdown();
     }
 
-    zbReceiverThread->join();
-    zbSenderThread->join();
-    ipsumThread->join();
 
+    std::cout << "Gateway stopped succesfully" << std::endl;
+    std::cerr << "Gateway stopped succesfully" << std::endl;
+}
+
+void MainClass::checkShutdown()
+{
+    std::string input;
+    getline(std::cin, input);
+
+    if (input.length() > 0)
+    {
+        /*
+         *  Going to stop program
+         */
+
+        /*
+         *  Close webService thread
+         */
+        webService->~Webservice();
+
+        /*
+         *  Stop ZBSender
+         */
+        stopZBSender = true;
+        std::lock_guard<std::mutex> lg(*zbSenderConditionVariableMutex);
+        zbSenderConditionVariable->notify_all();
+        zbSenderThread->join();
+
+        /*
+         *  Stop ZBReceiver
+         */
+        stopZBReceiver = true;
+        zbReceiverThread->join();
+
+        /*
+         *  Stop ipsum
+         */
+        stopIpsum = true;
+        {
+            std::lock_guard<std::mutex> lg(*ipsumConditionVariableMutex);
+            ipsumConditionVariable->notify_all();
+        }
+        ipsumThread->join();
+        exit = true;
+    }
 }
 
 void MainClass::checkExpiredPackets()
@@ -744,7 +771,7 @@ void MainClass::changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFreque
             std::cout << "sensors.second: " << sensorsIt->first << std::endl;
             if(sensorsIt->second == it->first)
             {
-                newFrequencies.push_back(std::pair<SensorType, int>(sensorsIt->first, it->second/10));  // interval / 10 since ZB works with 10s as a unit of time
+                newFrequencies.push_back(std::pair<SensorType, int>(sensorsIt->first, it->second));
             }
         }
 

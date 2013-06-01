@@ -1,5 +1,34 @@
 #include "webservice.h"
 
+
+Webservice::Webservice(PacketQueue * wsReceiveQueue, PacketQueue * wsSendQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex, std::condition_variable * webserviceConditionVariable, std::mutex * webserviceConditionVariableMutex) :
+    wsReceiveQueue(wsReceiveQueue), wsSendQueue(wsSendQueue), mainConditionVariable(mainConditionVariable), mainConditionVariableMutex(mainConditionVariableMutex), webserviceConditionVariable(webserviceConditionVariable), webserviceConditionVariableMutex(webserviceConditionVariableMutex)
+{
+    //const char *options[] = {"listening_ports", "8080s", "ssl_certificate",  "../server.pem","error_log_file", "./webservice_error.txt", NULL};
+    const char *options[] = {"listening_ports", "80", "error_log_file", "./webservice_error.txt", NULL};
+    #ifdef WS_DEBUG
+        std::cout << "begin of Webservice constructor" << std::endl;
+    #endif
+    struct mg_callbacks callbacks;
+
+    // Prepare callbacks structure. We have only one callback, the rest are NULL.
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.begin_request = &Webservice::beginRequestHandlerWrapper;
+
+    // Start the web server.
+    ctx = mg_start(&callbacks, (void*) this, options);
+    #ifdef WS_DEBUG
+        std::cout << "end of Webservice constructor" << std::endl;
+    #endif
+}
+
+Webservice::~Webservice()
+{
+    // Stop the server.
+    mg_stop(ctx);
+
+}
+
 // This function will be called by mongoose on every new request.
 int Webservice::beginRequestHandlerWrapper(struct mg_connection *conn)
 {
@@ -135,30 +164,3 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 
 }
 
-
-Webservice::Webservice(PacketQueue * wsReceiveQueue, PacketQueue * wsSendQueue, std::condition_variable * mainConditionVariable, std::mutex * mainConditionVariableMutex, std::condition_variable * webserviceConditionVariable, std::mutex * webserviceConditionVariableMutex) : wsReceiveQueue(wsReceiveQueue), wsSendQueue(wsSendQueue), mainConditionVariable(mainConditionVariable), mainConditionVariableMutex(mainConditionVariableMutex), webserviceConditionVariable(webserviceConditionVariable), webserviceConditionVariableMutex(webserviceConditionVariableMutex)
-{
-    //const char *options[] = {"listening_ports", "8080s", "ssl_certificate",  "../server.pem","error_log_file", "./webservice_error.txt", NULL};
-    const char *options[] = {"listening_ports", "80", "error_log_file", "./webservice_error.txt", NULL};
-    #ifdef WS_DEBUG
-        std::cout << "begin of Webservice constructor" << std::endl;
-    #endif
-    struct mg_callbacks callbacks;
-
-	// Prepare callbacks structure. We have only one callback, the rest are NULL.
-	memset(&callbacks, 0, sizeof(callbacks));
-	callbacks.begin_request = &Webservice::beginRequestHandlerWrapper;
-
-	// Start the web server.
-	ctx = mg_start(&callbacks, (void*) this, options);
-    #ifdef WS_DEBUG
-        std::cout << "end of Webservice constructor" << std::endl;
-    #endif
-}
-
-Webservice::~Webservice()
-{
-	// Stop the server.
-	mg_stop(ctx);
-
-}

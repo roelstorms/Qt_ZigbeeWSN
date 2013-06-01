@@ -1,6 +1,6 @@
 #include "ZBSender.h"
 
-ZBSender::ZBSender(int connectionDescriptor, std::mutex * zbSenderConditionVariableMutex, std::condition_variable * zbSenderConditionVariable, PacketQueue * zbSendQueue) : connectionDescriptor(connectionDescriptor), zbSenderConditionVariableMutex(zbSenderConditionVariableMutex), zbSenderConditionVariable(zbSenderConditionVariable), zbSendQueue(zbSendQueue)
+ZBSender::ZBSender(bool * stop, int connectionDescriptor, std::mutex * zbSenderConditionVariableMutex, std::condition_variable * zbSenderConditionVariable, PacketQueue * zbSendQueue) : stop(stop), connectionDescriptor(connectionDescriptor), zbSenderConditionVariableMutex(zbSenderConditionVariableMutex), zbSenderConditionVariable(zbSenderConditionVariable), zbSendQueue(zbSendQueue)
 {
 	std::cout << "ZBSender constructor" << std::endl;
     logFile.open("sentpacketlog.txt", std::ios::in | std::ios::app);
@@ -35,10 +35,10 @@ std::vector<unsigned char> ZBSender::escape(std::vector<unsigned char> data)
 
 void ZBSender::operator() ()
 {
-	while(true)
+    while(!(*stop))
 	{
         std::unique_lock<std::mutex> uniqueLock(*zbSenderConditionVariableMutex);
-        zbSenderConditionVariable->wait(uniqueLock, [this]{return (!zbSendQueue->empty());});
+        zbSenderConditionVariable->wait(uniqueLock, [this]{return (!zbSendQueue->empty() || (*stop));});
         std::cout << "zb sender out of wait" << std::endl;
         OutgoingPacket * packet;
 

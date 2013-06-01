@@ -27,6 +27,7 @@ extern "C" {
 
 #include "../XML/XML.h"
 #include "../errors.h"
+#include "config.h"
 
 class Http
 {
@@ -41,7 +42,7 @@ class Http
 		XML xmlParser;
         std::string PersonalKey;
 	public: 
-        Http(std::string urlBase, std::string PersonalKey);
+        Http();
 
 		~Http();
 

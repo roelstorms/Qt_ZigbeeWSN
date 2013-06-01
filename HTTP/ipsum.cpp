@@ -1,10 +1,10 @@
 #include "ipsum.h"
 
-Ipsum::Ipsum(std::string ipsumURL, std::string ipsumPersonalKey, PacketQueue * ipsumSendQueue, PacketQueue * ipsumReceiveQueue, std::mutex * mainConditionVariableMutex, std::condition_variable * mainConditionVariable, std::mutex * ipsumConditionVariableMutex, std::condition_variable * ipsumConditionVariable) : ipsumSendQueue(ipsumSendQueue), ipsumReceiveQueue(ipsumReceiveQueue), mainConditionVariableMutex(mainConditionVariableMutex), ipsumConditionVariableMutex(ipsumConditionVariableMutex), mainConditionVariable(mainConditionVariable), ipsumConditionVariable(ipsumConditionVariable), IpsumUnreachable(false)
+Ipsum::Ipsum(bool * stop, std::string ipsumURL, std::string ipsumPersonalKey, PacketQueue * ipsumSendQueue, PacketQueue * ipsumReceiveQueue, std::mutex * mainConditionVariableMutex, std::condition_variable * mainConditionVariable, std::mutex * ipsumConditionVariableMutex, std::condition_variable * ipsumConditionVariable) : stop(stop), ipsumSendQueue(ipsumSendQueue), ipsumReceiveQueue(ipsumReceiveQueue), mainConditionVariableMutex(mainConditionVariableMutex), ipsumConditionVariableMutex(ipsumConditionVariableMutex), mainConditionVariable(mainConditionVariable), ipsumConditionVariable(ipsumConditionVariable), IpsumUnreachable(false)
 {
 	std::cout << "ipsum constructor" << std::endl;
 	localIpsumSendQueue = new std::queue<Packet*>;
-    http = new Http(ipsumURL, ipsumPersonalKey);
+    http = new Http();
 }
 
 Ipsum::~Ipsum()
@@ -16,10 +16,10 @@ Ipsum::~Ipsum()
 void Ipsum::operator()()
 {
 	std::cout << "Ipsum::operator()()" << std::endl;
-    while(true)
+    while(!(*stop))
     {
         std::unique_lock<std::mutex> uniqueLock(*ipsumConditionVariableMutex);
-        ipsumConditionVariable->wait(uniqueLock, [this] {return (!ipsumSendQueue->empty());});
+        ipsumConditionVariable->wait(uniqueLock, [this] {return (!ipsumSendQueue->empty() || (*stop));});
 
         std::cout << "ipsum condition variable notified" << std::endl;
 
@@ -60,11 +60,20 @@ void Ipsum::operator()()
                         changeFrequencyHandler(dynamic_cast<IpsumChangeFreqPacket *> (ipsumPacket));
                     break;
                     default:
-                    std::cerr << "packet type not recognized in ipsum" << std::endl;
+                    std::cerr << "packet type not recognized in ipsum thread" << std::endl;
                     // Packet not recognized
 
                 }
             }
+        }
+        else if(*stop)
+        {
+            /*  Ipsum thread is going to exit but Ipsum has been unreachable. Data will be lost here
+             *  Solution is to send the packets in the local queue back to main and main should store them in sql db somehow.
+             *  Storing them in main could be done by using the boost serialization library http://www.boost.org/doc/libs/1_37_0/libs/serialization/doc/index.html.
+             *  This might be too heavyweight so a system to store the relevant info in the sql db in main is a better solution
+             */
+            std::cerr << "Ipsum exited with cached packets in the local queue, these packets are now lost" << std::endl;
         }
         else
         {

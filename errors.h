@@ -37,4 +37,5 @@ ERROR(CorruptedPacket, "Packet used to construct an object of type Incoming Pack
 ERROR(SqlError, "An unexpected error happend in connection with the sql database.");
 
 ERROR(InvalidWSXML, "The XML supplied by the webservice request was invalid.");
+
 #endif

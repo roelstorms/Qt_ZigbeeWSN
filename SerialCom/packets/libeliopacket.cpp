@@ -102,6 +102,7 @@ LibelIOPacket::LibelIOPacket(std::vector<unsigned char> input) : ReceivePacket(i
         {
             value = data.at(count++) * 256 ;
             value += data.at(count++);
+            value = value * 0.2794;      // Conversion from time the bucket is full to mm of rain
             sensorData.insert(std::pair<SensorType, float>(PLUVIO, value));
             std::cout << "Pluvio data found in packet: " << value << std::endl;
             value = 0;

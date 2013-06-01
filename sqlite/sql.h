@@ -26,7 +26,7 @@ class Sql
 	sqlite3 *db;	
 	std::vector<std::map<std::string, std::string>> selectReturn;
 	public:
-	Sql(std::string dbName);
+    Sql();
 	~Sql();
 	static int callbackWrapper(void *thisPointer, int argc, char **argv, char **azColName);
 	int callback(int argc, char **argv, char **azColName);

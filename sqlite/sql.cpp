@@ -1,10 +1,10 @@
 #include "sql.h"
 
-Sql::Sql(std::string dbName)
+Sql::Sql()
 {
 	int rc;
     std::cout << "Opening DB" << std::endl;
-	rc = sqlite3_open(dbName.c_str(), &db);
+    rc = sqlite3_open(Config::getDbName().c_str(), &db);
 	if( rc )
 	{
 		std::cerr << "Can't open database: " << sqlite3_errmsg(db) << std::endl;

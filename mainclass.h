@@ -65,8 +65,6 @@ class MainClass
     int packetExpirationTime;
 
     unsigned char nextFrameID;
-
-	Http * socket;
 	
     SentPackets<LibelAddNodePacket *, LibelAddNodeResponse *>  * addNodeSentPackets;
     SentPackets<LibelChangeFreqPacket *, LibelChangeFreqResponse *>  * changeFreqSentPackets;
@@ -86,8 +84,7 @@ class MainClass
 	Webservice * webService;
 	Ipsum * ipsum;
 
-    bool exit;
-
+    bool stopIpsum, stopZBSender, stopZBReceiver, exit;
     //static std::map<SensorType, std::string> sensorMap;
 
 
@@ -115,6 +112,7 @@ class MainClass
     void addNodeHandler(WSAddNodePacket * wsAddNodePacket);
     void addSensorHandler(WSAddSensorsPacket * wsAddSensorsPacket);
 
+    void checkShutdown();
     void checkExpiredPackets();
     std::string ucharVectToString(const std::vector<unsigned char> &ucharVect);
     unsigned char getNextFrameID();
@@ -124,7 +122,7 @@ class MainClass
     public:
 
 
-    MainClass(int argc, char * argv[], int packetExpirationTime, unsigned char numberOfRetries) throw (StartupError);
+    MainClass() throw (StartupError);
 	~MainClass();
 	void operator () ();
 
@@ -134,6 +132,7 @@ class MainClass
         return MainClass::sensorMap;
     }
 */
+
 };
 
 

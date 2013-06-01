@@ -20,11 +20,11 @@ class Ipsum
 
 	Http * http;
 
-    bool IpsumUnreachable;
+    bool IpsumUnreachable, * stop;
 
 	Ipsum(const Ipsum&);
 	public:
-    Ipsum(std::string ipsumURL, std::string ipsumPersonalKey, PacketQueue * ipsumSendQueue, PacketQueue * ipsumReceiveQueue, std::mutex * mainConditionVariableMutex, std::condition_variable * mainConditionVariable, std::mutex * ipsumConditionVariableMutex, std::condition_variable * ipsumConditionVariable);
+    Ipsum(bool * stop, std::string ipsumURL, std::string ipsumPersonalKey, PacketQueue * ipsumSendQueue, PacketQueue * ipsumReceiveQueue, std::mutex * mainConditionVariableMutex, std::condition_variable * mainConditionVariable, std::mutex * ipsumConditionVariableMutex, std::condition_variable * ipsumConditionVariable);
 	~Ipsum();
 	void operator() ();
 

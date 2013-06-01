@@ -21,39 +21,39 @@ LibelChangeFreqResponse::LibelChangeFreqResponse(std::vector<unsigned char> inpu
         auto data = getData();
         if(mask.at(0) == 1)
         {
-            sensorFrequencies.insert(std::pair<SensorType, int>(TEMP, data.at(0)));
+            sensorFrequencies.insert(std::pair<SensorType, int>(TEMP, data.at(0)* 10 ));   // * 10 since in the zigbee network we work with 10s as time unit and the rest works in seconds
         }
         if(mask.at(1) == 1)
         {
-            sensorFrequencies.insert(std::pair<SensorType, int>(HUM, data.at(1)));
+            sensorFrequencies.insert(std::pair<SensorType, int>(HUM, data.at(1)* 10 ));
         }
         if(mask.at(2) == 1)
         {
-            sensorFrequencies.insert(std::pair<SensorType, int>(PRES, data.at(2)));
+            sensorFrequencies.insert(std::pair<SensorType, int>(PRES, data.at(2)* 10 ));
         }
         if(mask.at(3) == 1)
         {
-            sensorFrequencies.insert(std::pair<SensorType, int>(BAT, data.at(3)));
+            sensorFrequencies.insert(std::pair<SensorType, int>(BAT, data.at(3)* 10 ));
         }
         if(mask.at(4) == 1)
         {
-            sensorFrequencies.insert(std::pair<SensorType, int>(CO2, data.at(4)));
+            sensorFrequencies.insert(std::pair<SensorType, int>(CO2, data.at(4)* 10 ));
         }
         if(mask.at(5) == 1)
         {
-            sensorFrequencies.insert(std::pair<SensorType, int>(ANEMO, data.at(5)));
+            sensorFrequencies.insert(std::pair<SensorType, int>(ANEMO, data.at(5)* 10 ));
         }
         if(mask.at(6) == 1)
         {
-            sensorFrequencies.insert(std::pair<SensorType, int>(VANE, data.at(6)));
+            sensorFrequencies.insert(std::pair<SensorType, int>(VANE, data.at(6)* 10 ));
         }
         if(mask.at(7) == 1)
         {
-            sensorFrequencies.insert(std::pair<SensorType, int>(PLUVIO, data.at(7)));
+            sensorFrequencies.insert(std::pair<SensorType, int>(PLUVIO, data.at(7)* 10 ));
         }
         if(mask.at(8) == 1)
         {
-            sensorFrequencies.insert(std::pair<SensorType, int>(LUMINOSITY, data.at(8)));
+            sensorFrequencies.insert(std::pair<SensorType, int>(LUMINOSITY, data.at(8)* 10 ));
         }
         if(mask.at(9) == 1)
         {
