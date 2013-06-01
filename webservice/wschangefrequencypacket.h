@@ -9,7 +9,7 @@ private:
     int sensorGroupID;
     std::vector<std::pair<int, int> > frequencies;      // IpsumID + frequency (interval) in seconds
 public:
-    WSChangeFrequencyPacket(std::string data);
+    WSChangeFrequencyPacket(std::string data) throw (InvalidXMLError);
 
 
     PacketType getPacketType(){ return WS_CHANGE_FREQUENCY_COMMAND; };

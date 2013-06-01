@@ -53,11 +53,11 @@
 #include <xercesc/framework/Wrapper4InputSource.hpp>
 
 
-//#include "config.h"
+#include "config.h"
 
 class Sql;
 
-extern std::map<SensorType, std::string> sensorMap;
+//extern std::map<SensorType, std::string> sensorMap;
 
 class MainClass
 {

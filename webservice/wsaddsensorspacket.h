@@ -12,7 +12,7 @@ private:
     std::map<SensorType, int> sensors;
 
 public:
-    WSAddSensorsPacket(std::string data);
+    WSAddSensorsPacket(std::string data) throw (InvalidXMLError);
 
     PacketType getPacketType(){ return WS_ADD_SENSORS_COMMAND; };
 

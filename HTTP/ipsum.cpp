@@ -47,7 +47,6 @@ void Ipsum::operator()()
             while(!localIpsumSendQueue->empty())
             {
                 ipsumPacket = localIpsumSendQueue->front();
-                localIpsumSendQueue->pop();
 
                 switch(ipsumPacket->getPacketType())
                 {
@@ -84,6 +83,7 @@ void Ipsum::uploadDataHandler(IpsumUploadPacket * packet)
     try
     {
         http->uploadData(packet);
+        localIpsumSendQueue->pop();
         delete packet;
     }
     catch(HttpError)
@@ -92,6 +92,7 @@ void Ipsum::uploadDataHandler(IpsumUploadPacket * packet)
         try
         {
             http->ipsumInfo();
+
         }
         catch (HttpError)
         {
@@ -108,6 +109,7 @@ void Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)
     try
     {
         http->changeInUse(packet);
+        localIpsumSendQueue->pop();
         delete packet;
     }
     catch(HttpError)
@@ -122,6 +124,11 @@ void Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)
             IpsumUnreachable = true;
         }
     }
+    catch(InvalidXMLError)
+    {
+        std::cerr << "Error trying to changing inuse on ipsum, invalid XML in get entity" << std::endl;
+        delete packet;
+    }
 }
 
 void Ipsum::changeFrequencyHandler(IpsumChangeFreqPacket * packet)
@@ -132,6 +139,7 @@ void Ipsum::changeFrequencyHandler(IpsumChangeFreqPacket * packet)
     try
     {
         http->changeFreq(packet);
+        localIpsumSendQueue->pop();
         delete packet;
     }
     catch(HttpError)
@@ -145,6 +153,11 @@ void Ipsum::changeFrequencyHandler(IpsumChangeFreqPacket * packet)
         {
             IpsumUnreachable = true;
         }
+    }
+    catch(InvalidXMLError)
+    {
+        std::cerr << "Error trying to changing inuse on ipsum, invalid XML in get entity" << std::endl;
+        delete packet;
     }
 
 }

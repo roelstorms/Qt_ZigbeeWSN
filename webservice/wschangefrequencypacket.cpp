@@ -1,12 +1,15 @@
 #include "wschangefrequencypacket.h"
 
-WSChangeFrequencyPacket::WSChangeFrequencyPacket(std::string data)
+WSChangeFrequencyPacket::WSChangeFrequencyPacket(std::string data) throw (InvalidXMLError)
 {
     char * temp;
     XML XMLParser;
     xercesc::DOMDocument * doc = XMLParser.parseToDom(data);
 
     xercesc::DOMElement * docElement = doc->getDocumentElement();
+    if(docElement == NULL)
+        throw InvalidXMLError();
+
     xercesc::DOMElement * nextElement;
     nextElement = docElement->getFirstElementChild();
 

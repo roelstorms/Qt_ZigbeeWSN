@@ -1,17 +1,11 @@
 /*
  *	Created by Roel Storms on 28/01/2013  
  *
- *	TODO: Saving url and XML of packet that should be sent to ipsum to the sql database whenever ipsum is down
  *  TODO: If parse to dom returns null program can crash. In add node on line 10 this is the case
- *  TODO: If XML data is empty in WSAddNode program should not crash
  *
- *  0x0808f1ad in WSAddNodePacket::WSAddNodePacket (this=0xb5c152a0, data=...)
- *  at ../Qt_ZigbeeWSN/webservice/wsaddnodepacket.cpp:10
- *  #8  0x080849d2 in Webservice::beginRequestHandler (this=0x817f8d8, conn=conn@entry=0xb5c10f18)
- *  at ../Qt_ZigbeeWSN/webservice/webservice.cpp:53
- *  #9  0x08084e7f in Webservice::beginRequestHandlerWrapper (conn=0xb5c10f18)
- *  at ../Qt_ZigbeeWSN/webservice/webservice.cpp:8
- *
+ *  TODO: Make a clean shutdown procedure
+ *  TODO: Free ZB packets at the right moment
+ *  TODO: Resending of packets
  *
  *  To know how much memory this proces is consuming use : sudo cat /proc/<PID>/smaps
  *  This can give an indication if you will have trouble running it on an embedded device. For now the memory used just after startup is less then 1MB.
@@ -28,13 +22,12 @@ void init();
 
 int main(int argc, char* argv[])
 {
-    static int teststaticvariable = 0;
-    init();
+   // init();
     TestClass test;
     test.runAll();
 
 
-
+/*
     std::map<int, bool> sensors;
     sensors.insert(std::pair<int, bool> (0, true));
     sensors.insert(std::pair<int, bool> (0, true));
@@ -67,11 +60,11 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-
+*/
 
 	return 0;
 }
-
+/*
 void init()
 {
 
@@ -97,4 +90,5 @@ void init()
 
 
 }
+*/
 

@@ -68,7 +68,7 @@ void Sql::addMeasurement(LibelIOPacket * packet)
     std::string sensorDataStrings;
     std::map<SensorType, float> sensorData = packet->getSensorData();
     std::vector<unsigned char> zigbeeAddress = packet->getZigbee64BitAddress();
-
+    auto sensorMap = Config::getSensorMap();
     for(auto it = sensorData.begin(); it != sensorData.end(); ++it)
     {
 
@@ -195,7 +195,7 @@ bool Sql::deleteNode(std::string zigbee64BitAddress)
 std::string Sql::updateSensorsInNode(int nodeID, SensorType sensorType, int sensorID)
 {
 
-
+    auto sensorMap = Config::getSensorMap();
     auto foundSensorType = sensorMap.find(sensorType);
     if(foundSensorType != sensorMap.end())
     {
@@ -313,7 +313,7 @@ std::map<SensorType, int> Sql::getSensorsFromNode(int nodeID) throw (SqlError)
 	std::map<SensorType, int> sensors;
 	auto it = data.begin();
 	std::map<std::string, std::string>::iterator  field;
-
+    auto sensorMap = Config::getSensorMap();
     for(auto sensorIt = sensorMap.begin(); sensorIt != sensorMap.end(); ++sensorIt)
     {
         field = it->find(sensorIt->second + "ID");

@@ -1,6 +1,6 @@
 #include "wsaddsensorspacket.h"
 
-WSAddSensorsPacket::WSAddSensorsPacket(std::string data)
+WSAddSensorsPacket::WSAddSensorsPacket(std::string data) throw (InvalidXMLError)
 {
     char * temp;
 
@@ -10,6 +10,8 @@ WSAddSensorsPacket::WSAddSensorsPacket(std::string data)
     sensorGroupID = -1;
 
     xercesc::DOMElement * docElement = doc->getDocumentElement();
+    if(docElement == NULL)
+        throw InvalidXMLError();
     xercesc::DOMElement * nextElement;
     nextElement = docElement->getFirstElementChild();
 

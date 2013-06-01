@@ -10,7 +10,7 @@ private:
     int sensorGroupID;
     std::vector<int> sensors;
 public:
-    WSRequestDataPacket(std::string data);
+    WSRequestDataPacket(std::string data) throw (InvalidXMLError);
 
     PacketType getPacketType(){ return WS_REQUEST_DATA_COMMAND; };
 

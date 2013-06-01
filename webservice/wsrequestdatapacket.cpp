@@ -1,12 +1,15 @@
 #include "wsrequestdatapacket.h"
 
-WSRequestDataPacket::WSRequestDataPacket(std::string data)
+WSRequestDataPacket::WSRequestDataPacket(std::string data) throw (InvalidXMLError)
 {
     XML XMLParser;
     xercesc::DOMDocument * doc = XMLParser.parseToDom( data );
     char * temp;
 
     xercesc::DOMElement * docElement = doc->getDocumentElement();
+    if(docElement == NULL)
+        throw InvalidXMLError();
+
     xercesc::DOMElement * nextElement;
     nextElement = docElement->getFirstElementChild();
 

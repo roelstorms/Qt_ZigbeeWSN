@@ -602,7 +602,7 @@ std::string Http::changeSensor(std::string newXML)
     return sendPost(url, newXML, &Http::standardReplyWrapper);
 }
 
-void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
+void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError, InvalidXMLError)
 {
     /*
      *  Changing in use of the sensorGroup
@@ -614,7 +614,10 @@ void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
 	XML XMLParser;
 	xercesc::DOMDocument * doc= XMLParser.parseToDom(entity);
 	xercesc::DOMElement * docElement = doc->getDocumentElement();
-		
+
+    if(docElement == NULL)
+        throw InvalidXMLError();
+
 	xercesc::DOMElement * nextElement;
 	nextElement = docElement->getFirstElementChild();
 	while(nextElement != NULL)
@@ -654,6 +657,10 @@ void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
         std::string entity = getEntity(calculateDestination(21 ,packet->getInstallationID(), packet->getSensorGroupID(), sensorsIt->first));
         XML XMLParser;
         xercesc::DOMDocument * doc= XMLParser.parseToDom(entity);
+
+        if(docElement == NULL)
+            throw InvalidXMLError();
+
         xercesc::DOMElement * docElement = doc->getDocumentElement();
 
         xercesc::DOMElement * nextElement;
@@ -693,7 +700,7 @@ void Http::changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError)
     }
 }
 
-void Http::changeFreq(IpsumChangeFreqPacket *packet)  throw (HttpError)
+void Http::changeFreq(IpsumChangeFreqPacket *packet)  throw (HttpError, InvalidXMLError)
 {
     #ifdef HTTP_DEBUG
     std::cout << "Http::changeFreq()" << std::endl;
@@ -709,6 +716,8 @@ void Http::changeFreq(IpsumChangeFreqPacket *packet)  throw (HttpError)
         XML XMLParser;
         xercesc::DOMDocument * doc= XMLParser.parseToDom(entity);
         xercesc::DOMElement * docElement = doc->getDocumentElement();
+        if(docElement == NULL)
+            throw InvalidXMLError();
 
         xercesc::DOMElement * nextElement;
         nextElement = docElement->getFirstElementChild();

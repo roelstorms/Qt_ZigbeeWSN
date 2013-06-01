@@ -14,11 +14,13 @@ class TestClass
     void assertTest(bool condition, std::string message);
 
     void runAll();
+    void testConfig();
     void testWSPackets();
     void testXML();
     void testSQL();
     void testTransmitStatusPacket();
     void testErrorPacket();
+
 };
 
 

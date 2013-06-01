@@ -3,7 +3,7 @@ CONFIG += console
 CONFIG -= qt
 
 QMAKE_CXXFLAGS += -std=c++11   -g
-DEFINES += DEBUG IPSUM_DEBUG HTTP_DEBUG PACKET_DEBUG SENTPACKETS_DEBUG WS_DEBUG PACKET_LOGGING XML_DEBUG SQL_DEBUG
+DEFINES += DEBUG IPSUM_DEBUG HTTP_DEBUG PACKET_DEBUG SENTPACKETS_DEBUG WS_DEBUG PACKET_LOGGING XML_DEBUG SQL_DEBUG CONFIG_DEBUG
 
 SOURCES += \
     packetqueue.cpp \
@@ -48,7 +48,8 @@ SOURCES += \
     #SerialCom/packet_test.cpp \
     testclass.cpp \
     SerialCom/packets/transmitstatuspacket.cpp \
-    SerialCom/packets/libelerrorpacket.cpp
+    SerialCom/packets/libelerrorpacket.cpp \
+    config.cpp
     #config.cpp
 
 HEADERS += \
@@ -96,8 +97,8 @@ HEADERS += \
     webservice/wschangefrequencypacket.h \
     sqlite/sqlite3.h \
     SerialCom/packets/transmitstatuspacket.h \
-    user.h \
-    SerialCom/packets/libelerrorpacket.h
+    SerialCom/packets/libelerrorpacket.h \
+    config.h
     #config.h
 
 unix:!macx:!symbian: LIBS += -lcrypto -lcurl -lxerces-c -lboost_thread -lpthread -lboost_date_time -ldl

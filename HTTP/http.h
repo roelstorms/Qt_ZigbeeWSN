@@ -69,8 +69,8 @@ class Http
         std::string changeSensorGroup(std::string newXML);
         std::string changeSensor(std::string newXML);
 
-		void changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError);
-        void changeFreq(IpsumChangeFreqPacket * packet) throw (HttpError);
+        void changeInUse(IpsumChangeInUsePacket * packet) throw(HttpError, InvalidXMLError);
+        void changeFreq(IpsumChangeFreqPacket * packet) throw (HttpError, InvalidXMLError);
 
 		//std::string createNewSensorGroup(const std::string& installationIDValue, const std::string& nameValue, const std::string& descriptionValue, const std::string& inuseValue) throw (HttpError);
 		

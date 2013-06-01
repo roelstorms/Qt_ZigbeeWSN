@@ -2,7 +2,7 @@
 #include "mainclass.h"
 
 
-std::map<SensorType, std::string> sensorMap;
+//std::map<SensorType, std::string> sensorMap;
 
 MainClass::MainClass(int argc, char * argv[], int packetExpirationTime, unsigned char numberOfRetries) throw (StartupError): packetExpirationTime(packetExpirationTime)
 {
