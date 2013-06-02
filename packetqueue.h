@@ -1,3 +1,12 @@
+
+/*
+ *  Created by Roel Storms
+ *
+ *  This is a wrapper around an std::queue to provide concurrency safety.
+ *  The queue has pointers to Packet objects. These queues are used to send packets between threads.
+ *
+ */
+
 #ifndef PACKETQUEUE_H
 #define PACKETQUEUE_H
 

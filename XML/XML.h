@@ -1,3 +1,17 @@
+/*
+ *  Created by Roel Storms
+ *
+ *  A lot of XML functionality can be found in this class. A number of functions
+ *  are no longer used and should be tested before using them again.
+ *
+ *  This class contains functions to create XML for Ipsum requests or analyze
+ *  XML coming from a login request to Ipsum. This class is mostly used in the HTTP
+ *  class.
+ *
+ *  Some XML functionality can also be found in the WSPackets.
+ *
+ */
+
 #ifndef XML_H
 #define XML_H
 

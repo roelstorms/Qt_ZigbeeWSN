@@ -1,3 +1,14 @@
+/*
+ *	Created by Roel Storms
+ *
+ *  The function Ipsum() is used to create a thread in the main thread. This Ipsum thread an incoming and outgoing packet queue between main and itself.
+ *  Incoming packets are processed by the corresponding Handler functions. The outgoing packet queue is not used yet but can be used to send packets back to main.
+ *  For instance when the Ipsum remote data storage is not reachable, packets can be sent back to main to store into a database untill ipsum can be reached again.
+ *
+ *  If Ipsum is unreachable now, packets are cached on a local queue in this thread. But no measures have been taken if Ipsum is down for a long period of time.
+ */
+
+
 #ifndef IPSUM_H
 #define IPSUM_H
 #include <mutex>

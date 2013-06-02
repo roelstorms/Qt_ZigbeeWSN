@@ -1,3 +1,11 @@
+/*
+ *  Created by Roel Storms
+ *
+ *  This class loads in all parameters of the config file. An example of the config file can be found in config.txt
+ *  All attributes and functions are static because we want to be able to access them throughout the entire program.
+ *
+ */
+
 #ifndef CONFIG_H
 #define CONFIG_H
 

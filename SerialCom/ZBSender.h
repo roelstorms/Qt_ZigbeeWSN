@@ -1,3 +1,13 @@
+/*
+ *  Created by Roel Storms
+ *
+ *  A thread is created of the ZBSender() function. This thread sends all packets
+ *  that should go into the ZigBee network. Escaping of data is also done here.
+ *
+ *  All incoming packets can also be logged to a file accompanied by a timestamp.
+ *
+ */
+
 #ifndef ZBSENDER_H
 #define ZBSENDER_H
 
@@ -16,6 +26,7 @@
 #include <iostream>
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>
+#include "enums.h"
 
 class ZBSender
 {

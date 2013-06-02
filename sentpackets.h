@@ -1,3 +1,14 @@
+/*
+ *  Created by Roel Storms
+ *
+ *  This is a special templated queue that is used to keep pointers to outgoing zigbee packets which we expect a reply to.
+ *  Packets in this queue can be resend if a reply doesn't come in before the expiration time. These packets should only be resent
+ *  a couple of times as defined by numberOfRetries. Afterwards they are thrown away. Letting the client know about this failure
+ *  should still be implemented. But for now our only communication with the client is Ipsum and there is no mechanism to report
+ *  errors yet.
+ *
+ */
+
 #ifndef SENTZBPACKETS_H
 #define SENTZBPACKETS_H
 #include "packet.h"
@@ -20,7 +31,6 @@ public:
     SentPackets(unsigned char numberOfRetries, int expirationTime);
     void addPacket(P packet);
 
-
     P retrieveCorrespondingPacket(R packet);
 
     /*
@@ -39,8 +49,6 @@ public:
      *  Since it is probably the last sent packet that received an acknoledgement. Also the time of sending this packet is returned to compare it with other packets from other sent queues.
      */
     P findResendablePacket(unsigned char frameID);
-
-    //std::pair<P, int> findResendablePacket(P packet);
 };
 
 template <class P, class R>
@@ -52,15 +60,8 @@ SentPackets<P,R>::SentPackets(unsigned char numberOfRetries, int expirationTime)
 template <class P, class R>
 void SentPackets<P, R>::addPacket(P packet)
 {
-    int currentTime = time(NULL);
-
-    #ifdef SENTPACKETS_DEBUG
-    std::cout << "currentTime of packet added to sentpacketsqueue: " << (unsigned int) currentTime << std::endl;
-    #endif
-    packet->setTimeOfLastSending(time(NULL));
+    packet->setTimeOfLastSending(0);
     sentPackets.push_back(packet);
-
-    std::cout << "Packet added to sentZBPacket with time: " << std::to_string(currentTime) << std::endl;
 }
 
 template <class P, class R>
@@ -94,19 +95,19 @@ void SentPackets<P, R>::removePacket(P packet)
 template <class P, class R>
 std::vector<P> SentPackets<P, R>::findExpiredPacket(std::vector<Packet *> * queue)
 {
-    std::vector<P> expiredPackets;
+    std::vector<P> resendablePackets;
 
     int currentTime = time(NULL);
-    sentPackets.erase(std::remove_if (sentPackets.begin(), sentPackets.end(), [this, &currentTime, &expiredPackets, queue](P it){
-        if(((currentTime-it->getTimeOfLastSending()) > expirationTime) && ((it->getNumberOfResends()) > numberOfRetries))       // True when packet expired and number of retries reached
+    sentPackets.erase(std::remove_if (sentPackets.begin(), sentPackets.end(), [this, &currentTime, &resendablePackets, queue](P it){
+        if(((currentTime-it->getTimeOfLastSending()) > expirationTime) && ( it->getTimeOfLastSending() != 0) && ((it->getNumberOfResends()) > numberOfRetries))       // True when packet expired and number of retries reached
         {
-            expiredPackets.push_back(it);
+            delete it;
             return true;
         }
-        else if (((currentTime - it->getTimeOfLastSending())  > expirationTime) && ((it->getNumberOfResends()) <= numberOfRetries))    // True when packet expired and number of retries not reached -> resend
+        else if (((currentTime - it->getTimeOfLastSending())  > expirationTime) && ( it->getTimeOfLastSending() != 0) && ((it->getNumberOfResends()) <= numberOfRetries))    // True when packet expired and number of retries not reached -> resend
         {
             std::cout << "expired packet found and resend done" << std::endl;
-            //queue->push_back(std::get<0>(it));
+            resendablePackets.push_back(it);
             return false;
         }
         else
@@ -116,7 +117,7 @@ std::vector<P> SentPackets<P, R>::findExpiredPacket(std::vector<Packet *> * queu
 
     }), sentPackets.end());
 
-    return expiredPackets;
+    return resendablePackets;
 }
 
 
@@ -137,22 +138,4 @@ P SentPackets<P, R>::findResendablePacket(unsigned char frameID)
     return resendablePacket;
 }
 
-/*
-template <class P, class R>
-std::pair<P, int> SentPackets<P, R>::findResendablePacket(P packet)
-{
-    std::pair <P, int> resendablePacket(nullptr, 0);
-    int lastTime = 0;
-    for(auto it = sentPackets.begin(); it < sentPackets.end(); ++it)
-    {
-        if((std::get<0>(*it) == packet) && (std::get<2>(*it) <= numberOfRetries) && (std::get<1>(*it) > lastTime))
-        {
-            lastTime = std::get<1>(*it);
-            resendablePacket = std::pair<P, int> (std::get<0>(*it), std::get<1>(*it));
-            ++std::get<2>(*it);
-        }
-    }
-    return resendablePacket;
-}
-*/
 #endif // SENTZBPACKETS_H

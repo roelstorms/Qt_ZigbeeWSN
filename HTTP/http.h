@@ -1,6 +1,11 @@
 /*
  *	Created by Roel Storms
- *	Does all the IPSUM connection and uses XML.cpp to generate and interprete the correct XML 
+ *
+ *	Does all the IPSUM connection and uses the XML class to generate and interprete the XML
+ *  The Ipsum thread uses this class to handle it's packets.
+ *
+ *  Several functions in this class are no longer used nor tested. They are still in here
+ *  might someone need similar code so they can reuse it.
  */
 
 #ifndef HTTP_H

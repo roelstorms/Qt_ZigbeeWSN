@@ -8,6 +8,16 @@
 #include <fcntl.h>   /* File control definitions */
 #include <errno.h>   /* Error number definitions */
 #include <termios.h> /* POSIX terminal control definitions */
+/*
+ *  Created by Roel Storms
+ *
+ *  This class sets up the connection to the XBee radio. A serial connection in linux is
+ *  accessed via a file descriptor and is read and written to as if it were a file.
+ *
+ *  This connection descriptor is used in ZBSender and ZBReciever classes.
+ *
+ */
+
 #include <fcntl.h>
 #include <stdlib.h>
 #include <string>

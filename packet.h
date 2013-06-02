@@ -1,3 +1,11 @@
+/*
+ *  Created by Roel Storms
+ *
+ *  The parent class of all packets. An enum is used to easily get the type of packet after dynamic casting of the packet object.
+ *
+ *  No instance of Packet can be made since it has a pure virtual function.
+ */
+
 #ifndef PACKET_H
 #define PACKET_H
 #include "errors.h"

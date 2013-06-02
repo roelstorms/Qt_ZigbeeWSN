@@ -29,8 +29,8 @@ void TestClass::testConfig()
 
     assertTest(Config::getDbName() == "../zigbee.dbs" , "DB name loading");
     assertTest(Config::getIpsumBaseURL() == "http://ipsum.groept.be" , "Ipsum url loading");
-    assertTest(Config::getNumberOfRetries() == 1 , "Number of retries loading");
-    assertTest(Config::getExpirationTime() == 60 , "Ipsum personal key loading");
+    assertTest(Config::getNumberOfRetries() == 2 , "Number of retries loading");
+    assertTest(Config::getExpirationTime() == 15 , "Expiration time loading");
     assertTest(Config::getPersonalKey() == "a31dd4f1-9169-4475-b316-764e1e737653" , "Ipsum personal key loading");
     assertTest(Config::getXBeeBaudRate() == 9600 , "XBee baud rate loading");
     assertTest(Config::getXBeePortNumber() == 0, "XBee port number loading");
@@ -68,6 +68,12 @@ void TestClass::testXML()
             exception = true;
         }
         assertTest(!exception , "XML analyseLoginReply throws exception");
+    }
+
+    {   // Pure for a memory leak check on this function
+
+        std::string serializedXML = xml.serializeDOM(xml.parseToDom("<?xml version=\"1.0\" encoding=\"UTF-16\" standalone=\"no\" ?>\n<UserLogin>\n\n  <username>username</username>\n\n  <password>password</password>\n\n</UserLogin>\n"));
+        std::cout << "serializedXML: " << std::endl << serializedXML << std::endl;
     }
 
     std::cout << "end of XML test" << std::endl;

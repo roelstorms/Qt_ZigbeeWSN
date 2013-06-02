@@ -1,3 +1,17 @@
+/*
+ *  Created by Roel Storms
+ *
+ *  This class uses the mongoose library to created a web service using HTTP on port 80 or HTTPS.
+ *  Privileged users on the client can send request to this webservice to changed the ZigBee
+ *  network configuration or parameters. Correct incoming requests will result in the creation of
+ *  WSPackets which will be pushed onto the shared queue to the main thread.
+ *
+ *  The url of the request specifies the type of request and the XML data specify all the necessary
+ *  data to fulfil this request. In the URL an authentication code is used. Together with HTTPS this
+ *  should prevent unwanted access to the gateway.
+ *
+ */
+
 #ifndef WEBSERVICE_H
 #define WEBSERVICE_H
 

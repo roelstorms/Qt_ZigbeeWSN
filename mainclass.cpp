@@ -157,6 +157,9 @@ void MainClass::operator() ()
     {
         checkExpiredPackets();
 
+        /*
+         *  Getting all packets out of the shared queues
+         */
         {	// Scope of unique_lock
             std::unique_lock<std::mutex> uniqueLock(*conditionVariableMutex);
             mainConditionVariable->wait(uniqueLock, [this]{ return ((!zbReceiveQueue->empty()) || (!wsReceiveQueue->empty() || (!ipsumReceiveQueue->empty()))); });
@@ -185,6 +188,11 @@ void MainClass::operator() ()
             }
         }
         // Shared queue is no longer locked, now ready to process the packets
+
+
+        /*
+         *  Processing all packets in local queues
+         */
         Packet * packet;
         while(!localZBReceiveQueue->empty())
         {
@@ -352,16 +360,22 @@ void MainClass::checkShutdown()
 
 void MainClass::checkExpiredPackets()
 {
-    std::vector<LibelAddNodePacket *> expiredAddNodePackets = addNodeSentPackets->findExpiredPacket(localZBSenderQueue);
-    for( auto it = expiredAddNodePackets.begin(); it < expiredAddNodePackets.end(); ++it )
+    std::vector<LibelAddNodePacket *> resendableAddNodePackets = addNodeSentPackets->findExpiredPacket(localZBSenderQueue);
+    for( auto it = resendableAddNodePackets.begin(); it < resendableAddNodePackets.end(); ++it )
     {
         std::cerr << "LibelAddNodePacket received no reply. " << (*it) <<  std::endl;
+        (*it)->setTimeOfLastSending(time(NULL));
+        (*it)->incrementNumberOfResends();
+        localZBSenderQueue->push_back(*it);
     }
 
-    std::vector<LibelChangeFreqPacket *> expiredChangeFrequencyPackets = changeFreqSentPackets->findExpiredPacket(localZBSenderQueue);
-    for( auto it = expiredChangeFrequencyPackets.begin(); it < expiredChangeFrequencyPackets.end(); ++it )
+    std::vector<LibelChangeFreqPacket *> resendableChangeFrequencyPackets = changeFreqSentPackets->findExpiredPacket(localZBSenderQueue);
+    for( auto it = resendableChangeFrequencyPackets.begin(); it < resendableChangeFrequencyPackets.end(); ++it )
     {
         std::cerr << "LibelChangeFreqPacket received no reply. " << (*it) <<  std::endl;
+        (*it)->setTimeOfLastSending(time(NULL));
+        (*it)->incrementNumberOfResends();
+        localZBSenderQueue->push_back(*it);
     }
 }
 
@@ -394,37 +408,40 @@ void MainClass::libelIOHandler(LibelIOPacket * libelIOPacket)
     std::vector<unsigned char> zigbee64BitAddress = libelIOPacket->getZigbee64BitAddress();
     std::cout << "Amount of packets in localZBSenderQueue before erase: " <<  localZBSenderQueue->size() << std::endl;
     localZBSenderQueue->erase(std::remove_if(localZBSenderQueue->begin(), localZBSenderQueue->end(), [&zigbee64BitAddress, this](Packet * packet) {
-            TransmitRequestPacket * zbPacket = dynamic_cast<TransmitRequestPacket *>(packet);
-            if(zbPacket == NULL)
-            {
-                std::cerr << "localZBSenderQueue had invalid packet type | type != ZBPacket (MainClass)" << std::endl;
-                return true;
-            }
-            else
-            {
-                std::vector<unsigned char> packetAddress = zbPacket->getZigbee64BitAddress();
+        TransmitRequestPacket * zbPacket = dynamic_cast<TransmitRequestPacket *>(packet);
+        if(zbPacket == NULL)
+        {
+            std::cerr << "localZBSenderQueue had invalid packet type | type != ZBPacket (MainClass)" << std::endl;
+            return true;
+        }
+        else
+        {
+            std::vector<unsigned char> packetAddress = zbPacket->getZigbee64BitAddress();
+            #ifdef DEBUG_MAIN
                 std::cout << "packetaddress:" << std::endl;
                 for(auto it = packetAddress.begin(); it < packetAddress.end(); ++it)
                 {
                     std::cout << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it) << " ";
                 }
+
                 std::cout << std::endl << "zigbee64BitAddress:" << std::endl;
                 for(auto it = zigbee64BitAddress.begin(); it < zigbee64BitAddress.end(); ++it)
                 {
                     std::cout << std::uppercase << std::setw(2) << std::setfill('0') << std::hex  << (int) (*it) << " ";
                 }
+            #endif
 
-                if(std::equal(packetAddress.begin(), packetAddress.end(), zigbee64BitAddress.begin()))
-                {
-                    std::cout << "packet added to zbSenderQueue from localZBSenderQueue" << std::endl;
-                    zbSenderQueue->addPacket(dynamic_cast<Packet *> (zbPacket));
-                    return true;
-                }
-                else
-                {
-                    return false;
-                }
-            }}), localZBSenderQueue->end());
+            if(std::equal(packetAddress.begin(), packetAddress.end(), zigbee64BitAddress.begin()))
+            {
+                std::cout << "packet added to zbSenderQueue from localZBSenderQueue" << std::endl;
+                zbSenderQueue->addPacket(dynamic_cast<Packet *> (zbPacket));
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }}), localZBSenderQueue->end());
     std::cout << "Amount of packets left in localZBSenderQueue after erase: " <<  localZBSenderQueue->size() << std::endl;
     {
         std::lock_guard<std::mutex> lgSender(*zbSenderConditionVariableMutex);
@@ -475,8 +492,6 @@ void MainClass::libelIOHandler(LibelIOPacket * libelIOPacket)
         }
 
     }
-
-
 
     delete libelIOPacket;
 
@@ -666,8 +681,10 @@ void MainClass::libelAddNodeResponseHandler(LibelAddNodeResponse * libelAddNodeR
     delete libelAddNodeResponse;
 }
 
+
 void MainClass::transmitStatusHandler(TransmitStatusPacket * transmitStatusPacket)
 {
+    /*
     std::cout << "MainClass::transmitStatusHandler(TransmitStatusPacket * transmitStatusPacket) " << std::endl;
     if(transmitStatusPacket == nullptr)
     {
@@ -707,7 +724,7 @@ void MainClass::transmitStatusHandler(TransmitStatusPacket * transmitStatusPacke
             changeFreqPacket->setTimeOfLastSending(0);
             //localZBSenderQueue->push_back(changeFreqPacket.first);
         }
-    }
+    }*/
     delete transmitStatusPacket;
 }
 

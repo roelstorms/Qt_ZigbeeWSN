@@ -1,3 +1,15 @@
+/*
+ *  Created by Roel Storms
+ *
+ *  A thread is created of the ZBReceiver() function. This thread receives all packets
+ *  coming from the ZigBee network. Escaping of data is also done here.
+ *
+ *  Each incoming packet will result in a Libel.. object being created and pushed onto
+ *  the shared queue towards the main thread. Incoming packets can also be logged to
+ *  a file accompanied by a correct timestamp
+ *
+ */
+
 #ifndef ZBRECEIVER_H
 #define ZBRECEIVER_H
 

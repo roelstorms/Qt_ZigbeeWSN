@@ -1,3 +1,17 @@
+/*
+ *  Created by Roel Storms
+ *
+ *  The MainClass has a number of queues between all IO threads (Ipsum, ZBSender, ZBReceiver, Webservice)
+ *  Packets from these queues are being analyzed and new packets are created to perform the necessary
+ *  actions. These newly created packets are put on outgoing shared queues to the Ipsum or ZBSender thread
+ *
+ *  Checks are performed to see whether outgoing ZigBee packets we expect a reply to are indeed receiving a
+ *  reply. Else resends can be done.
+ *
+ *  Most of the resources needed throughout the entire program are allocated here and free'd in the destructor.
+ *
+ */
+
 #ifndef MAINCLASS_H
 #define MAINCLASS_H
 

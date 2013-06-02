@@ -1,3 +1,10 @@
+/*
+ *  Created by Roel Storms
+ *
+ *  All errors that can be thrown are declared here. Every error is a child of std::exception
+ *
+ */
+
 #ifndef ERRORS_H
 #define ERRORS_H
 

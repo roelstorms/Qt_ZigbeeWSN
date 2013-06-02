@@ -1,15 +1,17 @@
 /*
  *	Created by Roel Storms on 28/01/2013  
  *
+ *  Main function for the gateway software. Here the config file is loaded, all tests are run and the MainClass is created.
+ *
+ *
+ *  The ZigBee radio should be set in 9600 baud, API 2 mode and configured as coordinator.
+ *
  *  TODO: Make a clean shutdown procedure (done, check once more)
  *  TODO: Free ZB packets at the right moment
  *  TODO: Resending of packets
  *
- *  To know how much memory this proces is consuming use : sudo cat /proc/<PID>/smaps
- *  This can give an indication if you will have trouble running it on an embedded device. For now the memory used just after startup is less then 1MB.
- *  Has to be rechecked when program is running for a few houres and recieves some traffic.
- *
  */
+
 #include <boost/date_time.hpp>
 #include <boost/date_time/gregorian/gregorian.hpp>
 
@@ -24,7 +26,7 @@ int main(int argc, char* argv[])
     if(argc != 2)
     {
         std::cerr << "also provide the path to config file" << std::endl;
-        throw StartupError();
+        return 1;
     }
 
     if(!Config::loadConfig((argv[1])))
@@ -32,6 +34,7 @@ int main(int argc, char* argv[])
         std::cout << "Could not load config file" << std::endl;
         return 1;
     }
+
     TestClass test;
     test.runAll();
 

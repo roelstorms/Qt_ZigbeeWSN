@@ -1,11 +1,11 @@
 #include "outgoingpacket.h"
 
-OutgoingPacket::OutgoingPacket() : ZBPacket(), numberOfResends(0)
+OutgoingPacket::OutgoingPacket() : ZBPacket(), numberOfResends(0), timeOfLastSending(0)
 {
 
 }
 
-OutgoingPacket::OutgoingPacket(std::vector<unsigned char> data) : ZBPacket (), numberOfResends(0)
+OutgoingPacket::OutgoingPacket(std::vector<unsigned char> data) : ZBPacket (), numberOfResends(0), timeOfLastSending(0)
 {
     setFrameData(data);
 }
