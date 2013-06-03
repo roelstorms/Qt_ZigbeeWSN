@@ -1,0 +1,7 @@
+ipsumBaseURL=http://ipsum.groept.be
+personalKey=a31dd4f1-9169-4475-b316-764e1e737653
+dbName=../zigbee.dbs
+numberOfRetries=2
+expirationTime=15
+xbeeBaudRate=9600
+xbeePortNumber=0
