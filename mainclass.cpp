@@ -225,7 +225,7 @@ void MainClass::operator() ()
             else if (packet->getPacketType() == ZB_LIBEL_CHANGE_FREQ_RESPONSE)
             {
                 std::cout << "ZB_LIBEL_CHANGE_FREQ_RESPONSE received in main" << std::endl;
-                if(dynamic_cast<LibelMaskResponse *> (packet) != NULL)
+                if(dynamic_cast<LibelChangeFreqResponse *> (packet) != NULL)
                 {
                     libelChangeFreqResponseHandler(dynamic_cast<LibelChangeFreqResponse *> (packet));
                 }
@@ -307,7 +307,7 @@ void MainClass::operator() ()
             localIpsumReceiveQueue->pop();
         }
 
-        checkShutdown();
+        //checkShutdown();
     }
 
 
@@ -364,18 +364,18 @@ void MainClass::checkExpiredPackets()
     for( auto it = resendableAddNodePackets.begin(); it < resendableAddNodePackets.end(); ++it )
     {
         std::cerr << "LibelAddNodePacket received no reply. " << (*it) <<  std::endl;
-        (*it)->setTimeOfLastSending(time(NULL));
+        /*(*it)->setTimeOfLastSending(time(NULL));
         (*it)->incrementNumberOfResends();
-        localZBSenderQueue->push_back(*it);
+        localZBSenderQueue->push_back(*it);*/
     }
 
     std::vector<LibelChangeFreqPacket *> resendableChangeFrequencyPackets = changeFreqSentPackets->findExpiredPacket(localZBSenderQueue);
     for( auto it = resendableChangeFrequencyPackets.begin(); it < resendableChangeFrequencyPackets.end(); ++it )
     {
         std::cerr << "LibelChangeFreqPacket received no reply. " << (*it) <<  std::endl;
-        (*it)->setTimeOfLastSending(time(NULL));
+        /*(*it)->setTimeOfLastSending(time(NULL));
         (*it)->incrementNumberOfResends();
-        localZBSenderQueue->push_back(*it);
+        localZBSenderQueue->push_back(*it);*/
     }
 }
 
@@ -524,6 +524,7 @@ void MainClass::libelMaskResponseHandler(LibelMaskResponse * libelMaskResponse)
 
 void MainClass::libelChangeFreqResponseHandler(LibelChangeFreqResponse * libelChangeFreqResponse)
 {
+    std::cout << " void MainClass::libelChangeFreqResponseHandler(LibelChangeFreqResponse * libelChangeFreqResponse) " << std::endl;
     if(libelChangeFreqResponse == nullptr)
     {
         std::cerr << "dynamic cast failed on LibelChangeFreqResponse in main" << std::endl;
@@ -550,6 +551,7 @@ void MainClass::libelChangeFreqResponseHandler(LibelChangeFreqResponse * libelCh
             std::cerr << "Could change frequency since this sensor was not known to the sql db" << std::endl;
             return;
         }
+        std::cout << "getSensorsFromNode" << std::endl;
         sensors = db->getSensorsFromNode(sensorGroupID); // sensors is a vector of sensorType + ipsum ID
     }
     catch(SqlError e)
@@ -776,6 +778,10 @@ void MainClass::changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFreque
     std::cout << "changeFrequencyHandler(WSChangeFrequencyPacket *  wsChangeFrequencyPacket)" << std::endl;
 
     std::string zigbee64BitAddress = db->getNodeAddress(wsChangeFrequencyPacket->getSensorGroupID());
+    if(zigbee64BitAddress == "")
+    {
+        return;
+    }
     std::map<SensorType,int> sensors = db->getSensorsFromNode(wsChangeFrequencyPacket->getSensorGroupID());
 
     std::vector<std::pair<SensorType, int> > newFrequencies;    // SensorType + frequency(interval) in seconds

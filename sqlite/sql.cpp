@@ -218,6 +218,7 @@ std::string Sql::getNodeAddress(int nodeID) throw (SqlError)
     if(data.size() != 1)
     {
         std::cerr << "node address not found in DB" << std::endl;
+        return "";
     }
 	for(auto it = data.begin(); it < data.end(); ++it)
 	{

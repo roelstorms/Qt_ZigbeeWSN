@@ -9,8 +9,8 @@ WSAddNodePacket::WSAddNodePacket(std::string data) throw(InvalidXMLError) : WSPa
     char * temp;
 
     xercesc::DOMElement * docElement = doc->getDocumentElement();
-    if(docElement == NULL)
-        throw InvalidXMLError();
+    //if(docElement == NULL)
+     //   throw InvalidXMLError();
 
     xercesc::DOMElement * nextElement;
     nextElement = docElement->getFirstElementChild();

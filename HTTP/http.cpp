@@ -194,6 +194,7 @@ std::string Http::calculateDestination(int userID, int installationID, int senso
 	output.append(std::to_string(sec));
 	output.append(":");
 
+
 	std::string stringChecksum(std::to_string(checksum));
     #ifdef HTTP_DEBUG_2
 	std::cout << "long checksum:" << std::endl << stringChecksum << std::endl;
@@ -203,7 +204,9 @@ std::string Http::calculateDestination(int userID, int installationID, int senso
 	std::cout << "short checksum" << std::endl << shortChecksum << std::endl;
     #endif
 	output.append(shortChecksum);
-
+    #ifdef HTTP_DEBUG
+        std::cout << "output of calculate destination" << output << std::endl;
+    #endif
 	std::string output2 = toBase64(output);
 	return output2;
 }

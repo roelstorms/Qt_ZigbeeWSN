@@ -58,8 +58,7 @@ LibelIOPacket::LibelIOPacket(std::vector<unsigned char> input) : ReceivePacket(i
         {
             value = data.at(count++) * 256 ;
             value += data.at(count++);
-            value /= 100;
-            value += 500;
+            value /= 10;
             sensorData.insert(std::pair<SensorType, float>(PRES, value));
             std::cout << "Pressure data found in packet: " << value << std::endl;
             value = 0;

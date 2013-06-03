@@ -143,7 +143,7 @@ void Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)
 void Ipsum::changeFrequencyHandler(IpsumChangeFreqPacket * packet)
 {
     #ifdef IPSUM_DEBUG
-    std::cout << "Ipsum::changeInUseHandler(IpsumChangeInUsePacket * packet)" << std::endl;
+    std::cout << "Ipsum::changeFrequencyHandler(IpsumChangeFreqPacket * packet)" << std::endl;
     #endif
     try
     {

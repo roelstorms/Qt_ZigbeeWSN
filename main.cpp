@@ -39,7 +39,7 @@ int main(int argc, char* argv[])
     test.runAll();
 
 
-/*
+
     std::map<int, bool> sensors;
     sensors.insert(std::pair<int, bool> (0, true));
     sensors.insert(std::pair<int, bool> (0, true));
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
 
     try
     {
-        MainClass mainClass(argc, argv, 100, 3);
+        MainClass mainClass;
         mainClass();
     }
     catch(StartupError)
@@ -72,7 +72,7 @@ int main(int argc, char* argv[])
         return 1;
     }
 
-*/
+
 
 	return 0;
 }

@@ -8,8 +8,10 @@ WSChangeFrequencyPacket::WSChangeFrequencyPacket(std::string data) throw (Invali
 
     xercesc::DOMElement * docElement = doc->getDocumentElement();
     if(docElement == NULL)
+    {
+        std::cout << "Dom parser returned empty doc" << std::endl;
         throw InvalidXMLError();
-
+    }
     xercesc::DOMElement * nextElement;
     nextElement = docElement->getFirstElementChild();
 
@@ -66,7 +68,7 @@ WSChangeFrequencyPacket::WSChangeFrequencyPacket(std::string data) throw (Invali
         else
         {
             std::cerr << "invalid XML" << std::endl;
-            throw InvalidWSXML();
+            //throw InvalidWSXML();
         }
 
         nextElement = nextElement->getNextElementSibling();

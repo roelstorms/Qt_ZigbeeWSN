@@ -17,7 +17,7 @@ int IpsumChangeFreqPacket::getSensorGroupID() const
 	return sensorGroupID;
 }
 
-const std::vector<std::pair<int, int>>& IpsumChangeFreqPacket::getFrequencies() const
+const std::vector<std::pair<int, int> >& IpsumChangeFreqPacket::getFrequencies() const
 {
 	return frequencies;
 }

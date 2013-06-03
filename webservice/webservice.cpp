@@ -43,7 +43,7 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
 
 	char content[500];
 	char post_data[1024] = "";
-    // int post_data_len = mg_read(conn, post_data, sizeof(post_data));    // warning since post_data_len is never used, maybe used in the future.
+    int post_data_len = mg_read(conn, post_data, sizeof(post_data));    // warning since post_data_len is never used, maybe used in the future.
 
 	// Prepare the message we're going to send
     #ifdef WS_DEBUG
@@ -72,7 +72,14 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
             #ifdef WS_DEBUG
                 std::cout << "request type set to CHANGE_FREQUENCY" << std::endl;
             #endif
+            try
+            {
             packet = dynamic_cast<Packet *> (new WSChangeFrequencyPacket(std::string(post_data)));
+            }
+            catch (InvalidXMLError)
+            {
+                std::cerr << "Tried to create a WSChangeFrequency in a WS Thread but XML was invalid" << std::endl;
+            }
         }
         else if(url.find("addNode") != std::string::npos)
         {
@@ -143,9 +150,10 @@ int Webservice::beginRequestHandler(struct mg_connection *conn)
     #ifdef WS_DEBUG
         std::cout << "adding ws packet to wsqueue" << std::endl;
     #endif
+    {
 	std::lock_guard<std::mutex> lg(*mainConditionVariableMutex);
 	mainConditionVariable->notify_all();
-
+    }
     int content_length = snprintf(content, sizeof(content),	"<error>false</error>");//,request_info->uri, post_data);
 		printf("%s: %d\n", post_data, content_length);
 	
